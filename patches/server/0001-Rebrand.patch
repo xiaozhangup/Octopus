@@ -1,11 +1,11 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: Encode42 <me@encode42.dev>
-Date: Thu, 16 Sep 2021 20:39:45 -0400
+From: Daniel Zhang <xiaozhangshiw@163.com>
+Date: Mon, 16 Sep 2024 21:20:42 +0800
 Subject: [PATCH] Rebrand
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index 299881d2c9fb7321f4b29c019e9088e024b64689..571e30fa02dcbe5c9095334579b4cfce135563e8 100644
+index b053160ee0faa550569a8b2273e38f48567ddbc7..c3cee86bc06e5637da8bf6979fab8b67a1428a23 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
 @@ -13,7 +13,7 @@ configurations.named(log4jPlugins.compileClasspathConfigurationName) {
@@ -13,7 +13,7 @@ index 299881d2c9fb7321f4b29c019e9088e024b64689..571e30fa02dcbe5c9095334579b4cfce
  
  dependencies {
 -    implementation(project(":purpur-api")) // Pufferfish // Paper // Purpur
-+    implementation(project(":tentacles-api")) // Pufferfish // Paper // Purpur // Tentacles
++    implementation(project(":octopus-api")) // Pufferfish // Paper // Purpur // Tentacles
      // Paper start
      implementation("org.jline:jline-terminal-jansi:3.21.0")
      implementation("net.minecrell:terminalconsoleappender:1.3.0")
@@ -22,18 +22,18 @@ index 299881d2c9fb7321f4b29c019e9088e024b64689..571e30fa02dcbe5c9095334579b4cfce
          attributes(
              "Main-Class" to "org.bukkit.craftbukkit.Main",
 -            "Implementation-Title" to "Purpur", // Pufferfish // Purpur
-+            "Implementation-Title" to "Tentacles", // Pufferfish // Purpur // Tentacles
++            "Implementation-Title" to "Octopus", // Pufferfish // Purpur // Tentacles
              "Implementation-Version" to implementationVersion,
              "Implementation-Vendor" to date, // Paper
 -            "Specification-Title" to "Purpur", // Pufferfish // Purpur
-+            "Specification-Title" to "Tentacles", // Pufferfish // Purpur // Tentacles
++            "Specification-Title" to "Octopus", // Pufferfish // Purpur // Tentacles
              "Specification-Version" to project.version,
 -            "Specification-Vendor" to "Purpur Team", // Pufferfish // Purpur
 -            "Brand-Id" to "purpurmc:purpur", // Pufferfish // Purpur
 -            "Brand-Name" to "Purpur", // Pufferfish // Purpur
-+            "Specification-Vendor" to "Tentacles Team", // Pufferfish // Purpur // Tentacles
-+            "Brand-Id" to "tentaclesmc:tentacles", // Pufferfish // Purpur // Tentacles
-+            "Brand-Name" to "Tentacles", // Pufferfish // Purpur // Tentacles
++            "Specification-Vendor" to "Octopus Team", // Pufferfish // Purpur // Tentacles
++            "Brand-Id" to "happyland:octopus", // Pufferfish // Purpur // Tentacles
++            "Brand-Name" to "Octopus", // Pufferfish // Purpur // Tentacles
              "Build-Number" to (build ?: ""),
              "Build-Time" to Instant.now().toString(),
              "Git-Branch" to gitBranch, // Paper
@@ -98,7 +98,7 @@ index 6d36fc6d8e22d9b68dea3830f6ecc8763184c343..c1334dbd5e027c41a4502c14491d34e5
              }
          } catch (final IOException e) {
 diff --git a/src/main/java/com/destroystokyo/paper/console/PaperConsole.java b/src/main/java/com/destroystokyo/paper/console/PaperConsole.java
-index 90b3526479320064378f2cde6c2f2b8e48a59ba6..1bd598d7395e34e2af3393362c4cd6425cdda713 100644
+index 90b3526479320064378f2cde6c2f2b8e48a59ba6..2a48f7d59850751584f98615b199afac47e274d5 100644
 --- a/src/main/java/com/destroystokyo/paper/console/PaperConsole.java
 +++ b/src/main/java/com/destroystokyo/paper/console/PaperConsole.java
 @@ -20,7 +20,7 @@ public final class PaperConsole extends SimpleTerminalConsole {
@@ -106,19 +106,19 @@ index 90b3526479320064378f2cde6c2f2b8e48a59ba6..1bd598d7395e34e2af3393362c4cd642
      protected LineReader buildReader(LineReaderBuilder builder) {
          builder
 -                .appName("Purpur") // Purpur
-+                .appName("Tentacles") // Purpur // Tentacles
++                .appName("Octopus") // Purpur // Octopus
                  .variable(LineReader.HISTORY_FILE, java.nio.file.Paths.get(".console_history"))
                  .completer(new ConsoleCommandCompleter(this.server))
                  .option(LineReader.Option.COMPLETE_IN_WORD, true);
 diff --git a/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java b/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
-index 3099c21ee589acf6edff5903a23673adf489024f..ea3a8e50641812e29300d783bdb82e895eb48c3d 100644
+index 3099c21ee589acf6edff5903a23673adf489024f..58ca471aa67208883217ac3f8a2c3217105843dd 100644
 --- a/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
 +++ b/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
 @@ -33,6 +33,7 @@ public record ServerBuildInfoImpl(
      private static final String BRAND_PAPER_NAME = "Paper";
      private static final String BRAND_PUFFERFISH_NAME = "Pufferfish"; // Purpur
      private static final String BRAND_PURPUR_NAME = "Purpur"; // Purpur
-+    private static final String BRAND_TENTACLES_NAME = "Tentacles"; // Tentacles
++    private static final String BRAND_OCTOPUS_NAME = "Octopus"; // Octopus
  
      private static final String BUILD_DEV = "DEV";
  
@@ -127,10 +127,10 @@ index 3099c21ee589acf6edff5903a23673adf489024f..ea3a8e50641812e29300d783bdb82e89
              getManifestAttribute(manifest, ATTRIBUTE_BRAND_ID)
                  .map(Key::key)
 -                .orElse(BRAND_PURPUR_ID), // Purpur
-+                .orElse(BRAND_TENTACLES_ID), // Purpur // Tentacles
++                .orElse(BRAND_OCTOPUS_ID), // Purpur // Tentacles
              getManifestAttribute(manifest, ATTRIBUTE_BRAND_NAME)
 -                .orElse(BRAND_PURPUR_NAME), // Purpur
-+                .orElse(BRAND_TENTACLES_NAME), // Purpur // Tentacles
++                .orElse(BRAND_OCTOPUS_NAME), // Purpur // Tentacles
              SharedConstants.getCurrentVersion().getId(),
              SharedConstants.getCurrentVersion().getName(),
              getManifestAttribute(manifest, ATTRIBUTE_BUILD_NUMBER)
@@ -157,7 +157,7 @@ index 710477ae27ebc5afdf0012ef0867d05efd293c24..1d82ed572d9cd8ad9647d9fd3dc2763d
      public CrashReport(String message, Throwable cause) {
          io.papermc.paper.util.StacktraceDeobfuscator.INSTANCE.deobfuscateThrowable(cause); // Paper
 diff --git a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
-index 48999a860a3b9ed691691c355beaf3e0674acb95..e33e1ccfebfb4fc1fdc4b26620db1c2a9e841d25 100644
+index 48999a860a3b9ed691691c355beaf3e0674acb95..68c29847a992bc4b83497df2ec5fb4e947dc9450 100644
 --- a/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
 +++ b/src/main/java/org/bukkit/craftbukkit/scheduler/CraftScheduler.java
 @@ -492,7 +492,7 @@ public class CraftScheduler implements BukkitScheduler {
@@ -165,12 +165,12 @@ index 48999a860a3b9ed691691c355beaf3e0674acb95..e33e1ccfebfb4fc1fdc4b26620db1c2a
              } else {
                  // this.debugTail = this.debugTail.setNext(new CraftAsyncDebugger(currentTick + CraftScheduler.RECENT_TICKS, task.getOwner(), task.getTaskClass())); // Paper
 -                task.getOwner().getLogger().log(Level.SEVERE, "Unexpected Async Task in the Sync Scheduler. Report this to Purpur"); // Paper // Purpur
-+                task.getOwner().getLogger().log(Level.SEVERE, "Unexpected Async Task in the Sync Scheduler. Report this to Tentacles"); // Paper // Purpur // Tentacles
++                task.getOwner().getLogger().log(Level.SEVERE, "Unexpected Async Task in the Sync Scheduler. Report this to Octopus"); // Paper // Purpur // Tentacles
                  // We don't need to parse pending
                  // (async tasks must live with race-conditions if they attempt to cancel between these few lines of code)
              }
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
-index 99597258e8e88cd9e2c901c4ac3ff7faeeabee2b..5e8569c0661d6cb38e8dafe47b812c7ba834dc0e 100644
+index 99597258e8e88cd9e2c901c4ac3ff7faeeabee2b..529d0123c2357b42f3bb20a1e1b4cd36c01729b6 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 @@ -11,7 +11,7 @@ public final class Versioning {
@@ -178,12 +178,12 @@ index 99597258e8e88cd9e2c901c4ac3ff7faeeabee2b..5e8569c0661d6cb38e8dafe47b812c7b
          String result = "Unknown-Version";
  
 -        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.purpurmc.purpur/purpur-api/pom.properties"); // Pufferfish // Purpur
-+        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.purpurmc.tentacles/tentacles-api/pom.properties"); // Pufferfish // Purpur // Tentacles
++        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/me.xiaozhangup.octopus/octopus-api/pom.properties"); // Pufferfish // Purpur // Tentacles
          Properties properties = new Properties();
  
          if (stream != null) {
 diff --git a/src/main/java/org/spigotmc/WatchdogThread.java b/src/main/java/org/spigotmc/WatchdogThread.java
-index f51cc3de3ca935ef90f7f0e9dd0506b856fc55f3..01a7e3d97bf7c0824bca15752a19f8af1c35a69d 100644
+index f51cc3de3ca935ef90f7f0e9dd0506b856fc55f3..c051a48b053c0f79b82dfada2dc1cecea473dda3 100644
 --- a/src/main/java/org/spigotmc/WatchdogThread.java
 +++ b/src/main/java/org/spigotmc/WatchdogThread.java
 @@ -155,14 +155,14 @@ public class WatchdogThread extends ca.spottedleaf.moonrise.common.util.TickThre
@@ -197,10 +197,10 @@ index f51cc3de3ca935ef90f7f0e9dd0506b856fc55f3..01a7e3d97bf7c0824bca15752a19f8af
                  log.log( Level.SEVERE, "If you see a world save or edit, then it means you did far more than your server can handle at once" );
                  log.log( Level.SEVERE, "\t If this is the case, consider increasing timeout-time in spigot.yml but note that this will replace the crash with LARGE lag spikes" );
 -                log.log( Level.SEVERE, "If you are unsure or still think this is a Purpur bug, please report this to https://github.com/PurpurMC/Purpur/issues" ); // Purpur
-+                log.log( Level.SEVERE, "If you are unsure or still think this is a Tentacles bug, please report this to https://github.com/PurpurMC/Tentacles/issues" ); // Purpur // Tentacles
++                log.log( Level.SEVERE, "If you are unsure or still think this is a Octopus bug, please report this to https://github.com/PurpurMC/Tentacles/issues" ); // Purpur // Tentacles
                  log.log( Level.SEVERE, "Be sure to include ALL relevant console errors and Minecraft crash reports" );
 -                log.log( Level.SEVERE, "Purpur version: " + Bukkit.getServer().getVersion() ); // Purpur
-+                log.log( Level.SEVERE, "Tentacles version: " + Bukkit.getServer().getVersion() ); // Purpur // Tentacles
++                log.log( Level.SEVERE, "Octopus version: " + Bukkit.getServer().getVersion() ); // Purpur // Tentacles
                  //
                  if ( net.minecraft.world.level.Level.lastPhysicsProblem != null )
                  {

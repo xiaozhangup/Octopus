@@ -1,23 +1,18 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: granny <granny@purpurmc.org>
-Date: Thu, 16 May 2024 20:37:05 -0700
+From: Daniel Zhang <xiaozhangshiw@163.com>
+Date: Mon, 16 Sep 2024 21:45:35 +0800
 Subject: [PATCH] Rebrand
 
 
 diff --git a/src/main/java/io/papermc/paper/ServerBuildInfo.java b/src/main/java/io/papermc/paper/ServerBuildInfo.java
-index 8c2c5ea14a839c8767bbf120ae5512f65475cbb0..8b7179c95b92b36237f14a14c1d8477b678f1b6e 100644
+index 8c2c5ea14a839c8767bbf120ae5512f65475cbb0..bb380029c5c93a3ea0c4ef38e9343f5c9bf5eced 100644
 --- a/src/main/java/io/papermc/paper/ServerBuildInfo.java
 +++ b/src/main/java/io/papermc/paper/ServerBuildInfo.java
-@@ -32,6 +32,13 @@ public interface ServerBuildInfo {
+@@ -32,6 +32,8 @@ public interface ServerBuildInfo {
      Key BRAND_PURPUR_ID = Key.key("purpurmc", "purpur");
      // Purpur end
  
-+    // Tentacles start
-+    /**
-+     * The brand id for Tentacles.
-+     */
-+    Key BRAND_TENTACLES_ID = Key.key("tentaclesmc", "tentacles");
-+    // Tentacles end
++    Key BRAND_OCTOPUS_ID = Key.key("happyland", "octopus");
 +
      /**
       * Gets the {@code ServerBuildInfo}.
