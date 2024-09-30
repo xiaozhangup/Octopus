@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Daniel Zhang <xiaozhangshiw@163.com>
 Date: Mon, 16 Sep 2024 21:28:27 +0800
-Subject: [PATCH] Skip EntityScheduler's executeTick checks if there  isn't any
+Subject: [PATCH] Skip EntityScheduler's executeTick checks if there isn't any
  tasks to be run
 
 
