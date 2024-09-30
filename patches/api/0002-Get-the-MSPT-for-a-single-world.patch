@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Zhang <xiaozhangshiw@163.com>
+Date: Mon, 30 Sep 2024 23:16:59 +0800
+Subject: [PATCH] Get the MSPT for a single world
+
+
+diff --git a/src/main/java/org/bukkit/World.java b/src/main/java/org/bukkit/World.java
+index ca600d3e8b1f4fae299b1bf3d283c466c18875a6..f5ead24639253ce051d632483252ac6c189ecfc2 100644
+--- a/src/main/java/org/bukkit/World.java
++++ b/src/main/java/org/bukkit/World.java
+@@ -4320,6 +4320,13 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+     @NotNull
+     public Collection<GeneratedStructure> getStructures(int x, int z, @NotNull Structure structure);
+ 
++    /**
++     * Get the mspt values from the last 5 seconds。
++     * @return a collection of mspt values.
++     */
++    @NotNull
++    public long[] getTickTimes();
++
+     /**
+      * Represents various map environment types that a world may be
+      */
