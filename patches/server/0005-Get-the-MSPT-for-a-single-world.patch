@@ -1,14 +1,14 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Daniel Zhang <xiaozhangshiw@163.com>
-Date: Mon, 30 Sep 2024 23:17:36 +0800
+Date: Thu, 10 Oct 2024 23:52:38 +0800
 Subject: [PATCH] Get the MSPT for a single world
 
 
 diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
-index 33a2df6caf52c83944e2c52b32dfa5824689938c..54f50f624e68769fde452d11ea3df7de9f5a8f80 100644
+index 35087b96b30765148592d4cb4fb6ec9094430fc6..1828077f050de17bb4be5a895bc4a511ffb125e9 100644
 --- a/src/main/java/net/minecraft/server/level/ServerLevel.java
 +++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
-@@ -505,6 +505,10 @@ public class ServerLevel extends Level implements WorldGenLevel, ca.spottedleaf.
+@@ -504,6 +504,10 @@ public class ServerLevel extends Level implements WorldGenLevel, ca.spottedleaf.
      public final MinecraftServer.TickTimes tickTimes5s = new MinecraftServer.TickTimes(100);
      public final MinecraftServer.TickTimes tickTimes10s = new MinecraftServer.TickTimes(200);
      public final MinecraftServer.TickTimes tickTimes60s = new MinecraftServer.TickTimes(1200);
@@ -20,10 +20,10 @@ index 33a2df6caf52c83944e2c52b32dfa5824689938c..54f50f624e68769fde452d11ea3df7de
  
      // Add env and gen to constructor, IWorldDataServer -> WorldDataServer
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-index c6a183e71b93263ac1a4bdcaaa6fcc2ef8a64692..fbe469952bbce6faf58fb967eeaf746d96744967 100644
+index 40712284682f2805858be68fe9e5428b376a5943..ae34140f77ba293ce5fb53cb58d8a23496047639 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-@@ -2408,6 +2408,11 @@ public class CraftWorld extends CraftRegionAccessor implements World {
+@@ -2400,6 +2400,11 @@ public class CraftWorld extends CraftRegionAccessor implements World {
          return this.getStructures(x, z, struct -> registry.getKey(struct).equals(key));
      }
  

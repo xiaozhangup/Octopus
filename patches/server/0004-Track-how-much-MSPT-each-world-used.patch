@@ -1,6 +1,6 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Daniel Zhang <xiaozhangshiw@163.com>
-Date: Mon, 30 Sep 2024 23:04:49 +0800
+Date: Thu, 10 Oct 2024 23:51:57 +0800
 Subject: [PATCH] Track how much MSPT each world used
 
 
@@ -56,31 +56,32 @@ index 8b5293b0c696ef21d0101493ffa41b60bf0bc86b..601198a33adb29316b0617d5390d1620
      }
  
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 0c787b06911726def2e8cb6db9e0e369ae091ef0..c36eb625d1088a7e273cfe1fcd571a9111d6981c 100644
+index fd7eb34840ef4f7697ac4198e7f2e28ae7f921a8..633d3d9ab420cc45c83704b3fda7a86478121296 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
-@@ -1851,7 +1851,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
-                             try {
-                                 ca.spottedleaf.moonrise.common.util.TickThread.ServerLevelTickThread currentThread = (ca.spottedleaf.moonrise.common.util.TickThread.ServerLevelTickThread) Thread.currentThread();
-                                 currentThread.currentlyTickingServerLevel = worldserver;
-+                                long i = Util.getNanos(); // SparklyPaper - track world's MSPT
-                                 worldserver.tick(shouldKeepTicking);
-+                                // SparklyPaper start - track world's MSPT
-+                                long j = Util.getNanos() - i;
+@@ -1856,7 +1856,17 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+ 
+             try {
+                 //worldserver.timings.doTick.startTiming(); // Spigot // Purpur
++                long i = Util.getNanos(); // Octopus
+                 worldserver.tick(shouldKeepTicking);
 +
-+                                // These are from the "tickServer" function
-+                                worldserver.tickTimes5s.add(this.tickCount, j);
-+                                worldserver.tickTimes10s.add(this.tickCount, j);
-+                                worldserver.tickTimes60s.add(this.tickCount, j);
-+                                // SparklyPaper end
-                             } catch (Throwable throwable) {
-                                 // Spigot Start
-                                 CrashReport crashreport;
++                // Octopus start
++                long j = Util.getNanos() - i;
++
++                // These are from the "tickServer" function
++                worldserver.tickTimes5s.add(this.tickCount, j);
++                worldserver.tickTimes10s.add(this.tickCount, j);
++                worldserver.tickTimes60s.add(this.tickCount, j);
++                // Octopus end
+                 //worldserver.timings.doTick.stopTiming(); // Spigot // Purpur
+             } catch (Throwable throwable) {
+                 CrashReport crashreport = CrashReport.forThrowable(throwable, "Exception ticking world");
 diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
-index 8969f8b355742f7616345b066fcf2ad30a116491..33a2df6caf52c83944e2c52b32dfa5824689938c 100644
+index c601061d1abb8f4a66dd5e478cf69a872a4d0f6f..35087b96b30765148592d4cb4fb6ec9094430fc6 100644
 --- a/src/main/java/net/minecraft/server/level/ServerLevel.java
 +++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
-@@ -501,6 +501,12 @@ public class ServerLevel extends Level implements WorldGenLevel, ca.spottedleaf.
+@@ -500,6 +500,12 @@ public class ServerLevel extends Level implements WorldGenLevel, ca.spottedleaf.
      }
      // Paper end - lag compensation
  
