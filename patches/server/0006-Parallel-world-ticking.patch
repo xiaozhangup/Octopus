@@ -1001,7 +1001,7 @@ index ae34140f77ba293ce5fb53cb58d8a23496047639..6ad2d9dba3080cfab23e9b17ab6db90d
              if (c != null) {
                  return c.getPersistedStatus() == ChunkStatus.FULL;
 diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
-index ac11f18690434922179b61ffcc3036dea025b0cb..cde03190f4959e10c1afc4ddb75ab0738835086b 100644
+index ac11f18690434922179b61ffcc3036dea025b0cb..a80d39feedc894e6096dc80e5295388306f662b5 100644
 --- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
 +++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
 @@ -554,8 +554,8 @@ public class CraftBlock implements Block {
@@ -1010,7 +1010,7 @@ index ac11f18690434922179b61ffcc3036dea025b0cb..cde03190f4959e10c1afc4ddb75ab073
          if (world.capturedBlockStates.size() > 0) {
 -            TreeType treeType = SaplingBlock.treeType;
 -            SaplingBlock.treeType = null;
-+            TreeType treeType = SaplingBlock.treeTypeRT;
++            TreeType treeType = SaplingBlock.treeTypeRT.get();
 +            SaplingBlock.treeTypeRT.remove();
              List<BlockState> blocks = new ArrayList<>(world.capturedBlockStates.values());
              world.capturedBlockStates.clear();
