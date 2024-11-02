@@ -715,6 +715,21 @@ index d05b1e129eee07434d162e1b949fd5633418ef66..fa97e9d75f8b784b6861534d81e8b7da
                  world.getCraftServer().getPluginManager().callEvent(event);
              }
  
+diff --git a/src/main/java/net/minecraft/world/item/ItemStack.java b/src/main/java/net/minecraft/world/item/ItemStack.java
+index 24a7e1780ec55ea95195b5478eef66015cb21f72..c61214c12879b203669b73d17293eb7dc1dcee8c 100644
+--- a/src/main/java/net/minecraft/world/item/ItemStack.java
++++ b/src/main/java/net/minecraft/world/item/ItemStack.java
+@@ -442,8 +442,8 @@ public final class ItemStack implements DataComponentHolder {
+             if (enuminteractionresult.consumesAction() && world.captureTreeGeneration && world.capturedBlockStates.size() > 0) {
+                 world.captureTreeGeneration = false;
+                 Location location = CraftLocation.toBukkit(blockposition, world.getWorld());
+-                TreeType treeType = SaplingBlock.treeType;
+-                SaplingBlock.treeType = null;
++                TreeType treeType = SaplingBlock.treeTypeRT.get();
++                SaplingBlock.treeTypeRT.remove();
+                 List<CraftBlockState> blocks = new java.util.ArrayList<>(world.capturedBlockStates.values());
+                 world.capturedBlockStates.clear();
+                 StructureGrowEvent structureEvent = null;
 diff --git a/src/main/java/net/minecraft/world/item/MinecartItem.java b/src/main/java/net/minecraft/world/item/MinecartItem.java
 index 4b8cebb321eddc852b4ec7def7f51d781f67927b..72c3eb48cb21c025a954abedf8ca59e972375e3a 100644
 --- a/src/main/java/net/minecraft/world/item/MinecartItem.java
