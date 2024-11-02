@@ -702,6 +702,32 @@ index 80dc8cc8166ed753168bbd3c010e32c2b03493de..c3c819a2e42d810bc4e1b9874ed1712e
              // CraftBukkit end
          }
  
+diff --git a/src/main/java/net/minecraft/world/item/ArmorItem.java b/src/main/java/net/minecraft/world/item/ArmorItem.java
+index d05b1e129eee07434d162e1b949fd5633418ef66..fa97e9d75f8b784b6861534d81e8b7daf9308e38 100644
+--- a/src/main/java/net/minecraft/world/item/ArmorItem.java
++++ b/src/main/java/net/minecraft/world/item/ArmorItem.java
+@@ -68,7 +68,7 @@ public class ArmorItem extends Item implements Equipable {
+             CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack1);
+ 
+             BlockDispenseArmorEvent event = new BlockDispenseArmorEvent(block, craftItem.clone(), (org.bukkit.craftbukkit.entity.CraftLivingEntity) entityliving.getBukkitEntity());
+-            if (!DispenserBlock.eventFired) {
++            if (!DispenserBlock.eventFired.get()) {
+                 world.getCraftServer().getPluginManager().callEvent(event);
+             }
+ 
+diff --git a/src/main/java/net/minecraft/world/item/MinecartItem.java b/src/main/java/net/minecraft/world/item/MinecartItem.java
+index 4b8cebb321eddc852b4ec7def7f51d781f67927b..72c3eb48cb21c025a954abedf8ca59e972375e3a 100644
+--- a/src/main/java/net/minecraft/world/item/MinecartItem.java
++++ b/src/main/java/net/minecraft/world/item/MinecartItem.java
+@@ -71,7 +71,7 @@ public class MinecartItem extends Item {
+             CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemstack1);
+ 
+             BlockDispenseEvent event = new BlockDispenseEvent(block2, craftItem.clone(), new org.bukkit.util.Vector(d0, d1 + d3, d2));
+-            if (!DispenserBlock.eventFired) {
++            if (!DispenserBlock.eventFired.get()) {
+                 worldserver.getCraftServer().getPluginManager().callEvent(event);
+             }
+ 
 diff --git a/src/main/java/net/minecraft/world/level/block/DispenserBlock.java b/src/main/java/net/minecraft/world/level/block/DispenserBlock.java
 index e1021d8be840f378568f28639c259182055c78ac..c962f5fbe1967cc27f88f363b1a3aa6f02aef812 100644
 --- a/src/main/java/net/minecraft/world/level/block/DispenserBlock.java
@@ -974,6 +1000,21 @@ index ae34140f77ba293ce5fb53cb58d8a23496047639..6ad2d9dba3080cfab23e9b17ab6db90d
          return future.thenApply(c -> {
              if (c != null) {
                  return c.getPersistedStatus() == ChunkStatus.FULL;
+diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
+index ac11f18690434922179b61ffcc3036dea025b0cb..cde03190f4959e10c1afc4ddb75ab0738835086b 100644
+--- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
++++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
+@@ -554,8 +554,8 @@ public class CraftBlock implements Block {
+         world.captureTreeGeneration = false;
+ 
+         if (world.capturedBlockStates.size() > 0) {
+-            TreeType treeType = SaplingBlock.treeType;
+-            SaplingBlock.treeType = null;
++            TreeType treeType = SaplingBlock.treeTypeRT;
++            SaplingBlock.treeTypeRT.remove();
+             List<BlockState> blocks = new ArrayList<>(world.capturedBlockStates.values());
+             world.capturedBlockStates.clear();
+             StructureGrowEvent structureEvent = null;
 diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlockEntityState.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlockEntityState.java
 index 440b4c13121e3ac2bab937a83d20cc3fbf69bda1..b8be302f6eef8f6ec59659dd44e5cd327a2e5ae9 100644
 --- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlockEntityState.java
