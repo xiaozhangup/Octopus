@@ -15,4 +15,9 @@ jobs:
       - name: Apply patches
         run: ./gradlew applyPatches --stacktrace
       - name: Build
-        run: ./gradlew build --stacktrace
+        run: ./gradlew createMojmapPaperclipJar --stacktrace
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Artifacts
+          path: build/libs/
