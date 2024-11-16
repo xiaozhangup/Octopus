@@ -19,10 +19,10 @@ jobs:
       - name: Upload Server Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Artifacts
+          name: Server
           path: build/libs/
       - name: Upload API Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Artifacts
-          path: Octopus-API/libs/
+          name: API
+          path: Octopus-API/build/libs/
