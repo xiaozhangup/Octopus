@@ -621,7 +621,7 @@ index ebe872c4643038f0c99b289d4d5afdbedd76c6ef..648056c4aa53c59a32002eee9e662686
  
              if (playerchunk != null) {
 diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
-index 1828077f050de17bb4be5a895bc4a511ffb125e9..ef580bc6d356789c5f439623f5b6005dd0a8a05b 100644
+index 1828077f050de17bb4be5a895bc4a511ffb125e9..9bf52f6f6849980f10e7db3356383befab602994 100644
 --- a/src/main/java/net/minecraft/server/level/ServerLevel.java
 +++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
 @@ -232,6 +232,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ca.spottedleaf.
@@ -632,6 +632,23 @@ index 1828077f050de17bb4be5a895bc4a511ffb125e9..ef580bc6d356789c5f439623f5b6005d
  
      public LevelChunk getChunkIfLoaded(int x, int z) {
          return this.chunkSource.getChunkAtIfLoadedImmediately(x, z); // Paper - Use getChunkIfLoadedImmediately
+@@ -510,6 +511,16 @@ public class ServerLevel extends Level implements WorldGenLevel, ca.spottedleaf.
+     }
+     // SparklyPaper end
+ 
++    // Octopus start
++    public void submitCallbackTask(Runnable task) {
++        worldTaskQueueInstance.submitCallbackTask(task);
++    }
++
++    public void submitScopedTask(Runnable task) {
++        worldTaskQueueInstance.submitScopedTask(task);
++    }
++    // Octopus end
++
+     // Add env and gen to constructor, IWorldDataServer -> WorldDataServer
+     public ServerLevel(MinecraftServer minecraftserver, Executor executor, LevelStorageSource.LevelStorageAccess convertable_conversionsession, PrimaryLevelData iworlddataserver, ResourceKey<Level> resourcekey, LevelStem worlddimension, ChunkProgressListener worldloadlistener, boolean flag, long i, List<CustomSpawner> list, boolean flag1, @Nullable RandomSequences randomsequences, org.bukkit.World.Environment env, org.bukkit.generator.ChunkGenerator gen, org.bukkit.generator.BiomeProvider biomeProvider) {
+         // IRegistryCustom.Dimension iregistrycustom_dimension = minecraftserver.registryAccess(); // CraftBukkit - decompile error
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
 index 80dc8cc8166ed753168bbd3c010e32c2b03493de..c3c819a2e42d810bc4e1b9874ed1712e17647faf 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
@@ -1003,7 +1020,7 @@ index 763b315b1d761bc3bd82d9b847ed3f64fd5ce991..117346c47446fefd36534964d0693ef7
      }
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-index ae34140f77ba293ce5fb53cb58d8a23496047639..6ad2d9dba3080cfab23e9b17ab6db90d4c9f7d75 100644
+index ae34140f77ba293ce5fb53cb58d8a23496047639..1e2fddf2d02dc1b71ea86a19a578e597e72d9835 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 @@ -386,7 +386,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
@@ -1015,6 +1032,23 @@ index ae34140f77ba293ce5fb53cb58d8a23496047639..6ad2d9dba3080cfab23e9b17ab6db90d
          return future.thenApply(c -> {
              if (c != null) {
                  return c.getPersistedStatus() == ChunkStatus.FULL;
+@@ -2405,6 +2405,16 @@ public class CraftWorld extends CraftRegionAccessor implements World {
+         return world.getTickTimes();
+     }
+ 
++    @Override
++    public void submitCallbackTask(Runnable task) {
++        world.submitCallbackTask(task);
++    }
++
++    @Override
++    public void submitScopedTask(Runnable task) {
++        world.submitScopedTask(task);
++    }
++
+     private List<GeneratedStructure> getStructures(int x, int z, Predicate<net.minecraft.world.level.levelgen.structure.Structure> predicate) {
+         List<GeneratedStructure> structures = new ArrayList<>();
+         for (StructureStart start : this.getHandle().structureManager().startsForStructure(new ChunkPos(x, z), predicate)) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
 index ac11f18690434922179b61ffcc3036dea025b0cb..a80d39feedc894e6096dc80e5295388306f662b5 100644
 --- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
