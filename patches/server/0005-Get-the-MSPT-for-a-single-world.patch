@@ -5,7 +5,7 @@ Subject: [PATCH] Get the MSPT for a single world
 
 
 diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
-index 35087b96b30765148592d4cb4fb6ec9094430fc6..1828077f050de17bb4be5a895bc4a511ffb125e9 100644
+index 551f2b2fc8f8830f35bb88045b30bee20424d2b1..705eca91dd6c04707814f763c8ab2af95f6d6c51 100644
 --- a/src/main/java/net/minecraft/server/level/ServerLevel.java
 +++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
 @@ -504,6 +504,10 @@ public class ServerLevel extends Level implements WorldGenLevel, ca.spottedleaf.
@@ -20,10 +20,10 @@ index 35087b96b30765148592d4cb4fb6ec9094430fc6..1828077f050de17bb4be5a895bc4a511
  
      // Add env and gen to constructor, IWorldDataServer -> WorldDataServer
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-index 40712284682f2805858be68fe9e5428b376a5943..ae34140f77ba293ce5fb53cb58d8a23496047639 100644
+index 0921894dbc0d81b943827ecda6e6befdbfd715f5..48912de0c47007be3281e5b6c468d276d7f52e9f 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-@@ -2400,6 +2400,11 @@ public class CraftWorld extends CraftRegionAccessor implements World {
+@@ -2443,6 +2443,11 @@ public class CraftWorld extends CraftRegionAccessor implements World {
          return this.getStructures(x, z, struct -> registry.getKey(struct).equals(key));
      }
  

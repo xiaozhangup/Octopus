@@ -5,10 +5,10 @@ Subject: [PATCH] Parallel world ticking
 
 
 diff --git a/src/main/java/org/bukkit/World.java b/src/main/java/org/bukkit/World.java
-index f5ead24639253ce051d632483252ac6c189ecfc2..bdba48e732756295c7b08a13aa2d95dbb4c7acb8 100644
+index f5257f41bc328d0cbe207c8197ea9bb16465f615..0a1b09ce08dd55b300fe855e6cc026d95b9345db 100644
 --- a/src/main/java/org/bukkit/World.java
 +++ b/src/main/java/org/bukkit/World.java
-@@ -4327,6 +4327,20 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+@@ -4391,6 +4391,20 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
      @NotNull
      public long[] getTickTimes();
  

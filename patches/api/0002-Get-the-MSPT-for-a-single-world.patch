@@ -5,10 +5,10 @@ Subject: [PATCH] Get the MSPT for a single world
 
 
 diff --git a/src/main/java/org/bukkit/World.java b/src/main/java/org/bukkit/World.java
-index ca600d3e8b1f4fae299b1bf3d283c466c18875a6..f5ead24639253ce051d632483252ac6c189ecfc2 100644
+index 36cf567973900d1e472616748926aecb9afcb42f..f5257f41bc328d0cbe207c8197ea9bb16465f615 100644
 --- a/src/main/java/org/bukkit/World.java
 +++ b/src/main/java/org/bukkit/World.java
-@@ -4320,6 +4320,13 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+@@ -4384,6 +4384,13 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
      @NotNull
      public Collection<GeneratedStructure> getStructures(int x, int z, @NotNull Structure structure);
  
