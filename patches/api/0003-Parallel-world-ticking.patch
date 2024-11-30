@@ -5,10 +5,10 @@ Subject: [PATCH] Parallel world ticking
 
 
 diff --git a/src/main/java/org/bukkit/World.java b/src/main/java/org/bukkit/World.java
-index f5257f41bc328d0cbe207c8197ea9bb16465f615..0a1b09ce08dd55b300fe855e6cc026d95b9345db 100644
+index f5257f41bc328d0cbe207c8197ea9bb16465f615..ab0b23c1cec46445953eb67d80573ab27d7d6a39 100644
 --- a/src/main/java/org/bukkit/World.java
 +++ b/src/main/java/org/bukkit/World.java
-@@ -4391,6 +4391,20 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+@@ -4391,6 +4391,24 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
      @NotNull
      public long[] getTickTimes();
  
@@ -25,6 +25,10 @@ index f5257f41bc328d0cbe207c8197ea9bb16465f615..0a1b09ce08dd55b300fe855e6cc026d9
 +     * @param task the task to execute
 +     */
 +    void submitScopedTask(Runnable task);
++
++    void submitCyclicalTask(String id, Runnable task);
++
++    Runnable removeCyclicalTask(String id);
 +
      /**
       * Represents various map environment types that a world may be

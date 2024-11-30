@@ -19,18 +19,21 @@ index 8671a90e969d16c7a57ddc38fedb7cf01815f64c..c36336b8b3d3b0b3967546be30bfe8f0
  
 diff --git a/src/main/java/i/xiaozhangup/octopus/WorldTaskQueue.java b/src/main/java/i/xiaozhangup/octopus/WorldTaskQueue.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..500f9d40b33109c3668ac43f9c7d802ab2ba8db9
+index 0000000000000000000000000000000000000000..e468eec486e10a89f0156e992f18650e2f632512
 --- /dev/null
 +++ b/src/main/java/i/xiaozhangup/octopus/WorldTaskQueue.java
-@@ -0,0 +1,145 @@
+@@ -0,0 +1,168 @@
 +package i.xiaozhangup.octopus;
 +
 +import com.mojang.logging.LogUtils;
 +import net.minecraft.DefaultUncaughtExceptionHandler;
++import net.minecraft.server.MinecraftServer;
 +import net.minecraft.server.level.ServerLevel;
 +
 +import java.util.Queue;
++import java.util.concurrent.ConcurrentHashMap;
 +import java.util.concurrent.ConcurrentLinkedQueue;
++import java.util.concurrent.ConcurrentMap;
 +import java.util.concurrent.locks.LockSupport;
 +import java.util.function.BooleanSupplier;
 +
@@ -40,6 +43,7 @@ index 0000000000000000000000000000000000000000..500f9d40b33109c3668ac43f9c7d802a
 +    private final Queue<Runnable> chunkSystemTasks = new ConcurrentLinkedQueue<>();
 +    private final Queue<Runnable> scopedTasks = new ConcurrentLinkedQueue<>();
 +    private final Queue<Runnable> callbackTasks = new ConcurrentLinkedQueue<>();
++    private final ConcurrentMap<String, Runnable> cyclicalTasks = new ConcurrentHashMap<>();
 +    private final ServerLevel world;
 +
 +    private volatile Thread currentOwner;
@@ -62,6 +66,14 @@ index 0000000000000000000000000000000000000000..500f9d40b33109c3668ac43f9c7d802a
 +
 +    public void submitCallbackTask(Runnable task) {
 +        this.callbackTasks.offer(task);
++    }
++
++    public void submitCyclicalTask(String id, Runnable task) {
++        this.cyclicalTasks.put(id, task);
++    }
++
++    public Runnable removeCyclicalTask(String id) {
++        return this.cyclicalTasks.remove(id);
 +    }
 +
 +    public void finalizeCallbackTasks() {
@@ -91,6 +103,17 @@ index 0000000000000000000000000000000000000000..500f9d40b33109c3668ac43f9c7d802a
 +                this.exceptionHandler.uncaughtException(Thread.currentThread(), e);
 +            }
 +        }
++    }
++
++    public void finalizeCyclicalTasks() {
++        cyclicalTasks.forEach((id, task) -> {
++            try {
++                task.run();
++            }catch (Exception e){
++                MinecraftServer.LOGGER.error("Error executing task on {}, in {}", this.world.getWorld().getName(), id);
++                this.exceptionHandler.uncaughtException(Thread.currentThread(), e);
++            }
++        });
 +    }
 +
 +    public void submitChunkSystemTask(Runnable runnable) {
@@ -375,7 +398,7 @@ index cb308808906a8cdb127df8284e106e00553473ca..65c52fee25a141052f9151389a8f62bb
              }
  
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 5a399d0bd1d725d4fc5607bfa918bee80f5a6698..6ac437ae90b0ad5902cbbd218a0e7aa8a17c625d 100644
+index 5a399d0bd1d725d4fc5607bfa918bee80f5a6698..6b56ede8aeee1c489008ffbc7aaa4ad1d0e14244 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
 @@ -1,11 +1,9 @@
@@ -511,7 +534,7 @@ index 5a399d0bd1d725d4fc5607bfa918bee80f5a6698..6ac437ae90b0ad5902cbbd218a0e7aa8
              try {
                  //worldserver.timings.doTick.startTiming(); // Spigot // Purpur
                  long i = Util.getNanos(); // Octopus
-@@ -1876,16 +1878,39 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1876,16 +1878,40 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                  // Octopus end
                  //worldserver.timings.doTick.stopTiming(); // Spigot // Purpur
              } catch (Throwable throwable) {
@@ -519,12 +542,14 @@ index 5a399d0bd1d725d4fc5607bfa918bee80f5a6698..6ac437ae90b0ad5902cbbd218a0e7aa8
 -
 -                worldserver.fillReportDetails(crashreport);
 -                throw new ReportedException(crashreport);
+-            }
 +                return Pair.of(worldserver, throwable);
 +            }finally {
 +                worldserver.worldTaskQueueInstance.finalizeScopedTasks();
++                worldserver.worldTaskQueueInstance.finalizeCyclicalTasks();
 +                worldserver.explosionDensityCache.clear(); // Paper - Optimize explosions // Octopus - Move up
 +                worldserver.worldTaskQueueInstance.releasePoller(); // Octopus
-             }
++            }
 +            return Pair.of(worldserver, null);
 +            };
  
@@ -621,7 +646,7 @@ index ebe872c4643038f0c99b289d4d5afdbedd76c6ef..648056c4aa53c59a32002eee9e662686
  
              if (playerchunk != null) {
 diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
-index 705eca91dd6c04707814f763c8ab2af95f6d6c51..957b53d10d6d83307bfcb3db912ae5e06890cae4 100644
+index 705eca91dd6c04707814f763c8ab2af95f6d6c51..dd76df0ba21d008b2ab8b9c7e5e11c61f8454dd3 100644
 --- a/src/main/java/net/minecraft/server/level/ServerLevel.java
 +++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
 @@ -232,6 +232,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ca.spottedleaf.
@@ -632,7 +657,7 @@ index 705eca91dd6c04707814f763c8ab2af95f6d6c51..957b53d10d6d83307bfcb3db912ae5e0
  
      public LevelChunk getChunkIfLoaded(int x, int z) {
          return this.chunkSource.getChunkAtIfLoadedImmediately(x, z); // Paper - Use getChunkIfLoadedImmediately
-@@ -510,6 +511,16 @@ public class ServerLevel extends Level implements WorldGenLevel, ca.spottedleaf.
+@@ -510,6 +511,24 @@ public class ServerLevel extends Level implements WorldGenLevel, ca.spottedleaf.
      }
      // SparklyPaper end
  
@@ -643,6 +668,14 @@ index 705eca91dd6c04707814f763c8ab2af95f6d6c51..957b53d10d6d83307bfcb3db912ae5e0
 +
 +    public void submitScopedTask(Runnable task) {
 +        worldTaskQueueInstance.submitScopedTask(task);
++    }
++
++    public void submitCyclicalTask(String id, Runnable task) {
++        worldTaskQueueInstance.submitCyclicalTask(id, task);
++    }
++
++    public Runnable removeCyclicalTask(String id) {
++        return worldTaskQueueInstance.removeCyclicalTask(id);
 +    }
 +    // Octopus end
 +
@@ -1059,7 +1092,7 @@ index 763b315b1d761bc3bd82d9b847ed3f64fd5ce991..117346c47446fefd36534964d0693ef7
      }
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-index 48912de0c47007be3281e5b6c468d276d7f52e9f..b5254e15f98dd951347e6f42222b91b67b60d900 100644
+index 48912de0c47007be3281e5b6c468d276d7f52e9f..ee0dc888e047a410a3dee7c0d36bc6f8ad8e82e3 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 @@ -427,7 +427,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
@@ -1071,7 +1104,7 @@ index 48912de0c47007be3281e5b6c468d276d7f52e9f..b5254e15f98dd951347e6f42222b91b6
          return future.thenApply(c -> {
              if (c != null) {
                  return c.getPersistedStatus() == ChunkStatus.FULL;
-@@ -2448,6 +2448,16 @@ public class CraftWorld extends CraftRegionAccessor implements World {
+@@ -2448,6 +2448,26 @@ public class CraftWorld extends CraftRegionAccessor implements World {
          return world.getTickTimes();
      }
  
@@ -1083,6 +1116,16 @@ index 48912de0c47007be3281e5b6c468d276d7f52e9f..b5254e15f98dd951347e6f42222b91b6
 +    @Override
 +    public void submitScopedTask(Runnable task) {
 +        world.submitScopedTask(task);
++    }
++
++    @Override
++    public void submitCyclicalTask(String id, Runnable task) {
++        world.submitCyclicalTask(id, task);
++    }
++
++    @Override
++    public Runnable removeCyclicalTask(String id) {
++        return world.removeCyclicalTask(id);
 +    }
 +
      private List<GeneratedStructure> getStructures(int x, int z, Predicate<net.minecraft.world.level.levelgen.structure.Structure> predicate) {
