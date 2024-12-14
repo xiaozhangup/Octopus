@@ -1,0 +1,98 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Zhang <xiaozhangshiw@163.com>
+Date: Sat, 14 Dec 2024 21:11:27 +0800
+Subject: [PATCH] No chat sign
+
+
+diff --git a/src/main/java/io/papermc/paper/adventure/ChatProcessor.java b/src/main/java/io/papermc/paper/adventure/ChatProcessor.java
+index 14e412ebf75b0e06ab53a1c8f9dd1be6ad1e2680..94a74204f293578dbad2d732f6bc98536a7629d1 100644
+--- a/src/main/java/io/papermc/paper/adventure/ChatProcessor.java
++++ b/src/main/java/io/papermc/paper/adventure/ChatProcessor.java
+@@ -317,7 +317,8 @@ public final class ChatProcessor {
+ 
+         private void sendToServer(final ChatType.Bound chatType, final @Nullable Function<Audience, net.minecraft.network.chat.Component> msgFunction) {
+             final PlayerChatMessage toConsoleMessage = msgFunction == null ? ChatProcessor.this.message : ChatProcessor.this.message.withUnsignedContent(msgFunction.apply(ChatProcessor.this.server.console));
+-            ChatProcessor.this.server.logChatMessage(toConsoleMessage.decoratedContent(), chatType, ChatProcessor.this.server.getPlayerList().verifyChatTrusted(toConsoleMessage) ? null : "Not Secure");
++            ChatProcessor.this.server.getPlayerList().verifyChatTrusted(toConsoleMessage);
++            ChatProcessor.this.server.logChatMessage(toConsoleMessage.decoratedContent(), chatType, null); // Leaves - No Not Secure
+         }
+     }
+ 
+diff --git a/src/main/java/net/minecraft/network/FriendlyByteBuf.java b/src/main/java/net/minecraft/network/FriendlyByteBuf.java
+index 0cd6a50837efce87ca052a0e1e24db2b75761196..2d29cbd06a0d385236154db80a5cbb230ac2a137 100644
+--- a/src/main/java/net/minecraft/network/FriendlyByteBuf.java
++++ b/src/main/java/net/minecraft/network/FriendlyByteBuf.java
+@@ -129,6 +129,16 @@ public class FriendlyByteBuf extends ByteBuf {
+         // Paper end - Adventure; add max length parameter
+         DataResult<JsonElement> dataresult = codec.encodeStart(JsonOps.INSTANCE, value);
+ 
++        // Leaves start - no chat sign
++        if (codec == net.minecraft.network.protocol.status.ServerStatus.CODEC) {
++            JsonElement element = dataresult.getOrThrow(string -> new EncoderException("Failed to encode: " + string + " " + value));
++            element.getAsJsonObject().addProperty("preventsChatReports", true);
++
++            this.writeUtf(GSON.toJson(element));
++            return;
++        }
++        // Leaves end - no chat sign
++
+         this.writeUtf(FriendlyByteBuf.GSON.toJson((JsonElement) dataresult.getOrThrow((s) -> {
+             return new EncoderException("Failed to encode: " + s + " " + String.valueOf(value));
+         })), maxLength); // Paper - Adventure; add max length parameter
+diff --git a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
+index 6e6f4dffceb0032153c5be119303c5809629cfcc..e7c8c90ea5383993100c402cd91033324a7384a7 100644
+--- a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
++++ b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
+@@ -705,9 +705,11 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         DedicatedServerProperties dedicatedserverproperties = this.getProperties();
+ 
+         // Paper start - Add setting for proxy online mode status
+-        return dedicatedserverproperties.enforceSecureProfile
+-            && io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode()
+-            && this.services.canValidateProfileKeys();
++        if (dedicatedserverproperties.enforceSecureProfile
++                && io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode()) {
++            this.services.canValidateProfileKeys();
++        }
++        return false; // Leaves - no chat sign
+         // Paper end - Add setting for proxy online mode status
+     }
+ 
+diff --git a/src/main/java/net/minecraft/server/network/ServerCommonPacketListenerImpl.java b/src/main/java/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
+index a9d54c80f682d826ad272731bd6477eed0fd44d5..e343e6ee72ba01f55781d142e1ee7491a3999568 100644
+--- a/src/main/java/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
++++ b/src/main/java/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
+@@ -325,10 +325,20 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
+     }
+ 
+     public void send(Packet<?> packet) {
++        // Leaves start - rebuild ClientboundPlayerChatPacket
++        if (this instanceof ServerGamePacketListenerImpl && packet instanceof net.minecraft.network.protocol.game.ClientboundPlayerChatPacket chat) {
++            packet = new net.minecraft.network.protocol.game.ClientboundSystemChatPacket(chat.chatType().decorate(chat.unsignedContent() != null ? chat.unsignedContent() : Component.literal(chat.body().content())), false);
++        }
++        // Leaves end - rebuild ClientboundPlayerChatPacket
+         this.send(packet, (PacketSendListener) null);
+     }
+ 
+     public void send(Packet<?> packet, @Nullable PacketSendListener callbacks) {
++        // Leaves start - no ClientboundPlayerChatHeaderPacket and rebuild ClientboundPlayerChatPacket
++        if (packet instanceof net.minecraft.network.protocol.game.ClientboundPlayerChatPacket chat && callbacks != null) {
++            callbacks = null;
++        }
++        // Leaves end - no ClientboundPlayerChatHeaderPacket and rebuild ClientboundPlayerChatPacket
+         // CraftBukkit start
+         if (packet == null || this.processedDisconnect) { // Spigot
+             return;
+diff --git a/src/main/java/net/minecraft/server/players/PlayerList.java b/src/main/java/net/minecraft/server/players/PlayerList.java
+index 33b7f0f14c826e9baa8b562a852cd4d46882622c..4dc7a8d92087d515091e7cd2c576f9adbb3c4c1f 100644
+--- a/src/main/java/net/minecraft/server/players/PlayerList.java
++++ b/src/main/java/net/minecraft/server/players/PlayerList.java
+@@ -1462,7 +1462,7 @@ public abstract class PlayerList {
+     }
+ 
+     public boolean verifyChatTrusted(PlayerChatMessage message) { // Paper - private -> public
+-        return message.hasSignature() && !message.hasExpiredServer(Instant.now());
++        return true; // Leaves - No Not Secure
+     }
+ 
+     // CraftBukkit start
