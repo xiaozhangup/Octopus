@@ -52,9 +52,9 @@ manifest.mf
 run/
 
 build-data/
-Tentacles-API
-Tentacles-MojangAPI
-Tentacles-Server
+Octopus-API
+Octopus-MojangAPI
+Octopus-Server
 paper-api-generator
 *.jar
 test-plugin.settings.gradle.kts

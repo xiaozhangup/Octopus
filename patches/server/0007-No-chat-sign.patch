@@ -39,6 +39,32 @@ index 0cd6a50837efce87ca052a0e1e24db2b75761196..2d29cbd06a0d385236154db80a5cbb23
          this.writeUtf(FriendlyByteBuf.GSON.toJson((JsonElement) dataresult.getOrThrow((s) -> {
              return new EncoderException("Failed to encode: " + s + " " + String.valueOf(value));
          })), maxLength); // Paper - Adventure; add max length parameter
+diff --git a/src/main/java/net/minecraft/network/protocol/game/ClientboundLoginPacket.java b/src/main/java/net/minecraft/network/protocol/game/ClientboundLoginPacket.java
+index 667d1da3b6332737d7382d383bf15b53bd726442..84ddd7ce4010320ae56938ecfb666747eb39dfe2 100644
+--- a/src/main/java/net/minecraft/network/protocol/game/ClientboundLoginPacket.java
++++ b/src/main/java/net/minecraft/network/protocol/game/ClientboundLoginPacket.java
+@@ -55,7 +55,7 @@ public record ClientboundLoginPacket(
+         buf.writeBoolean(this.showDeathScreen);
+         buf.writeBoolean(this.doLimitedCrafting);
+         this.commonPlayerSpawnInfo.write(buf);
+-        buf.writeBoolean(this.enforcesSecureChat);
++        buf.writeBoolean(true); // Octopus - No chat sign
+     }
+ 
+     @Override
+diff --git a/src/main/java/net/minecraft/network/protocol/status/ServerStatus.java b/src/main/java/net/minecraft/network/protocol/status/ServerStatus.java
+index 50dc68a005490415b88780397ef6c26859596dd5..b8b32c0cdb099cf80b2900f1fddad7bf99927f3d 100644
+--- a/src/main/java/net/minecraft/network/protocol/status/ServerStatus.java
++++ b/src/main/java/net/minecraft/network/protocol/status/ServerStatus.java
+@@ -28,7 +28,7 @@ public record ServerStatus(
+                     ServerStatus.Players.CODEC.lenientOptionalFieldOf("players").forGetter(ServerStatus::players),
+                     ServerStatus.Version.CODEC.lenientOptionalFieldOf("version").forGetter(ServerStatus::version),
+                     ServerStatus.Favicon.CODEC.lenientOptionalFieldOf("favicon").forGetter(ServerStatus::favicon),
+-                    Codec.BOOL.lenientOptionalFieldOf("enforcesSecureChat", Boolean.valueOf(false)).forGetter(ServerStatus::enforcesSecureChat)
++                    Codec.BOOL.lenientOptionalFieldOf("enforcesSecureChat", Boolean.FALSE).forGetter(x -> true)
+                 )
+                 .apply(instance, ServerStatus::new)
+     );
 diff --git a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
 index 6e6f4dffceb0032153c5be119303c5809629cfcc..e7c8c90ea5383993100c402cd91033324a7384a7 100644
 --- a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
