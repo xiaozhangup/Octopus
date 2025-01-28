@@ -5,7 +5,7 @@ Subject: [PATCH] Add EntityPortalPreparedEvent
 
 
 diff --git a/src/main/java/net/minecraft/world/level/block/EndPortalBlock.java b/src/main/java/net/minecraft/world/level/block/EndPortalBlock.java
-index 28d8c8a879badc97cd1168e1847e2fafdc40e4bd..6917ec061b8ef1bee1905967f0481c6811c33839 100644
+index 28d8c8a879badc97cd1168e1847e2fafdc40e4bd..b23a468b6f3e2c36531112bf3a8c558ad6a7771c 100644
 --- a/src/main/java/net/minecraft/world/level/block/EndPortalBlock.java
 +++ b/src/main/java/net/minecraft/world/level/block/EndPortalBlock.java
 @@ -29,6 +29,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
@@ -16,23 +16,21 @@ index 28d8c8a879badc97cd1168e1847e2fafdc40e4bd..6917ec061b8ef1bee1905967f0481c68
  import org.bukkit.craftbukkit.CraftWorld;
  import org.bukkit.craftbukkit.event.CraftPortalEvent;
  import org.bukkit.craftbukkit.util.CraftLocation;
-@@ -94,6 +95,14 @@ public class EndPortalBlock extends BaseEntityBlock implements Portal {
+@@ -94,6 +95,12 @@ public class EndPortalBlock extends BaseEntityBlock implements Portal {
  
      @Override
      public DimensionTransition getPortalDestination(ServerLevel world, Entity entity, BlockPos pos) {
 +        // Octopus start - Add EntityPortalPreparedEvent
-+        if (!(entity instanceof ServerPlayer)) {
-+            org.bukkit.event.entity.EntityPortalPreparedEvent portalPreparedEvent = new org.bukkit.event.entity.EntityPortalPreparedEvent(entity.getBukkitEntity(), PortalType.ENDER);
-+            if (!portalPreparedEvent.callEvent()) {
-+                return null;
-+            }
++        org.bukkit.event.entity.EntityPortalPreparedEvent portalPreparedEvent = new org.bukkit.event.entity.EntityPortalPreparedEvent(entity.getBukkitEntity(), PortalType.ENDER);
++        if (!portalPreparedEvent.callEvent()) {
++            return null;
 +        }
 +        // Octopus end - Add EntityPortalPreparedEvent
          ResourceKey<Level> resourcekey = world.getTypeKey() == LevelStem.END ? Level.OVERWORLD : Level.END; // CraftBukkit - SPIGOT-6152: send back to main overworld in custom ends
          ServerLevel worldserver1 = world.getServer().getLevel(resourcekey);
  
 diff --git a/src/main/java/net/minecraft/world/level/block/NetherPortalBlock.java b/src/main/java/net/minecraft/world/level/block/NetherPortalBlock.java
-index d579132d1afd5c2edb9356c5601584bca2357f8f..015b9e193c74f0b3924be99c6760eec764857c1c 100644
+index d579132d1afd5c2edb9356c5601584bca2357f8f..258e2d9dc2cfb2483ccca9eb3b5d166aa3057889 100644
 --- a/src/main/java/net/minecraft/world/level/block/NetherPortalBlock.java
 +++ b/src/main/java/net/minecraft/world/level/block/NetherPortalBlock.java
 @@ -10,6 +10,7 @@ import net.minecraft.core.Direction;
@@ -43,17 +41,15 @@ index d579132d1afd5c2edb9356c5601584bca2357f8f..015b9e193c74f0b3924be99c6760eec7
  import net.minecraft.sounds.SoundEvents;
  import net.minecraft.sounds.SoundSource;
  import net.minecraft.util.RandomSource;
-@@ -138,6 +139,15 @@ public class NetherPortalBlock extends Block implements Portal {
+@@ -138,6 +139,13 @@ public class NetherPortalBlock extends Block implements Portal {
      @Nullable
      @Override
      public DimensionTransition getPortalDestination(ServerLevel world, Entity entity, BlockPos pos) {
 +        // Octopus start - Add EntityPortalPreparedEvent
-+        if (!(entity instanceof ServerPlayer)) {
-+            org.bukkit.event.entity.EntityPortalPreparedEvent portalPreparedEvent = new org.bukkit.event.entity.EntityPortalPreparedEvent(entity.getBukkitEntity(), org.bukkit.PortalType.NETHER);
-+            if (!portalPreparedEvent.callEvent()) {
-+                entity.portalProcess = null;
-+                return null;
-+            }
++        org.bukkit.event.entity.EntityPortalPreparedEvent portalPreparedEvent = new org.bukkit.event.entity.EntityPortalPreparedEvent(entity.getBukkitEntity(), org.bukkit.PortalType.NETHER);
++        if (!portalPreparedEvent.callEvent()) {
++            entity.portalProcess = null;
++            return null;
 +        }
 +        // Octopus end - Add EntityPortalPreparedEvent
          // CraftBukkit start
