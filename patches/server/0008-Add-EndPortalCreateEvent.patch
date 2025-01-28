@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Zhang <xiaozhangshiw@163.com>
+Date: Tue, 28 Jan 2025 12:17:30 +0800
+Subject: [PATCH] Add EndPortalCreateEvent
+
+
+diff --git a/src/main/java/net/minecraft/world/item/EnderEyeItem.java b/src/main/java/net/minecraft/world/item/EnderEyeItem.java
+index d8ce44a180f848f4c9c04967470c4359af979b2f..cae1fb575ec48c9a3d3e155f5cf55c672539d99f 100644
+--- a/src/main/java/net/minecraft/world/item/EnderEyeItem.java
++++ b/src/main/java/net/minecraft/world/item/EnderEyeItem.java
+@@ -28,6 +28,7 @@ import net.minecraft.world.level.block.state.pattern.BlockPattern;
+ import net.minecraft.world.level.gameevent.GameEvent;
+ import net.minecraft.world.phys.BlockHitResult;
+ import net.minecraft.world.phys.HitResult;
++import org.bukkit.craftbukkit.util.CraftVector;
+ 
+ public class EnderEyeItem extends Item {
+ 
+@@ -64,7 +65,13 @@ public class EnderEyeItem extends Item {
+ 
+                     for (int i = 0; i < 3; ++i) {
+                         for (int j = 0; j < 3; ++j) {
+-                            world.setBlock(blockposition1.offset(i, 0, j), Blocks.END_PORTAL.defaultBlockState(), 2);
++                            BlockPos pos = blockposition1.offset(i, 0, j);
++                            org.bukkit.block.Block block = world.getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ());
++                            org.bukkit.event.block.EndPortalCreateEvent event = new org.bukkit.event.block.EndPortalCreateEvent(block, block);
++                            world.getCraftServer().getPluginManager().callEvent(event);
++                            if (!event.isCancelled()) {
++                                world.setBlock(pos, Blocks.END_PORTAL.defaultBlockState(), 2);
++                            }
+                         }
+                     }
+ 
