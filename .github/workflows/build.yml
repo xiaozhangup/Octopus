@@ -12,16 +12,16 @@ jobs:
       - name: Configure Git
         run: git config --global user.email "action@github.com" && git config --global user.name "Github Action"
       - name: Apply patches
-        run: ./gradlew applyPatches --stacktrace
+        run: ./gradlew applyAllPatches --stacktrace
       - name: Build
         run: ./gradlew createMojmapPaperclipJar --stacktrace
       - name: Upload Server Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Server
-          path: build/libs/
+          path: octopus-server/build/libs
       - name: Upload API Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: API
-          path: Octopus-API/build/libs/
+          path: octopus-api/build/libs
