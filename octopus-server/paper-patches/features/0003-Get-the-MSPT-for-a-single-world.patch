@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Zhang <xiaozhangshiw@163.com>
+Date: Sun, 23 Feb 2025 20:51:49 +0800
+Subject: [PATCH] Get the MSPT for a single world
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
+index 198136241d4ddb445d5e0dcd0d935257d8822df8..483005677c6640f88cc4b8e01cd8800200858758 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
+@@ -199,6 +199,13 @@ public class CraftWorld extends CraftRegionAccessor implements World {
+     }
+     // Paper end - void damage configuration
+ 
++    // Octopus start - Get the MSPT for a single world
++    @Override
++    public @NotNull long[] getTickTimes() {
++        return world.getTickTimes();
++    }
++    // Octopus end - Get the MSPT for a single world
++
+     // Paper start - Provide fast information methods
+     @Override
+     public int getEntityCount() {
