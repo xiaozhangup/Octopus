@@ -1,0 +1,46 @@
+--- a/net/minecraft/server/level/ServerChunkCache.java
++++ b/net/minecraft/server/level/ServerChunkCache.java
+@@ -114,7 +_,7 @@
+ 
+         if (ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this.level, chunkX, chunkZ)) {
+             ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler.pushChunkWait(this.level, chunkX, chunkZ);
+-            this.mainThreadProcessor.managedBlock(completable::isDone);
++            this.level.worldTaskQueueInstance.chunkSystemSpinBlocking(completable::isDone);
+             ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler.popChunkWait();
+         }
+ 
+@@ -359,7 +_,7 @@
+         CompletableFuture<ChunkResult<ChunkAccess>> chunkFutureMainThread;
+         if (flag) {
+             chunkFutureMainThread = this.getChunkFutureMainThread(x, z, chunkStatus, requireChunk);
+-            this.mainThreadProcessor.managedBlock(chunkFutureMainThread::isDone);
++            this.level.worldTaskQueueInstance.chunkSystemSpinBlocking(chunkFutureMainThread::isDone);
+         } else {
+             chunkFutureMainThread = CompletableFuture.<CompletableFuture<ChunkResult<ChunkAccess>>>supplyAsync(
+                     () -> this.getChunkFutureMainThread(x, z, chunkStatus, requireChunk), this.mainThreadProcessor
+@@ -432,6 +_,7 @@
+     }
+ 
+     public boolean pollTask() {
++        if (true) { return false; } // Octopus
+         return this.mainThreadProcessor.pollTask();
+     }
+ 
+@@ -648,7 +_,7 @@
+ 
+     @VisibleForTesting
+     public int getPendingTasksCount() {
+-        return this.mainThreadProcessor.getPendingTasksCount();
++        return this.level.worldTaskQueueInstance.chunkSystemTaskQueueSize();
+     }
+ 
+     public ChunkGenerator getGenerator() {
+@@ -679,7 +_,7 @@
+ 
+     @Override
+     public void onLightUpdate(LightLayer type, SectionPos pos) {
+-        this.mainThreadProcessor.execute(() -> {
++        this.level.worldTaskQueueInstance.submitChunkSystemTask(() -> {
+             ChunkHolder visibleChunkIfPresent = this.getVisibleChunkIfPresent(pos.chunk().toLong());
+             if (visibleChunkIfPresent != null && visibleChunkIfPresent.sectionLightChanged(type, pos.y())) {
+                 this.chunkHoldersToBroadcast.add(visibleChunkIfPresent);

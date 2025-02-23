@@ -1,0 +1,54 @@
+--- a/net/minecraft/server/commands/TeleportCommand.java
++++ b/net/minecraft/server/commands/TeleportCommand.java
+@@ -291,9 +_,27 @@
+             float f2 = Mth.wrapDegrees(f);
+             float f3 = Mth.wrapDegrees(f1);
+             // CraftBukkit start - Teleport event
+-            boolean result;
++            java.util.function.Consumer<Entity> teleportCallback = entity -> {
++              final boolean result = entity != null;
++
++              if (result) {
++                  // CraftBukkit end
++                  if (lookAt != null) {
++                      lookAt.perform(source, target);
++                  }
++
++                  if (!(target instanceof LivingEntity livingEntity && livingEntity.isFallFlying())) {
++                      target.setDeltaMovement(target.getDeltaMovement().multiply(1.0, 0.0, 1.0));
++                      target.setOnGround(true);
++                  }
++
++                  if (target instanceof PathfinderMob pathfinderMob) {
++                      pathfinderMob.getNavigation().stop();
++                  }
++              }
++            };
+             if (target instanceof final net.minecraft.server.level.ServerPlayer player) {
+-                result = player.teleportTo(level, d, d1, d2, relatives, f2, f3, true, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.COMMAND);
++                player.teleportTo(level, d, d1, d2, relatives, f2, f3, true, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.COMMAND, teleportCallback); // Octopus
+             } else {
+                 org.bukkit.Location to = new org.bukkit.Location(level.getWorld(), d, d1, d2, f2, f3);
+                 org.bukkit.event.entity.EntityTeleportEvent event = new org.bukkit.event.entity.EntityTeleportEvent(target.getBukkitEntity(), target.getBukkitEntity().getLocation(), to);
+@@ -310,10 +_,10 @@
+                 f3 = to.getPitch();
+                 level = ((org.bukkit.craftbukkit.CraftWorld) to.getWorld()).getHandle();
+ 
+-                result = target.teleportTo(level, d, d1, d2, relatives, f2, f3, true);
++                target.teleportTo(level, d, d1, d2, relatives, f2, f3, true, teleportCallback); // Octopus
+             }
+ 
+-            if (result) {
++            /*if (result) { // Octopus move up
+                 // CraftBukkit end
+                 if (lookAt != null) {
+                     lookAt.perform(source, target);
+@@ -327,7 +_,7 @@
+                 if (target instanceof PathfinderMob pathfinderMob) {
+                     pathfinderMob.getNavigation().stop();
+                 }
+-            }
++            }*/ // Octopus move up
+         }
+     }
+ }

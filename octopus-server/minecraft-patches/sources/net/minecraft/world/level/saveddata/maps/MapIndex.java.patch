@@ -1,0 +1,26 @@
+--- a/net/minecraft/world/level/saveddata/maps/MapIndex.java
++++ b/net/minecraft/world/level/saveddata/maps/MapIndex.java
+@@ -34,17 +_,21 @@
+ 
+     @Override
+     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+-        for (Entry<String> entry : this.usedAuxIds.object2IntEntrySet()) {
+-            tag.putInt(entry.getKey(), entry.getIntValue());
++        synchronized (this.usedAuxIds) { // Octopus
++            for (Entry<String> entry : this.usedAuxIds.object2IntEntrySet()) {
++                tag.putInt(entry.getKey(), entry.getIntValue());
++            }
+         }
+ 
+         return tag;
+     }
+ 
+     public MapId getFreeAuxValueForMap() {
++        synchronized (this.usedAuxIds) { // Octopus
+         int i = this.usedAuxIds.getInt("map") + 1;
+         this.usedAuxIds.put("map", i);
+         this.setDirty();
+         return new MapId(i);
++        } // Octopus
+     }
+ }

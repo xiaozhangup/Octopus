@@ -1,60 +1,18 @@
-# JVM crash related
-core.*
-hs_err_pid*
+# Ignore Gradle project-specific cache directory
+.gradle
 
-# Intellij
+# Ignore Gradle build output directory
+build
+
+/run
+
+/fork-server/build.gradle.kts
+/fork-server/src/minecraft
+/paper-server
+/fork-api/build.gradle.kts
+/paper-api
+/paper-api-generator
+
 .idea/
-*.iml
-*.ipr
-*.iws
-out/
-
-# Eclipse
-.classpath
-.project
-.settings/
-
-# netbeans
-nbproject/
-nbactions.xml
-
-# Gradle
-!gradle-wrapper.jar
-.gradle/
-build/
-*/build/
-
-# we use maven!
-build.xml
-
-# Maven
-log/
-target/
-dependency-reduced-pom.xml
-
-# various other potential build files
-build/
-bin/
-dist/
-manifest.mf
-
-# Mac
-.DS_Store/
-.DS_Store
-
-# vim
-.*.sw[a-p]
-
-# Linux temp files
-*~
-
-# other stuff
-run/
-
-build-data/
-Octopus-API
-Octopus-MojangAPI
-Octopus-Server
-paper-api-generator
-*.jar
-test-plugin.settings.gradle.kts
+/paper-api/
+/paper-server/

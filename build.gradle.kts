@@ -2,18 +2,28 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-    java
-    `maven-publish`
-    id("io.papermc.paperweight.patcher") version "1.7.1"
+    id("io.papermc.paperweight.patcher") version "2.0.0-beta.14"
 }
 
-allprojects {
-    apply(plugin = "java")
-    apply(plugin = "maven-publish")
+paperweight {
+    upstreams.paper {
+        ref = providers.gradleProperty("paperRef")
 
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
+        patchFile {
+            path = "paper-server/build.gradle.kts"
+            outputFile = file("octopus-server/build.gradle.kts")
+            patchFile = file("octopus-server/build.gradle.kts.patch")
+        }
+        patchFile {
+            path = "paper-api/build.gradle.kts"
+            outputFile = file("octopus-api/build.gradle.kts")
+            patchFile = file("octopus-api/build.gradle.kts.patch")
+        }
+        patchDir("paperApi") {
+            upstreamPath = "paper-api"
+            excludes = setOf("build.gradle.kts")
+            patchesDir = file("octopus-api/paper-patches")
+            outputDir = file("paper-api")
         }
     }
 }
@@ -21,9 +31,28 @@ allprojects {
 val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
 
 subprojects {
-    tasks.withType<JavaCompile>().configureEach {
+    apply(plugin = "java-library")
+    apply(plugin = "maven-publish")
+
+    extensions.configure<JavaPluginExtension> {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    repositories {
+        mavenCentral()
+        maven(paperMavenPublicUrl)
+    }
+
+    tasks.withType<AbstractArchiveTask>().configureEach {
+        isPreserveFileTimestamps = false
+        isReproducibleFileOrder = true
+    }
+    tasks.withType<JavaCompile> {
         options.encoding = Charsets.UTF_8.name()
         options.release = 21
+        options.isFork = true
     }
     tasks.withType<Javadoc> {
         options.encoding = Charsets.UTF_8.name()
@@ -39,93 +68,14 @@ subprojects {
         }
     }
 
-    repositories {
-        mavenCentral()
-        maven(paperMavenPublicUrl)
-        maven("https://jitpack.io")
-    }
-}
-
-repositories {
-    mavenCentral()
-    maven(paperMavenPublicUrl) {
-        content {
-            onlyForConfigurations(configurations.paperclip.name)
-        }
-    }
-}
-
-dependencies {
-    remapper("net.fabricmc:tiny-remapper:0.10.3:fat")
-    decompiler("org.vineflower:vineflower:1.10.1")
-    paperclip("io.papermc:paperclip:3.0.3")
-}
-
-paperweight {
-    serverProject = project(":octopus-server")
-
-    remapRepo = paperMavenPublicUrl
-    decompileRepo = paperMavenPublicUrl
-
-    useStandardUpstream("purpur") {
-        url = github("PurpurMC", "Purpur")
-        ref = providers.gradleProperty("purpurCommit")
-
-        withStandardPatcher {
-            baseName("Purpur")
-
-            apiPatchDir = layout.projectDirectory.dir("patches/api")
-            apiOutputDir = layout.projectDirectory.dir("Octopus-API")
-
-            serverPatchDir = layout.projectDirectory.dir("patches/server")
-            serverOutputDir = layout.projectDirectory.dir("Octopus-Server")
-        }
-
-        patchTasks.register("generatedApi") {
-            isBareDirectory = true
-            upstreamDirPath = "paper-api-generator/generated"
-            patchDir = layout.projectDirectory.dir("patches/generated-api")
-            outputDir = layout.projectDirectory.dir("paper-api-generator/generated")
-        }
-    }
-}
-
-tasks.generateDevelopmentBundle {
-    apiCoordinates = "me.xiaozhangup.octopus:octopus-api"
-    libraryRepositories.addAll(
-        "https://repo.maven.apache.org/maven2/",
-        paperMavenPublicUrl,
-        "https://repo.purpurmc.org/snapshots",
-    )
-}
-
-allprojects {
-    publishing {
+    extensions.configure<PublishingExtension> {
         repositories {
-            maven("https://repo.purpurmc.org/snapshots") {
-                name = "tentacles"
+            /*
+            maven("https://repo.papermc.io/repository/maven-snapshots/") {
+                name = "paperSnapshots"
                 credentials(PasswordCredentials::class)
             }
+             */
         }
-    }
-}
-
-publishing {
-    publications.create<MavenPublication>("devBundle") {
-        artifact(tasks.generateDevelopmentBundle) {
-            artifactId = "dev-bundle"
-        }
-    }
-}
-
-tasks.register("printMinecraftVersion") {
-    doLast {
-        println(providers.gradleProperty("mcVersion").get().trim())
-    }
-}
-
-tasks.register("printOctopusVersion") {
-    doLast {
-        println(project.version)
     }
 }

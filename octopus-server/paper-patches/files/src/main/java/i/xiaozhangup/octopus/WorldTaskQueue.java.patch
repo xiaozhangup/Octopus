@@ -1,0 +1,171 @@
+--- /dev/null
++++ b/src/main/java/i/xiaozhangup/octopus/WorldTaskQueue.java
+@@ -1,0 +_,168 @@
++package i.xiaozhangup.octopus;
++
++import com.mojang.logging.LogUtils;
++import net.minecraft.DefaultUncaughtExceptionHandler;
++import net.minecraft.server.MinecraftServer;
++import net.minecraft.server.level.ServerLevel;
++
++import java.util.Queue;
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.concurrent.ConcurrentLinkedQueue;
++import java.util.concurrent.ConcurrentMap;
++import java.util.concurrent.locks.LockSupport;
++import java.util.function.BooleanSupplier;
++
++public class WorldTaskQueue {
++    private final Thread.UncaughtExceptionHandler exceptionHandler = new DefaultUncaughtExceptionHandler(LogUtils.getLogger());
++
++    private final Queue<Runnable> chunkSystemTasks = new ConcurrentLinkedQueue<>();
++    private final Queue<Runnable> scopedTasks = new ConcurrentLinkedQueue<>();
++    private final Queue<Runnable> callbackTasks = new ConcurrentLinkedQueue<>();
++    private final ConcurrentMap<String, Runnable> cyclicalTasks = new ConcurrentHashMap<>();
++    private final ServerLevel world;
++
++    private volatile Thread currentOwner;
++
++    public WorldTaskQueue(ServerLevel world) {
++        this.world = world;
++    }
++
++    public void acquirePoller() {
++        if (this.currentOwner != null)
++            throw new IllegalStateException("Task queue already owned by " + this.currentOwner);
++
++        this.currentOwner = Thread.currentThread();
++    }
++
++    public void submitScopedTask(Runnable runnable) {
++        this.scopedTasks.offer(runnable);
++        this.notifyPollerIfNotReleased();
++    }
++
++    public void submitCallbackTask(Runnable task) {
++        this.callbackTasks.offer(task);
++    }
++
++    public void submitCyclicalTask(String id, Runnable task) {
++        this.cyclicalTasks.put(id, task);
++    }
++
++    public Runnable removeCyclicalTask(String id) {
++        return this.cyclicalTasks.remove(id);
++    }
++
++    public void finalizeCallbackTasks() {
++        if (this.currentOwner != null)
++            throw new IllegalStateException("Queue doesn't get out of using state!");
++
++        Runnable task;
++        while ((task = this.callbackTasks.poll()) != null) {
++            try {
++                task.run();
++            }catch (Exception e){
++                this.exceptionHandler.uncaughtException(Thread.currentThread(), e);
++            }
++        }
++    }
++
++    public void finalizeScopedTasks() {
++        if (!this.isFullyHeldByCurrentThread()) {
++            throw new IllegalStateException("Task queue not owned by current thread!");
++        }
++
++        Runnable task;
++        while ((task = this.scopedTasks.poll()) != null) {
++            try {
++                task.run();
++            }catch (Exception e){
++                this.exceptionHandler.uncaughtException(Thread.currentThread(), e);
++            }
++        }
++    }
++
++    public void finalizeCyclicalTasks() {
++        cyclicalTasks.forEach((id, task) -> {
++            try {
++                task.run();
++            }catch (Exception e){
++                MinecraftServer.LOGGER.error("Error executing task on {}, in {}", this.world.getWorld().getName(), id);
++                this.exceptionHandler.uncaughtException(Thread.currentThread(), e);
++            }
++        });
++    }
++
++    public void submitChunkSystemTask(Runnable runnable) {
++        this.chunkSystemTasks.offer(runnable);
++        this.notifyPollerIfNotReleased();
++    }
++
++    public int chunkSystemTaskQueueSize() {
++        return this.chunkSystemTasks.size();
++    }
++
++    public boolean pollChunkSystemTask() {
++        if (this.isHeldByAnyThread() && !this.isFullyHeldByCurrentThread()) {
++            throw new IllegalStateException("Task queue not owned by current thread!");
++        }
++
++        if (this.world.getChunkSource().runDistanceManagerUpdates()) {
++            return true;
++        }
++
++        Runnable runnable = this.chunkSystemTasks.poll();
++
++        if (runnable != null) {
++            try {
++                runnable.run();
++            }catch (Exception e){
++                this.exceptionHandler.uncaughtException(Thread.currentThread(), e);
++            }
++            return true;
++        }
++
++        return this.world.moonrise$getChunkTaskScheduler().executeMainThreadTask();
++    }
++
++    public void chunkSystemSpinBlocking(BooleanSupplier stopCondition) {
++        while (!stopCondition.getAsBoolean()) {
++            if (!this.pollChunkSystemTask()) {
++                LockSupport.parkNanos(1_000);
++            }
++        }
++    }
++
++    public void notifyPollerIfNotReleased() {
++        Thread currentHeld = this.currentOwner;
++
++        if (currentHeld != null) {
++            LockSupport.unpark(currentHeld);
++        }
++    }
++
++    public void notifyPoller() {
++        Thread currentHeld = this.currentOwner;
++
++        if (currentHeld == null)
++            throw new IllegalStateException("Task queue not owned by any thread");
++
++        LockSupport.unpark(currentHeld);
++    }
++
++    public void releasePoller() {
++        if (this.currentOwner == null)
++            throw new IllegalStateException("Task queue not owned by any thread");
++
++        this.currentOwner = null;
++    }
++
++    public boolean isHeldByAnyThread() {
++        return this.currentOwner != null;
++    }
++
++    public boolean isFullyHeldByCurrentThread() {
++        if (this.currentOwner == null)
++            return false;
++
++        return this.currentOwner == Thread.currentThread();
++    }
++}

@@ -1,0 +1,35 @@
+--- a/net/minecraft/world/entity/item/ItemEntity.java
++++ b/net/minecraft/world/entity/item/ItemEntity.java
+@@ -2,6 +_,7 @@
+ 
+ import java.util.Objects;
+ import java.util.UUID;
++import java.util.function.Consumer;
+ import javax.annotation.Nullable;
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.nbt.CompoundTag;
+@@ -523,13 +_,18 @@
+ 
+     @Nullable
+     @Override
+-    public Entity teleport(TeleportTransition teleportTransition) {
+-        Entity entity = super.teleport(teleportTransition);
+-        if (!this.level().isClientSide && entity instanceof ItemEntity itemEntity) {
+-            itemEntity.mergeWithNeighbours();
+-        }
++    public Entity teleport(TeleportTransition teleportTransition, Consumer<Entity> callback) {
++        // Octopus start
++        return super.teleport(teleportTransition, teleported -> {
++            if (teleported != null) {
++                if (!this.level().isClientSide && teleported instanceof ItemEntity itemEntity) {
++                    itemEntity.mergeWithNeighbours();
++                }
++            }
+ 
+-        return entity;
++            if (callback != null) callback.accept(teleported);
++        });
++        // Octopus end
+     }
+ 
+     public ItemStack getItem() {

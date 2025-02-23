@@ -1,0 +1,11 @@
+--- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
++++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
+@@ -551,7 +_,7 @@
+ 
+         // we could do a simple spinwait here, since we do not need to process tasks while performing this load
+         // but we process tasks only because it's a better use of the time spent
+-        this.world.getChunkSource().mainThreadProcessor.managedBlock(() -> {
++        this.world.worldTaskQueueInstance.chunkSystemSpinBlocking(() -> { // Octopus
+             return ((ChunkSystemServerLevel)this.world).moonrise$getSpecificChunkIfLoaded(chunkX, chunkZ, status) != null;
+         });
+ 

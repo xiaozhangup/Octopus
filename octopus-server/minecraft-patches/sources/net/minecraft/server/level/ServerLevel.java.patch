@@ -1,0 +1,27 @@
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -208,6 +_,24 @@
+     private final StructureCheck structureCheck;
+     private final boolean tickTime;
+     private final RandomSequences randomSequences;
++    // Octopus start
++    public final i.xiaozhangup.octopus.WorldTaskQueue worldTaskQueueInstance = new i.xiaozhangup.octopus.WorldTaskQueue(this);
++    public void submitCallbackTask(Runnable task) {
++        worldTaskQueueInstance.submitCallbackTask(task);
++    }
++
++    public void submitScopedTask(Runnable task) {
++        worldTaskQueueInstance.submitScopedTask(task);
++    }
++
++    public void submitCyclicalTask(String id, Runnable task) {
++        worldTaskQueueInstance.submitCyclicalTask(id, task);
++    }
++
++    public Runnable removeCyclicalTask(String id) {
++        return worldTaskQueueInstance.removeCyclicalTask(id);
++    }
++    // Octopus end
+ 
+     // CraftBukkit start
+     public final LevelStorageSource.LevelStorageAccess levelStorageAccess;

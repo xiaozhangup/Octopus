@@ -1,0 +1,38 @@
+--- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
+@@ -408,7 +_,7 @@
+         ca.spottedleaf.moonrise.common.PlatformHooks.get().scheduleChunkLoad(
+             this.world, x, z, false, ChunkStatus.EMPTY, true, ca.spottedleaf.concurrentutil.util.Priority.NORMAL, future::complete
+         );
+-        world.getChunkSource().mainThreadProcessor.managedBlock(future::isDone);
++        world.worldTaskQueueInstance.chunkSystemSpinBlocking(future::isDone);
+         return future.thenApply(c -> {
+             if (c != null) {
+                 return c.getPersistedStatus() == ChunkStatus.FULL;
+@@ -2359,6 +_,26 @@
+         ResourceLocation key = registry.getKey(CraftStructure.bukkitToMinecraft(structure));
+ 
+         return this.getStructures(x, z, struct -> registry.getKey(struct).equals(key));
++    }
++
++    @Override
++    public void submitCallbackTask(Runnable task) {
++        world.submitCallbackTask(task);
++    }
++
++    @Override
++    public void submitScopedTask(Runnable task) {
++        world.submitScopedTask(task);
++    }
++
++    @Override
++    public void submitCyclicalTask(String id, Runnable task) {
++        world.submitCyclicalTask(id, task);
++    }
++
++    @Override
++    public Runnable removeCyclicalTask(String id) {
++        return world.removeCyclicalTask(id);
+     }
+ 
+     private List<GeneratedStructure> getStructures(int x, int z, Predicate<net.minecraft.world.level.levelgen.structure.Structure> predicate) {

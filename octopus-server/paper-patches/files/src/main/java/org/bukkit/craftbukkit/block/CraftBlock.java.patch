@@ -1,0 +1,13 @@
+--- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
++++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
+@@ -554,8 +_,8 @@
+         world.captureTreeGeneration = false;
+ 
+         if (world.capturedBlockStates.size() > 0) {
+-            TreeType treeType = SaplingBlock.treeType;
+-            SaplingBlock.treeType = null;
++            TreeType treeType = SaplingBlock.treeTypeRT.get();
++            SaplingBlock.treeTypeRT.remove();
+             List<BlockState> blocks = new ArrayList<>(world.capturedBlockStates.values());
+             world.capturedBlockStates.clear();
+             StructureGrowEvent structureEvent = null;

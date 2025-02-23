@@ -1,0 +1,14 @@
+--- a/net/minecraft/world/entity/ai/behavior/YieldJobSite.java
++++ b/net/minecraft/world/entity/ai/behavior/YieldJobSite.java
+@@ -33,7 +_,10 @@
+                         } else if (villager.getVillagerData().getProfession() != VillagerProfession.NONE) {
+                             return false;
+                         } else {
+-                            BlockPos blockPos = instance.<GlobalPos>get(potentialJobSite).pos();
++                            final GlobalPos globalPos = instance.<GlobalPos>get(potentialJobSite); //Octopus start - Fix off world POI accessing
++                            final net.minecraft.server.level.ServerLevel targetLevel = net.minecraft.server.MinecraftServer.getServer().getLevel(globalPos.dimension()); //Octopus start - Fix off world POI accessing
++                            BlockPos blockPos = globalPos.pos(); //Octopus start - Fix off world POI accessing
++                            if (!(targetLevel.worldTaskQueueInstance.isHeldByAnyThread() && targetLevel.worldTaskQueueInstance.isFullyHeldByCurrentThread())) return true; //Octopus start - Fix off world POI accessing
+                             Optional<Holder<PoiType>> type = level.getPoiManager().getType(blockPos);
+                             if (type.isEmpty()) {
+                                 return true;

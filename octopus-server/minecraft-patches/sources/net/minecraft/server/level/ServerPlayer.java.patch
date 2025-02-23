@@ -1,0 +1,183 @@
+--- a/net/minecraft/server/level/ServerPlayer.java
++++ b/net/minecraft/server/level/ServerPlayer.java
+@@ -13,6 +_,7 @@
+ import java.util.OptionalInt;
+ import java.util.Set;
+ import java.util.UUID;
++import java.util.function.Consumer;
+ import java.util.stream.Collectors;
+ import javax.annotation.Nullable;
+ import net.minecraft.ChatFormatting;
+@@ -1359,9 +_,10 @@
+ 
+     @Nullable
+     @Override
+-    public ServerPlayer teleport(TeleportTransition teleportTransition) {
++    public ServerPlayer teleport(TeleportTransition teleportTransition, Consumer<Entity> callback) { // Octopus
+         if (this.isSleeping()) return null; // CraftBukkit - SPIGOT-3154
+         if (this.isRemoved()) {
++            if (callback != null) callback.accept(null); // Octopus
+             return null;
+         } else {
+             if (teleportTransition.missingRespawnBlock()) {
+@@ -1385,6 +_,7 @@
+             org.bukkit.Bukkit.getServer().getPluginManager().callEvent(tpEvent);
+             org.bukkit.Location newExit = tpEvent.getTo();
+             if (tpEvent.isCancelled() || newExit == null) {
++                if (callback != null) callback.accept(null); // Octopus
+                 return null;
+             }
+             if (!newExit.equals(exit)) {
+@@ -1412,6 +_,7 @@
+                 // CraftBukkit end
+                 this.connection.resetPosition();
+                 teleportTransition.postTeleportTransition().onTransition(this);
++                if (callback != null) callback.accept(this); // Octopus
+                 return this;
+             } else {
+                 // CraftBukkit start
+@@ -1432,8 +_,8 @@
+                     this.enteredNetherPosition = this.position();
+                 }
+ 
+-                profilerFiller.pop();
+-                profilerFiller.push("placing");
++                // profilerFiller.pop(); // Octopus
++                // profilerFiller.push("placing"); // Octopus
+                 // CraftBukkit start
+                 this.isChangingDimension = true; // CraftBukkit - Set teleport invulnerability only if player changing worlds
+                 LevelData worlddata = level.getLevelData();
+@@ -1447,31 +_,44 @@
+                 this.unsetRemoved();
+                 // CraftBukkit end
+                 this.setServerLevel(level);
+-                this.connection.internalTeleport(PositionMoveRotation.of(teleportTransition), teleportTransition.relatives()); // CraftBukkit - use internal teleport without event
+-                this.connection.resetPosition();
+-                level.addDuringTeleport(this);
+-                profilerFiller.pop();
+-                this.triggerDimensionChangeTriggers(serverLevel);
+-                this.stopUsingItem();
+-                this.connection.send(new ClientboundPlayerAbilitiesPacket(this.getAbilities()));
+-                playerList.sendLevelInfo(this, level);
+-                playerList.sendAllPlayerInfo(this);
+-                playerList.sendActivePlayerEffects(this);
+-                teleportTransition.postTeleportTransition().onTransition(this);
+-                this.lastSentExp = -1;
+-                this.lastSentHealth = -1.0F;
+-                this.lastSentFood = -1;
+-
+-
+-                // CraftBukkit start
+-                org.bukkit.event.player.PlayerChangedWorldEvent changeEvent = new org.bukkit.event.player.PlayerChangedWorldEvent(this.getBukkitEntity(), serverLevel.getWorld());
+-                this.level().getCraftServer().getPluginManager().callEvent(changeEvent);
+-                // CraftBukkit end
+-                // Paper start - Reset shield blocking on dimension change
+-                if (this.isBlocking()) {
++                final TeleportTransition finalTeleportTransition = teleportTransition; // Octopus
++                final ServerLevel finalLevel = level; // Octopus
++                java.lang.Runnable scheduledAdd = () -> { // Octopus
++                    this.connection.internalTeleport(PositionMoveRotation.of(finalTeleportTransition), finalTeleportTransition.relatives()); // CraftBukkit - use internal teleport without event // Octopus
++                    this.connection.resetPosition();
++                    finalLevel.addDuringTeleport(this); // Octopus
++                    // profilerFiller.pop(); // Octopus
++                    this.triggerDimensionChangeTriggers(serverLevel);
+                     this.stopUsingItem();
++                    this.connection.send(new ClientboundPlayerAbilitiesPacket(this.getAbilities()));
++                    playerList.sendLevelInfo(this, finalLevel); // Octopus
++                    playerList.sendAllPlayerInfo(this);
++                    playerList.sendActivePlayerEffects(this);
++                    finalTeleportTransition.postTeleportTransition().onTransition(this); // Octopus
++                    this.lastSentExp = -1;
++                    this.lastSentHealth = -1.0F;
++                    this.lastSentFood = -1;
++
++
++                    // CraftBukkit start
++                    org.bukkit.event.player.PlayerChangedWorldEvent changeEvent = new org.bukkit.event.player.PlayerChangedWorldEvent(this.getBukkitEntity(), serverLevel.getWorld());
++                    this.level().getCraftServer().getPluginManager().callEvent(changeEvent);
++                    // CraftBukkit end
++                    // Paper start - Reset shield blocking on dimension change
++                    if (this.isBlocking()) {
++                        this.stopUsingItem();
++                    }
++                    // Paper end - Reset shield blocking on dimension change
++                    if (callback != null) callback.accept(this); // Octopus
++                }; // Octopus
++                // Octopus start
++                //       Same level      ||      World is not ticking or helding by our current thread
++                if (level.worldTaskQueueInstance.isHeldByAnyThread() && level.worldTaskQueueInstance.isFullyHeldByCurrentThread()) {
++                    scheduledAdd.run();
++                } else {
++                    level.worldTaskQueueInstance.submitCallbackTask(scheduledAdd);
+                 }
+-                // Paper end - Reset shield blocking on dimension change
++                // Octopus end
+                 return this;
+             }
+         }
+@@ -2131,7 +_,7 @@
+     }
+ 
+     @Override
+-    public boolean teleportTo(ServerLevel level, double x, double y, double z, Set<Relative> relativeMovements, float yaw, float pitch, boolean setCamera, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause) { // CraftBukkit
++    public boolean teleportTo(ServerLevel level, double x, double y, double z, Set<Relative> relativeMovements, float yaw, float pitch, boolean setCamera, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause, Consumer<Entity> callback) { // CraftBukkit // Octopus
+         if (this.isSleeping()) {
+             this.stopSleepInBed(true, true);
+         }
+@@ -2140,12 +_,15 @@
+             this.setCamera(this);
+         }
+ 
+-        boolean flag = super.teleportTo(level, x, y, z, relativeMovements, yaw, pitch, setCamera, cause); // CraftBukkit
+-        if (flag) {
+-            this.setYHeadRot(relativeMovements.contains(Relative.Y_ROT) ? this.getYHeadRot() + yaw : yaw);
+-        }
++        return super.teleportTo(level, x, y, z, relativeMovements, yaw, pitch, setCamera, cause, (afterTeleport) -> { // Octopus
++            if (afterTeleport != null) {
++                this.setYHeadRot(relativeMovements.contains(Relative.Y_ROT) ? this.getYHeadRot() + yaw : yaw);
++            }
+ 
+-        return flag;
++            if (callback != null) {
++                callback.accept(afterTeleport);
++            }
++        }); // CraftBukkit // Octopus
+     }
+ 
+     @Override
+@@ -2416,16 +_,32 @@
+                 }
+             }
+             // Paper end - Add PlayerStartSpectatingEntityEvent and PlayerStopSpectatingEntity
++            // Octopus - move up
++            java.lang.Runnable scheduledCallback = () -> {
++                if (entityToSpectate != null) {
++                    this.serverLevel().getChunkSource().move(this);
++                }
++
++                this.connection.send(new ClientboundSetCameraPacket(this.camera));
++                this.connection.resetPosition();
++            };
++
+             if (this.camera.level() instanceof ServerLevel serverLevel) {
+-                this.teleportTo(serverLevel, this.camera.getX(), this.camera.getY(), this.camera.getZ(), Set.of(), this.getYRot(), this.getXRot(), false, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.SPECTATE); // CraftBukkit
++                final java.lang.Runnable callbackValueCp = scheduledCallback; // Octopus
++                scheduledCallback = null; // Octopus
++                this.teleportTo(serverLevel, this.camera.getX(), this.camera.getY(), this.camera.getZ(), Set.of(), this.getYRot(), this.getXRot(), false, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.SPECTATE, teleported -> { // Octopus
++                    callbackValueCp.run();
++                }); // CraftBukkit // Octopus
+             }
+ 
+-            if (entityToSpectate != null) {
++            if (scheduledCallback != null) scheduledCallback.run(); // Octopus
++
++            /*if (entityToSpectate != null) { // Octopus - move up
+                 this.serverLevel().getChunkSource().move(this);
+             }
+ 
+             this.connection.send(new ClientboundSetCameraPacket(this.camera));
+-            this.connection.resetPosition();
++            this.connection.resetPosition();*/ // Octopus - move up
+         }
+     }
+ 

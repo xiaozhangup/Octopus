@@ -1,0 +1,22 @@
+--- a/net/minecraft/world/entity/npc/AbstractVillager.java
++++ b/net/minecraft/world/entity/npc/AbstractVillager.java
+@@ -3,6 +_,7 @@
+ import com.google.common.collect.Lists;
+ import com.mojang.logging.LogUtils;
+ import java.util.ArrayList;
++import java.util.function.Consumer;
+ import javax.annotation.Nullable;
+ import net.minecraft.Util;
+ import net.minecraft.advancements.CriteriaTriggers;
+@@ -220,9 +_,9 @@
+ 
+     @Nullable
+     @Override
+-    public Entity teleport(TeleportTransition teleportTransition) {
++    public Entity teleport(TeleportTransition teleportTransition, Consumer<Entity> callback) { // Octopus
+         this.stopTrading();
+-        return super.teleport(teleportTransition);
++        return super.teleport(teleportTransition, callback); // Octopus
+     }
+ 
+     protected void stopTrading() {

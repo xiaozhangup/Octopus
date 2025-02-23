@@ -1,0 +1,130 @@
+--- a/net/minecraft/core/dispenser/DispenseItemBehavior.java
++++ b/net/minecraft/core/dispenser/DispenseItemBehavior.java
+@@ -89,7 +_,7 @@
+                 org.bukkit.craftbukkit.inventory.CraftItemStack craftItem = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(singleItemStack);
+ 
+                 org.bukkit.event.block.BlockDispenseEvent event = new org.bukkit.event.block.BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector(0, 0, 0));
+-                if (!DispenserBlock.eventFired) {
++                if (!DispenserBlock.eventFired.get()) { // Octopus
+                     serverLevel.getCraftServer().getPluginManager().callEvent(event);
+                 }
+ 
+@@ -147,7 +_,7 @@
+                     org.bukkit.craftbukkit.inventory.CraftItemStack craftItem = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(singleItemStack);
+ 
+                     org.bukkit.event.block.BlockDispenseEvent event = new org.bukkit.event.block.BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector(0, 0, 0));
+-                    if (!DispenserBlock.eventFired) {
++                    if (!DispenserBlock.eventFired.get()) { // Octopus
+                         serverLevel.getCraftServer().getPluginManager().callEvent(event);
+                     }
+ 
+@@ -201,7 +_,7 @@
+                         org.bukkit.craftbukkit.inventory.CraftItemStack craftItem = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(singleItemStack);
+ 
+                         org.bukkit.event.block.BlockDispenseArmorEvent event = new org.bukkit.event.block.BlockDispenseArmorEvent(block, craftItem.clone(), entitiesOfClass.get(0).getBukkitLivingEntity());
+-                        if (!DispenserBlock.eventFired) {
++                        if (!DispenserBlock.eventFired.get()) { // Octopus
+                             world.getCraftServer().getPluginManager().callEvent(event);
+                         }
+ 
+@@ -251,7 +_,7 @@
+                             org.bukkit.block.Block block = org.bukkit.craftbukkit.block.CraftBlock.at(world, blockSource.pos());
+                             org.bukkit.craftbukkit.inventory.CraftItemStack craftItem = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(singleCopy);
+                             org.bukkit.event.block.BlockDispenseArmorEvent event = new org.bukkit.event.block.BlockDispenseArmorEvent(block, craftItem.clone(), abstractChestedHorse.getBukkitLivingEntity());
+-                            if (!DispenserBlock.eventFired) {
++                            if (!DispenserBlock.eventFired.get()) { // Octopus
+                                 world.getCraftServer().getPluginManager().callEvent(event);
+                             }
+ 
+@@ -329,7 +_,7 @@
+                     org.bukkit.craftbukkit.inventory.CraftItemStack craftItem = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(item.copyWithCount(1)); // Paper - single item in event
+ 
+                     org.bukkit.event.block.BlockDispenseEvent event = new org.bukkit.event.block.BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector(x, y, z));
+-                    if (!DispenserBlock.eventFired) {
++                    if (!DispenserBlock.eventFired.get()) { // Octopus
+                         level.getCraftServer().getPluginManager().callEvent(event);
+                     }
+ 
+@@ -389,7 +_,7 @@
+                         org.bukkit.craftbukkit.inventory.CraftItemStack craftItem = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(item.copyWithCount(1)); // Paper - single item in event
+ 
+                         org.bukkit.event.block.BlockDispenseEvent event = new org.bukkit.event.block.BlockDispenseEvent(bukkitBlock, craftItem.clone(), org.bukkit.craftbukkit.util.CraftVector.toBukkit(blockPos));
+-                        if (!DispenserBlock.eventFired) {
++                        if (!DispenserBlock.eventFired.get()) { // Octopus
+                             levelAccessor.getMinecraftWorld().getCraftServer().getPluginManager().callEvent(event);
+                         }
+ 
+@@ -425,7 +_,7 @@
+                 org.bukkit.craftbukkit.inventory.CraftItemStack craftItem = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(item); // Paper - ignore stack size on damageable items
+ 
+                 org.bukkit.event.block.BlockDispenseEvent event = new org.bukkit.event.block.BlockDispenseEvent(bukkitBlock, craftItem.clone(), new org.bukkit.util.Vector(0, 0, 0));
+-                if (!DispenserBlock.eventFired) {
++                if (!DispenserBlock.eventFired.get()) { // Octopus
+                     serverLevel.getCraftServer().getPluginManager().callEvent(event);
+                 }
+ 
+@@ -482,7 +_,7 @@
+                 org.bukkit.craftbukkit.inventory.CraftItemStack craftItem = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(item.copyWithCount(1)); // Paper - single item in event
+ 
+                 org.bukkit.event.block.BlockDispenseEvent event = new org.bukkit.event.block.BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector(0, 0, 0));
+-                if (!DispenserBlock.eventFired) {
++                if (!DispenserBlock.eventFired.get()) { // Octopus
+                     level.getCraftServer().getPluginManager().callEvent(event);
+                 }
+ 
+@@ -510,8 +_,8 @@
+                 // CraftBukkit start
+                 level.captureTreeGeneration = false;
+                 if (level.capturedBlockStates.size() > 0) {
+-                    org.bukkit.TreeType treeType = net.minecraft.world.level.block.SaplingBlock.treeType;
+-                    net.minecraft.world.level.block.SaplingBlock.treeType = null;
++                    org.bukkit.TreeType treeType = net.minecraft.world.level.block.SaplingBlock.treeTypeRT.get(); // Octopus
++                    net.minecraft.world.level.block.SaplingBlock.treeTypeRT.set(null); // Octopus
+                     org.bukkit.Location location = org.bukkit.craftbukkit.util.CraftLocation.toBukkit(blockPos, level.getWorld());
+                     List<org.bukkit.block.BlockState> blocks = new java.util.ArrayList<>(level.capturedBlockStates.values());
+                     level.capturedBlockStates.clear();
+@@ -548,7 +_,7 @@
+                 org.bukkit.craftbukkit.inventory.CraftItemStack craftItem = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(singleItemStack);
+ 
+                 org.bukkit.event.block.BlockDispenseEvent event = new org.bukkit.event.block.BlockDispenseEvent(block, craftItem.clone(), new org.bukkit.util.Vector((double) blockPos.getX() + 0.5D, (double) blockPos.getY(), (double) blockPos.getZ() + 0.5D));
+-                if (!DispenserBlock.eventFired) {
++                if (!DispenserBlock.eventFired.get()) { // Octopus
+                     level.getCraftServer().getPluginManager().callEvent(event);
+                 }
+ 
+@@ -591,7 +_,7 @@
+                     org.bukkit.craftbukkit.inventory.CraftItemStack craftItem = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(item.copyWithCount(1)); // Paper - single item in event
+ 
+                     org.bukkit.event.block.BlockDispenseEvent event = new org.bukkit.event.block.BlockDispenseEvent(bukkitBlock, craftItem.clone(), org.bukkit.craftbukkit.util.CraftVector.toBukkit(blockPos));
+-                    if (!DispenserBlock.eventFired) {
++                    if (!DispenserBlock.eventFired.get()) { // Octopus
+                         level.getCraftServer().getPluginManager().callEvent(event);
+                     }
+ 
+@@ -644,7 +_,7 @@
+                 org.bukkit.craftbukkit.inventory.CraftItemStack craftItem = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(item.copyWithCount(1)); // Paper - single item in event
+ 
+                 org.bukkit.event.block.BlockDispenseEvent event = new org.bukkit.event.block.BlockDispenseEvent(bukkitBlock, craftItem.clone(), org.bukkit.craftbukkit.util.CraftVector.toBukkit(blockPos));
+-                if (!DispenserBlock.eventFired) {
++                if (!DispenserBlock.eventFired.get()) { // Octopus
+                     level.getCraftServer().getPluginManager().callEvent(event);
+                 }
+ 
+@@ -702,7 +_,7 @@
+                     org.bukkit.craftbukkit.inventory.CraftItemStack craftItem = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(item.copyWithCount(1)); // Paper - only single item in event
+ 
+                     org.bukkit.event.block.BlockDispenseEvent event = new org.bukkit.event.block.BlockDispenseEvent(bukkitBlock, craftItem.clone(), org.bukkit.craftbukkit.util.CraftVector.toBukkit(blockPos));
+-                    if (!DispenserBlock.eventFired) {
++                    if (!DispenserBlock.eventFired.get()) { // Octopus
+                         serverLevel.getCraftServer().getPluginManager().callEvent(event);
+                     }
+ 
+@@ -783,7 +_,7 @@
+                     org.bukkit.craftbukkit.inventory.CraftItemStack craftItem = org.bukkit.craftbukkit.inventory.CraftItemStack.asCraftMirror(item); // Paper - ignore stack size on damageable items
+ 
+                     org.bukkit.event.block.BlockDispenseEvent event = new org.bukkit.event.block.BlockDispenseArmorEvent(block, craftItem.clone(), entitiesOfClass.get(0).getBukkitLivingEntity());
+-                    if (!DispenserBlock.eventFired) {
++                    if (!DispenserBlock.eventFired.get()) { // Octopus
+                         serverLevel.getCraftServer().getPluginManager().callEvent(event);
+                     }
+ 

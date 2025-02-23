@@ -1,0 +1,29 @@
+--- a/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java
++++ b/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java
+@@ -951,7 +_,7 @@
+         return CraftEventFactory.handleBlockSpreadEvent(world, source, target, block, 2);
+     }
+ 
+-    public static BlockPos sourceBlockOverride = null; // SPIGOT-7068: Add source block override, not the most elegant way but better than passing down a BlockPosition up to five methods deep.
++    public static final ThreadLocal<BlockPos> sourceBlockOverrideRT = new ThreadLocal<>(); // SPIGOT-7068: Add source block override, not the most elegant way but better than passing down a BlockPosition up to five methods deep. // Octopus (this is from Folia, fixes concurrency bugs with sculk catalysts)
+ 
+     public static boolean handleBlockSpreadEvent(LevelAccessor world, BlockPos source, BlockPos target, net.minecraft.world.level.block.state.BlockState block, int flag) {
+         // Suppress during worldgen
+@@ -963,7 +_,7 @@
+         CraftBlockState state = CraftBlockStates.getBlockState(world, target, flag);
+         state.setData(block);
+ 
+-        BlockSpreadEvent event = new BlockSpreadEvent(state.getBlock(), CraftBlock.at(world, CraftEventFactory.sourceBlockOverride != null ? CraftEventFactory.sourceBlockOverride : source), state);
++        BlockSpreadEvent event = new BlockSpreadEvent(state.getBlock(), CraftBlock.at(world, CraftEventFactory.sourceBlockOverrideRT.get() != null ? CraftEventFactory.sourceBlockOverrideRT.get() : source), state); // Octopus
+         Bukkit.getPluginManager().callEvent(event);
+ 
+         if (!event.isCancelled()) {
+@@ -2232,7 +_,7 @@
+         CraftItemStack craftItem = CraftItemStack.asCraftMirror(itemStack.copyWithCount(1));
+ 
+         org.bukkit.event.block.BlockDispenseEvent event = new org.bukkit.event.block.BlockDispenseEvent(bukkitBlock, craftItem.clone(), CraftVector.toBukkit(to));
+-        if (!net.minecraft.world.level.block.DispenserBlock.eventFired) {
++        if (!net.minecraft.world.level.block.DispenserBlock.eventFired.get()) { // Octopus
+             if (!event.callEvent()) {
+                 return itemStack;
+             }
