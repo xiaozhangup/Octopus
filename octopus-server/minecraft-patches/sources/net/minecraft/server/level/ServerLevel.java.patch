@@ -5,7 +5,7 @@
      private final boolean tickTime;
      private final RandomSequences randomSequences;
 +    // Octopus start
-+    public final i.xiaozhangup.octopus.WorldTaskQueue worldTaskQueueInstance = new i.xiaozhangup.octopus.WorldTaskQueue(this);
++    public final me.xiaozhangup.octopus.WorldTaskQueue worldTaskQueueInstance = new me.xiaozhangup.octopus.WorldTaskQueue(this);
 +    public void submitCallbackTask(Runnable task) {
 +        worldTaskQueueInstance.submitCallbackTask(task);
 +    }
