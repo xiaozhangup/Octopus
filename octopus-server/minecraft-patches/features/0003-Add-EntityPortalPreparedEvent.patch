@@ -5,7 +5,7 @@ Subject: [PATCH] Add EntityPortalPreparedEvent
 
 
 diff --git a/net/minecraft/world/level/block/EndPortalBlock.java b/net/minecraft/world/level/block/EndPortalBlock.java
-index 01cddd7001b4a7f99c1b1d147fac904d3064d733..8bcd905343a313e8cc53212e7451d61ed24e274d 100644
+index 01cddd7001b4a7f99c1b1d147fac904d3064d733..f708e2555c40f8760497f067a762638c65bd2257 100644
 --- a/net/minecraft/world/level/block/EndPortalBlock.java
 +++ b/net/minecraft/world/level/block/EndPortalBlock.java
 @@ -74,6 +74,13 @@ public class EndPortalBlock extends BaseEntityBlock implements Portal {
@@ -13,7 +13,7 @@ index 01cddd7001b4a7f99c1b1d147fac904d3064d733..8bcd905343a313e8cc53212e7451d61e
      @Override
      public TeleportTransition getPortalDestination(ServerLevel level, Entity entity, BlockPos pos) {
 +        // Octopus start - Add EntityPortalPreparedEvent
-+        org.bukkit.event.entity.EntityPortalPreparedEvent portalPreparedEvent = new org.bukkit.event.entity.EntityPortalPreparedEvent(entity.getBukkitEntity(), org.bukkit.PortalType.NETHER);
++        org.bukkit.event.entity.EntityPortalPreparedEvent portalPreparedEvent = new org.bukkit.event.entity.EntityPortalPreparedEvent(entity.getBukkitEntity(), org.bukkit.PortalType.ENDER);
 +        if (!portalPreparedEvent.callEvent()) {
 +                entity.portalProcess = null;
 +                return null;
