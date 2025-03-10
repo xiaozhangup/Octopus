@@ -369,15 +369,6 @@
          } else {
              this.defaultActivationState = false;
          }
-@@ -550,7 +_,7 @@
-         this.entityData = builder.build();
-         this.setPos(0.0, 0.0, 0.0);
-         this.eyeHeight = this.dimensions.eyeHeight();
--        this.despawnTime = type == EntityType.PLAYER ? -1 : level.paperConfig().entities.spawning.despawnTime.getOrDefault(type, io.papermc.paper.configuration.type.number.IntOr.Disabled.DISABLED).or(-1); // Paper - entity despawn time limit
-+        this.despawnTime = type == EntityType.PLAYER ? -1 : level.paperConfig().entities.spawning.despawnTime.getOrDefault(type, IntOr.Disabled.DISABLED).or(-1); // Paper - entity despawn time limit
-     }
- 
-     public boolean isColliding(BlockPos pos, BlockState state) {
 @@ -618,7 +_,7 @@
      }
  
