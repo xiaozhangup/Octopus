@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Zhang <xiaozhangshiw@163.com>
+Date: Tue, 11 Mar 2025 23:23:31 +0800
+Subject: [PATCH] Custom PlayerDataStorage
+
+
+diff --git a/src/main/java/me/xiaozhangup/octopus/ProfileSource.java b/src/main/java/me/xiaozhangup/octopus/ProfileSource.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..8710db9505da483701ac7f47df1c844a09ad185a
+--- /dev/null
++++ b/src/main/java/me/xiaozhangup/octopus/ProfileSource.java
+@@ -0,0 +1,12 @@
++package me.xiaozhangup.octopus;
++
++import org.bukkit.entity.Player;
++
++import java.io.IOException;
++import java.util.Optional;
++
++public interface ProfileSource {
++    boolean save(Player player, byte[] data) throws IOException;
++    Optional<byte[]> load(Player player) throws IOException;
++    Optional<byte[]> load(String playerName, String uuid) throws IOException;
++}
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index d7ebfcfc6a41b7e94a041f7faf3c2d8090fab3c4..155525463fcfb3d506574e0dd658db22031ee555 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -2698,4 +2698,10 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+      */
+     void allowPausing(@NotNull org.bukkit.plugin.Plugin plugin, boolean value);
+     // Paper end - API to check if the server is sleeping
++
++    /**
++     * Sets the profile source for the server.
++     * @param source
++     */
++    void setProfileSource(me.xiaozhangup.octopus.ProfileSource source);
+ }

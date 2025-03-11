@@ -1,0 +1,90 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Zhang <xiaozhangshiw@163.com>
+Date: Tue, 11 Mar 2025 23:17:59 +0800
+Subject: [PATCH] Custom PlayerDataStorage
+
+
+diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
+index c44110b123ba5912af18faf0065e9ded780da9b7..6bd1bcd2e5808f1557747a32702daa755f4048e4 100644
+--- a/net/minecraft/world/level/storage/PlayerDataStorage.java
++++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
+@@ -3,6 +3,7 @@ package net.minecraft.world.level.storage;
+ import com.mojang.datafixers.DataFixer;
+ import com.mojang.logging.LogUtils;
+ import java.io.File;
++import java.io.IOException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.nio.file.StandardCopyOption;
+@@ -25,6 +26,13 @@ public class PlayerDataStorage {
+     private final File playerDir;
+     protected final DataFixer fixerUpper;
+     private static final DateTimeFormatter FORMATTER = FileNameDateFormatter.create();
++    private @org.jetbrains.annotations.Nullable me.xiaozhangup.octopus.PlayerDataSource dataSource = null; // Octopus
++
++    // Octopus start - PlayerDataSource
++    public void setDataSource(@org.jetbrains.annotations.Nullable me.xiaozhangup.octopus.PlayerDataSource dataSource) {
++        this.dataSource = dataSource;
++    }
++    // Octopus end - PlayerDataSource
+ 
+     public PlayerDataStorage(LevelStorageSource.LevelStorageAccess levelStorageAccess, DataFixer fixerUpper) {
+         this.fixerUpper = fixerUpper;
+@@ -36,6 +44,12 @@ public class PlayerDataStorage {
+         if (org.spigotmc.SpigotConfig.disablePlayerDataSaving) return; // Spigot
+         try {
+             CompoundTag compoundTag = player.saveWithoutId(new CompoundTag());
++            // Octopus start - PlayerDataSource
++            if (dataSource != null) {
++                dataSource.save(player, compoundTag);
++                return;
++            }
++            // Octopus end - PlayerDataSource
+             Path path = this.playerDir.toPath();
+             Path path1 = Files.createTempFile(path, player.getStringUUID() + "-", ".dat");
+             NbtIo.writeCompressed(compoundTag, path1);
+@@ -90,6 +104,21 @@ public class PlayerDataStorage {
+     }
+ 
+     public Optional<CompoundTag> load(Player player) {
++        // Octopus start - PlayerDataSource
++        try {
++            if (dataSource != null) {
++                Optional<CompoundTag> data = dataSource.load(player);
++                if (data.isPresent()) {
++                    return data.map(tag -> {
++                        player.load(tag);
++                        return tag;
++                    });
++                }
++            }
++        } catch (Exception e) {
++            LOGGER.warn("Failed to load player data for {}", player.getScoreboardName(), e); // Paper - Print exception
++        }
++        // Octopus end - PlayerDataSource
+         // CraftBukkit start
+         return this.load(player.getName().getString(), player.getStringUUID()).map((tag) -> {
+             if (player instanceof ServerPlayer serverPlayer) {
+@@ -107,6 +136,22 @@ public class PlayerDataStorage {
+     }
+ 
+     public Optional<CompoundTag> load(String name, String uuid) {
++        // Octopus start - PlayerDataSource
++        try {
++            if (dataSource != null) {
++                Optional<CompoundTag> data = dataSource.load(name, uuid);
++                if (data.isPresent()) {
++                    return data.map(compoundTag -> {
++                        int dataVersion = NbtUtils.getDataVersion(compoundTag, -1);
++                        compoundTag = ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry.PLAYER, compoundTag, dataVersion, net.minecraft.SharedConstants.getCurrentVersion().getDataVersion().getVersion());
++                        return compoundTag;
++                    });
++                }
++            }
++        } catch (Exception e) {
++            LOGGER.warn("Failed to load player data for {}", name, e); // Paper - Print exception
++        }
++        // Octopus end - PlayerDataSource
+         // CraftBukkit end
+         Optional<CompoundTag> optional = this.load(name, uuid, ".dat"); // CraftBukkit
+         if (optional.isEmpty()) {

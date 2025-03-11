@@ -1,0 +1,68 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Zhang <xiaozhangshiw@163.com>
+Date: Tue, 11 Mar 2025 23:19:35 +0800
+Subject: [PATCH] Custom PlayerDataStorage
+
+
+diff --git a/src/main/java/me/xiaozhangup/octopus/PlayerDataSource.java b/src/main/java/me/xiaozhangup/octopus/PlayerDataSource.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..26e952a61f16e898fa2991362976247cc15accf5
+--- /dev/null
++++ b/src/main/java/me/xiaozhangup/octopus/PlayerDataSource.java
+@@ -0,0 +1,13 @@
++package me.xiaozhangup.octopus;
++
++import net.minecraft.nbt.CompoundTag;
++import net.minecraft.world.entity.player.Player;
++
++import java.io.IOException;
++import java.util.Optional;
++
++public interface PlayerDataSource {
++    boolean save(Player player, CompoundTag data) throws IOException;
++    Optional<CompoundTag> load(Player player) throws IOException;
++    Optional<CompoundTag> load(String playerName, String uuid) throws IOException;
++}
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index 99beb7ec6e1864426492f4e27e650ab97ce6d4b5..e49c55593c00ae5e1e79c23eb978baf15c1329e9 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -3296,4 +3296,38 @@ public final class CraftServer implements Server {
+         this.console.addPluginAllowingSleep(plugin.getName(), value);
+     }
+     // Paper end - API to check if the server is sleeping
++
++    @Override
++    public void setProfileSource(@Nullable me.xiaozhangup.octopus.ProfileSource source) {
++        if (source == null) {
++            MinecraftServer.getServer().getPlayerList().playerIo.setDataSource(null);
++            return;
++        }
++        MinecraftServer.getServer().getPlayerList().playerIo.setDataSource(
++                new me.xiaozhangup.octopus.PlayerDataSource() {
++                    @Override
++                    public boolean save(net.minecraft.world.entity.player.Player player, net.minecraft.nbt.CompoundTag data) throws IOException {
++                        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
++                        net.minecraft.nbt.NbtIo.writeCompressed(data, outStream);
++                        return source.save(((ServerPlayer) player).getBukkitEntity(), outStream.toByteArray());
++                    }
++
++                    @Override
++                    public Optional<net.minecraft.nbt.CompoundTag> load(net.minecraft.world.entity.player.Player player) throws IOException {
++                        Optional<byte[]> data = source.load(((ServerPlayer) player).getBukkitEntity());
++                        if (data.isEmpty()) return Optional.empty();
++                        java.io.ByteArrayInputStream inStream = new java.io.ByteArrayInputStream(data.get());
++                        return Optional.of(net.minecraft.nbt.NbtIo.readCompressed(inStream, net.minecraft.nbt.NbtAccounter.unlimitedHeap()));
++                    }
++
++                    @Override
++                    public Optional<net.minecraft.nbt.CompoundTag> load(String playerName, String uuid) throws IOException {
++                        Optional<byte[]> data = source.load(playerName, uuid);
++                        if (data.isEmpty()) return Optional.empty();
++                        java.io.ByteArrayInputStream inStream = new java.io.ByteArrayInputStream(data.get());
++                        return Optional.of(net.minecraft.nbt.NbtIo.readCompressed(inStream, net.minecraft.nbt.NbtAccounter.unlimitedHeap()));
++                    }
++                }
++        );
++    }
+ }
