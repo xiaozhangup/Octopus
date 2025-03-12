@@ -4,6 +4,20 @@ Date: Tue, 11 Mar 2025 23:23:31 +0800
 Subject: [PATCH] Custom PlayerDataStorage
 
 
+diff --git a/src/main/java/me/xiaozhangup/octopus/JsonDataSource.java b/src/main/java/me/xiaozhangup/octopus/JsonDataSource.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..b5ea28cb71889ec6c03b8870935d52336baa13f0
+--- /dev/null
++++ b/src/main/java/me/xiaozhangup/octopus/JsonDataSource.java
+@@ -0,0 +1,8 @@
++package me.xiaozhangup.octopus;
++
++import org.jetbrains.annotations.Nullable;
++
++public interface JsonDataSource {
++    void save(String json, String uuid);
++    @Nullable String load(String uuid);
++}
 diff --git a/src/main/java/me/xiaozhangup/octopus/ProfileSource.java b/src/main/java/me/xiaozhangup/octopus/ProfileSource.java
 new file mode 100644
 index 0000000000000000000000000000000000000000..8710db9505da483701ac7f47df1c844a09ad185a
@@ -23,10 +37,10 @@ index 0000000000000000000000000000000000000000..8710db9505da483701ac7f47df1c844a
 +    Optional<byte[]> load(String playerName, String uuid) throws IOException;
 +}
 diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
-index d7ebfcfc6a41b7e94a041f7faf3c2d8090fab3c4..155525463fcfb3d506574e0dd658db22031ee555 100644
+index d7ebfcfc6a41b7e94a041f7faf3c2d8090fab3c4..5913393b5dfba99ac48ae04f8c06dac2ebb4233f 100644
 --- a/src/main/java/org/bukkit/Server.java
 +++ b/src/main/java/org/bukkit/Server.java
-@@ -2698,4 +2698,10 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+@@ -2698,4 +2698,22 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
       */
      void allowPausing(@NotNull org.bukkit.plugin.Plugin plugin, boolean value);
      // Paper end - API to check if the server is sleeping
@@ -36,4 +50,16 @@ index d7ebfcfc6a41b7e94a041f7faf3c2d8090fab3c4..155525463fcfb3d506574e0dd658db22
 +     * @param source
 +     */
 +    void setProfileSource(me.xiaozhangup.octopus.ProfileSource source);
++
++    /**
++     * Sets the stats source for the server.
++     * @param source
++     */
++    void setStatsSource(me.xiaozhangup.octopus.JsonDataSource source);
++    
++    /**
++     * Sets the achievements source for the server.
++     * @param source
++     */
++    void setAchievementsSource(me.xiaozhangup.octopus.JsonDataSource source);
  }

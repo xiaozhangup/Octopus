@@ -4,6 +4,104 @@ Date: Tue, 11 Mar 2025 23:17:59 +0800
 Subject: [PATCH] Custom PlayerDataStorage
 
 
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index b3578ad892cb9110ccf6e0f29373e1f96e369078..f9ffb0b111e689c3a20b0e2d1b7ccd9831bc074a 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -207,6 +207,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+     private Consumer<ProfileResults> onMetricsRecordingStopped = results -> this.stopRecordingMetrics();
+     private Consumer<Path> onMetricsRecordingFinished = path -> {};
+     private boolean willStartRecordingMetrics;
++    // Octopus start - Custom DataSource
++    @Nullable
++    public me.xiaozhangup.octopus.PlayerJsonDataSource achievementsSource = null;
++    @Nullable
++    public me.xiaozhangup.octopus.PlayerJsonDataSource statsSource = null;
++    // Octopus end - Custom DataSource
+     @Nullable
+     private MinecraftServer.TimeProfiler debugCommandProfiler;
+     private boolean debugCommandProfilerDelayStart;
+diff --git a/net/minecraft/server/PlayerAdvancements.java b/net/minecraft/server/PlayerAdvancements.java
+index 64dbee1f67eaa17c93c13bfa38fbe27de57651e4..1bb9d97a9039d19a9db7afde4c3a6c1bcbfef75a 100644
+--- a/net/minecraft/server/PlayerAdvancements.java
++++ b/net/minecraft/server/PlayerAdvancements.java
+@@ -111,6 +111,15 @@ public class PlayerAdvancements {
+     }
+ 
+     private void load(ServerAdvancementManager manager) {
++        if (playerList.getServer().achievementsSource != null) {
++            String jsonData = playerList.getServer().achievementsSource.load(player.getUUID().toString());
++            if (jsonData != null) {
++                JsonElement jsonElement = com.google.gson.JsonParser.parseString(jsonData);
++                PlayerAdvancements.Data data = this.codec.parse(JsonOps.INSTANCE, jsonElement).getOrThrow(JsonParseException::new);
++                this.applyFrom(manager, data);
++            }
++            return;
++        }
+         if (Files.isRegularFile(this.playerSavePath)) {
+             try (JsonReader jsonReader = new JsonReader(Files.newBufferedReader(this.playerSavePath, StandardCharsets.UTF_8))) {
+                 jsonReader.setLenient(false);
+@@ -133,6 +142,10 @@ public class PlayerAdvancements {
+         JsonElement jsonElement = this.codec.encodeStart(JsonOps.INSTANCE, this.asData()).getOrThrow();
+ 
+         try {
++            if (playerList.getServer().achievementsSource != null) {
++                playerList.getServer().achievementsSource.save(GSON.toJson(jsonElement), player.getUUID().toString());
++                return;
++            }
+             FileUtil.createDirectoriesSafe(this.playerSavePath.getParent());
+ 
+             try (Writer bufferedWriter = Files.newBufferedWriter(this.playerSavePath, StandardCharsets.UTF_8)) {
+diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
+index 5a4960fdbd97d830ac79845697eea9372c48a13b..4caf69a5c258bee56d928d1a127cff444efc31b1 100644
+--- a/net/minecraft/server/players/PlayerList.java
++++ b/net/minecraft/server/players/PlayerList.java
+@@ -1305,7 +1305,7 @@ public abstract class PlayerList {
+                 }
+             }
+ 
+-            serverStatsCounter = new ServerStatsCounter(this.server, file1);
++            serverStatsCounter = new ServerStatsCounter(this.server, file1, uuid.toString()); // Octopus
+             // this.stats.put(uuid, serverStatsCounter); // CraftBukkit
+         }
+ 
+diff --git a/net/minecraft/stats/ServerStatsCounter.java b/net/minecraft/stats/ServerStatsCounter.java
+index 6c5205fe1dc6387a77b1edbdcab748d39e775d7f..9354da75b4a75340ff257254f5621021a9768002 100644
+--- a/net/minecraft/stats/ServerStatsCounter.java
++++ b/net/minecraft/stats/ServerStatsCounter.java
+@@ -38,11 +38,19 @@ public class ServerStatsCounter extends StatsCounter {
+     private final MinecraftServer server;
+     private final File file;
+     private final Set<Stat<?>> dirty = Sets.newHashSet();
++    private final String uuid;
+ 
+-    public ServerStatsCounter(MinecraftServer server, File file) {
++    public ServerStatsCounter(MinecraftServer server, File file, String uuid) {
+         this.server = server;
+         this.file = file;
+-        if (file.isFile()) {
++        this.uuid = uuid;
++        if (server.statsSource != null) {
++            String json = server.statsSource.load(uuid);
++            if (json != null) {
++                this.parseLocal(server.getFixerUpper(), json);
++            }
++        }
++        else if (file.isFile()) {
+             try {
+                 this.parseLocal(server.getFixerUpper(), FileUtils.readFileToString(file));
+             } catch (IOException var4) {
+@@ -67,6 +75,10 @@ public class ServerStatsCounter extends StatsCounter {
+     public void save() {
+         if (org.spigotmc.SpigotConfig.disableStatSaving) return; // Spigot
+         try {
++            if (server.statsSource != null) {
++                server.statsSource.save(this.toJson(), this.uuid);
++                return;
++            }
+             FileUtils.writeStringToFile(this.file, this.toJson());
+         } catch (IOException var2) {
+             LOGGER.error("Couldn't save stats", (Throwable)var2);
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
 index c44110b123ba5912af18faf0065e9ded780da9b7..6bd1bcd2e5808f1557747a32702daa755f4048e4 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java

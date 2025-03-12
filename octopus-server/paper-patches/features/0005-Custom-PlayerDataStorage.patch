@@ -23,11 +23,25 @@ index 0000000000000000000000000000000000000000..26e952a61f16e898fa2991362976247c
 +    Optional<CompoundTag> load(Player player) throws IOException;
 +    Optional<CompoundTag> load(String playerName, String uuid) throws IOException;
 +}
+diff --git a/src/main/java/me/xiaozhangup/octopus/PlayerJsonDataSource.java b/src/main/java/me/xiaozhangup/octopus/PlayerJsonDataSource.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..6c3290a9fbba318795466457cc9d9b48b70eb34a
+--- /dev/null
++++ b/src/main/java/me/xiaozhangup/octopus/PlayerJsonDataSource.java
+@@ -0,0 +1,8 @@
++package me.xiaozhangup.octopus;
++
++import org.jetbrains.annotations.Nullable;
++
++public interface PlayerJsonDataSource {
++    void save(String json, String uuid);
++    @Nullable String load(String uuid);
++}
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index 99beb7ec6e1864426492f4e27e650ab97ce6d4b5..e49c55593c00ae5e1e79c23eb978baf15c1329e9 100644
+index 99beb7ec6e1864426492f4e27e650ab97ce6d4b5..de448287979c777572898fe855fa37f0e4fa4f8f 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -3296,4 +3296,38 @@ public final class CraftServer implements Server {
+@@ -3296,4 +3296,76 @@ public final class CraftServer implements Server {
          this.console.addPluginAllowingSleep(plugin.getName(), value);
      }
      // Paper end - API to check if the server is sleeping
@@ -64,5 +78,43 @@ index 99beb7ec6e1864426492f4e27e650ab97ce6d4b5..e49c55593c00ae5e1e79c23eb978baf1
 +                    }
 +                }
 +        );
++    }
++
++    @Override
++    public void setStatsSource(@Nullable me.xiaozhangup.octopus.JsonDataSource source) {
++        if (source == null) {
++            MinecraftServer.getServer().statsSource = null;
++            return;
++        }
++        MinecraftServer.getServer().statsSource = new me.xiaozhangup.octopus.PlayerJsonDataSource() {
++            @Override
++            public void save(String json, String uuid) {
++                source.save(json, uuid);
++            }
++
++            @Override
++            public @Nullable String load(String uuid) {
++                return source.load(uuid);
++            }
++        };
++    }
++
++    @Override
++    public void setAchievementsSource(@Nullable me.xiaozhangup.octopus.JsonDataSource source) {
++        if (source == null) {
++            MinecraftServer.getServer().achievementsSource = null;
++            return;
++        }
++        MinecraftServer.getServer().achievementsSource = new me.xiaozhangup.octopus.PlayerJsonDataSource() {
++            @Override
++            public void save(String json, String uuid) {
++                source.save(json, uuid);
++            }
++
++            @Override
++            public @Nullable String load(String uuid) {
++                return source.load(uuid);
++            }
++        };
 +    }
  }
