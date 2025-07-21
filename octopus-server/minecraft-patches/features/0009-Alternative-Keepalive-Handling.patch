@@ -5,7 +5,7 @@ Subject: [PATCH] Alternative Keepalive Handling
 
 
 diff --git a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
-index e71c1a564e5d4ac43460f89879ff709ee685706f..94ad65bf0463accce16d99fbb7f3bdd99ffb57a7 100644
+index af75f1ca60dc01045f27cb550ac9e3deacf1a1cf..347dd7e0c52b805eb7b869e55424173610408021 100644
 --- a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
 @@ -41,6 +41,7 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
@@ -36,7 +36,7 @@ index e71c1a564e5d4ac43460f89879ff709ee685706f..94ad65bf0463accce16d99fbb7f3bdd9
      }
  
      @Override
-@@ -238,19 +240,19 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
+@@ -242,19 +244,19 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
          // Paper start - give clients a longer time to respond to pings as per pre 1.12.2 timings
          // This should effectively place the keepalive handling back to "as it was" before 1.12.2
          final long elapsedTime = millis - this.keepAliveTime;

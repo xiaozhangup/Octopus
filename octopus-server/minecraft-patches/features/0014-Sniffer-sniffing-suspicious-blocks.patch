@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Zhang <xiaozhangshiw@163.com>
+Date: Mon, 21 Jul 2025 16:43:38 +0800
+Subject: [PATCH] Sniffer sniffing suspicious blocks
+
+
+diff --git a/net/minecraft/data/tags/VanillaBlockTagsProvider.java b/net/minecraft/data/tags/VanillaBlockTagsProvider.java
+index 8829f019eb172234e44d2ae862f0dfe7c7909d83..c9dba5538a0fff937be91fc4616be92589008c58 100644
+--- a/net/minecraft/data/tags/VanillaBlockTagsProvider.java
++++ b/net/minecraft/data/tags/VanillaBlockTagsProvider.java
+@@ -1792,7 +1792,11 @@ public class VanillaBlockTagsProvider extends IntrinsicHolderTagsProvider<Block>
+                 Blocks.MOSS_BLOCK,
+                 Blocks.PALE_MOSS_BLOCK,
+                 Blocks.MUD,
+-                Blocks.MUDDY_MANGROVE_ROOTS
++                Blocks.MUDDY_MANGROVE_ROOTS,
++                // Octopus start - Sniffer sniffing suspicious blocks
++                Blocks.SAND,
++                Blocks.GRAVEL
++                // Octopus end - Sniffer sniffing suspicious blocks
+             );
+         this.tag(BlockTags.SNIFFER_EGG_HATCH_BOOST).add(Blocks.MOSS_BLOCK);
+         IntrinsicHolderTagsProvider.IntrinsicTagAppender<Block> intrinsicTagAppender = this.tag(BlockTags.REPLACEABLE);
+diff --git a/net/minecraft/world/entity/animal/sniffer/Sniffer.java b/net/minecraft/world/entity/animal/sniffer/Sniffer.java
+index 62ca7871d1e5d0fe611948ad43e44c23fdc2d3f8..fdf721685dea98dc45fdc821e69355aeb4f2cfe8 100644
+--- a/net/minecraft/world/entity/animal/sniffer/Sniffer.java
++++ b/net/minecraft/world/entity/animal/sniffer/Sniffer.java
+@@ -264,6 +264,21 @@ public class Sniffer extends Animal {
+     private void dropSeed() {
+         if (this.level() instanceof ServerLevel serverLevel && this.entityData.get(DATA_DROP_SEED_AT_TICK) == this.tickCount) {
+             BlockPos headBlock = this.getHeadBlock();
++            // Octopus start - Sniffer sniffing suspicious blocks
++            net.minecraft.world.level.block.Block block = this.level().getBlockState(headBlock.below()).getBlock();
++            org.bukkit.Material material = block.defaultBlockState().getBukkitMaterial();
++            if (material == org.bukkit.Material.SAND || material == org.bukkit.Material.GRAVEL) {
++                net.minecraft.world.level.block.state.BlockState state =
++                        (material == org.bukkit.Material.SAND ?
++                                net.minecraft.world.level.block.Blocks.SUSPICIOUS_SAND :
++                                net.minecraft.world.level.block.Blocks.SUSPICIOUS_GRAVEL).defaultBlockState();
++
++                if (org.bukkit.craftbukkit.event.CraftEventFactory.callEntityChangeBlockEvent(this, headBlock.below(), state)) {
++                    this.level().setBlock(headBlock.below(), state, 2);
++                }
++                return;
++            }
++            // Octopus end - Sniffer sniffing suspicious blocks
+             this.dropFromGiftLootTable(serverLevel, BuiltInLootTables.SNIFFER_DIGGING, (serverLevel1, itemStack) -> {
+                 ItemEntity itemEntity = new ItemEntity(this.level(), headBlock.getX(), headBlock.getY(), headBlock.getZ(), itemStack);
+                 itemEntity.setDefaultPickUpDelay();

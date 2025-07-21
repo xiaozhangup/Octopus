@@ -8,7 +8,7 @@
  import java.util.stream.Collectors;
  import javax.annotation.Nullable;
  import net.minecraft.ChatFormatting;
-@@ -1359,9 +_,10 @@
+@@ -1366,9 +_,10 @@
  
      @Nullable
      @Override
@@ -20,7 +20,7 @@
              return null;
          } else {
              if (teleportTransition.missingRespawnBlock()) {
-@@ -1385,6 +_,7 @@
+@@ -1392,6 +_,7 @@
              org.bukkit.Bukkit.getServer().getPluginManager().callEvent(tpEvent);
              org.bukkit.Location newExit = tpEvent.getTo();
              if (tpEvent.isCancelled() || newExit == null) {
@@ -28,7 +28,7 @@
                  return null;
              }
              if (!newExit.equals(exit)) {
-@@ -1412,6 +_,7 @@
+@@ -1419,6 +_,7 @@
                  // CraftBukkit end
                  this.connection.resetPosition();
                  teleportTransition.postTeleportTransition().onTransition(this);
@@ -36,7 +36,7 @@
                  return this;
              } else {
                  // CraftBukkit start
-@@ -1432,8 +_,8 @@
+@@ -1439,8 +_,8 @@
                      this.enteredNetherPosition = this.position();
                  }
  
@@ -47,7 +47,7 @@
                  // CraftBukkit start
                  this.isChangingDimension = true; // CraftBukkit - Set teleport invulnerability only if player changing worlds
                  LevelData worlddata = level.getLevelData();
-@@ -1447,31 +_,44 @@
+@@ -1454,31 +_,44 @@
                  this.unsetRemoved();
                  // CraftBukkit end
                  this.setServerLevel(level);
@@ -115,7 +115,7 @@
                  return this;
              }
          }
-@@ -2131,7 +_,7 @@
+@@ -2138,7 +_,7 @@
      }
  
      @Override
@@ -124,7 +124,7 @@
          if (this.isSleeping()) {
              this.stopSleepInBed(true, true);
          }
-@@ -2140,12 +_,15 @@
+@@ -2147,12 +_,15 @@
              this.setCamera(this);
          }
  
@@ -145,7 +145,7 @@
      }
  
      @Override
-@@ -2416,16 +_,32 @@
+@@ -2423,16 +_,32 @@
                  }
              }
              // Paper end - Add PlayerStartSpectatingEntityEvent and PlayerStopSpectatingEntity
