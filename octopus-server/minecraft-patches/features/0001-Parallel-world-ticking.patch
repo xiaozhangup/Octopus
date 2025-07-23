@@ -33,7 +33,7 @@ index ca02c4c71a0a5a1a0ae8bbb40f0b1b7eac64e6fd..22d9fa825438465f67591a7df8d47a22
                      List<org.bukkit.block.BlockState> states = new java.util.ArrayList<>(level.capturedBlockStates.values());
                      level.capturedBlockStates.clear();
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 7aac2a6889af3edaebfaf94deecbf00d00758b68..aee51eedbe4c7cdabf6518b137fa34b9265b3c79 100644
+index 7aac2a6889af3edaebfaf94deecbf00d00758b68..6e442761f863c627bc01ad631e9a76f1dced94fa 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -1,5 +1,9 @@
@@ -46,7 +46,7 @@ index 7aac2a6889af3edaebfaf94deecbf00d00758b68..aee51eedbe4c7cdabf6518b137fa34b9
  import com.google.common.base.Preconditions;
  import com.google.common.base.Splitter;
  import com.google.common.collect.ImmutableList;
-@@ -344,10 +344,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -344,10 +348,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              if (currTime - ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)world).moonrise$getLastMidTickFailure() <= TASK_EXECUTION_FAILURE_BACKOFF) {
                  continue;
              }
@@ -62,7 +62,7 @@ index 7aac2a6889af3edaebfaf94deecbf00d00758b68..aee51eedbe4c7cdabf6518b137fa34b9
                  executed = true;
              }
          }
-@@ -986,6 +990,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -986,6 +994,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              if (this.hasStopped) return;
              this.hasStopped = true;
          }
@@ -70,7 +70,7 @@ index 7aac2a6889af3edaebfaf94deecbf00d00758b68..aee51eedbe4c7cdabf6518b137fa34b9
          if (!hasLoggedStop && isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread("Server stopped"); // Paper - Debugging
          shutdownThread = Thread.currentThread(); // Paper - Improved watchdog support
          org.spigotmc.WatchdogThread.doStop(); // Paper - Improved watchdog support
-@@ -1433,7 +1438,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1433,7 +1442,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              boolean ret = false; // Paper - force execution of all worlds, do not just bias the first
              if (this.tickRateManager.isSprinting() || this.haveTime()) {
                  for (ServerLevel serverLevel : this.getAllLevels()) {
@@ -79,7 +79,7 @@ index 7aac2a6889af3edaebfaf94deecbf00d00758b68..aee51eedbe4c7cdabf6518b137fa34b9
                          ret = true; // Paper - force execution of all worlds, do not just bias the first
                      }
                  }
-@@ -1656,6 +1661,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1656,6 +1665,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
  
      public final io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList entitySchedulerTickList = new io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList(); // Paper - optimise Folia entity scheduler
  
@@ -96,7 +96,7 @@ index 7aac2a6889af3edaebfaf94deecbf00d00758b68..aee51eedbe4c7cdabf6518b137fa34b9
      protected void tickChildren(BooleanSupplier hasTimeLeft) {
          ProfilerFiller profilerFiller = Profiler.get();
          this.getPlayerList().getPlayers().forEach(serverPlayer1 -> serverPlayer1.connection.suspendFlushing());
-@@ -1704,6 +1719,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1704,6 +1723,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          }
  
          this.isIteratingOverLevels = true; // Paper - Throw exception on world create while being ticked
@@ -104,7 +104,7 @@ index 7aac2a6889af3edaebfaf94deecbf00d00758b68..aee51eedbe4c7cdabf6518b137fa34b9
          for (ServerLevel serverLevel : this.getAllLevels()) {
              serverLevel.hasPhysicsEvent = org.bukkit.event.block.BlockPhysicsEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper - BlockPhysicsEvent
              serverLevel.hasEntityMoveEvent = io.papermc.paper.event.entity.EntityMoveEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper - Add EntityMoveEvent
-@@ -1718,20 +1734,44 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1718,20 +1738,44 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              }
              // CraftBukkit end */
  
@@ -233,10 +233,10 @@ index dda8d38ef61672cc714d9e5a475f9b0412ed5ff9..8f41bed57265846457a1f891b3113345
      // CraftBukkit start
      public final LevelStorageSource.LevelStorageAccess levelStorageAccess;
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 3d2c0a4d3a1f9d3e5cc6cd0cdb988ae1205de821..b6f15d4a8a20793c417201f6829cbc65fe4aa846 100644
+index 70b6ea8ab35e88989b5b1f5ffd64490a9d743b56..5b153979f1191f4c8d68713dc684c09020459830 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -4024,6 +4024,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -4023,6 +4023,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
              // Paper end - Fix item duplication and teleport issues
              entityx.restoreFrom(this);
              this.removeAfterChangingDimensions();
@@ -244,7 +244,7 @@ index 3d2c0a4d3a1f9d3e5cc6cd0cdb988ae1205de821..b6f15d4a8a20793c417201f6829cbc65
              entityx.teleportSetPosition(PositionMoveRotation.of(teleportTransition), teleportTransition.relatives());
              if (this.inWorld) newLevel.addDuringTeleport(entityx); // CraftBukkit - Don't spawn the new entity if the current entity isn't spawned
  
-@@ -4035,6 +4036,10 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -4034,6 +4035,10 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
              teleportTransition.postTeleportTransition().onTransition(entityx);
              this.teleportSpectators(teleportTransition, oldLevel);
              profilerFiller.pop();
