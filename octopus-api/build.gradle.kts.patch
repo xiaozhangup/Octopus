@@ -1,0 +1,21 @@
+--- a/paper-api/build.gradle.kts
++++ b/paper-api/build.gradle.kts
+@@ -100,6 +_,18 @@
+     main {
+         java {
+             srcDir(generatedDir)
++            srcDir(file("../paper-api/src/main/java"))
++        }
++        resources {
++            srcDir(file("../paper-api/src/main/resources"))
++        }
++    }
++    test {
++        java {
++            srcDir(file("../paper-api/src/test/java"))
++        }
++        resources {
++            srcDir(file("../paper-api/src/test/resources"))
+         }
+     }
+ }
