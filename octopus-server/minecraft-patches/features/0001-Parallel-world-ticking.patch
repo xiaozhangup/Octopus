@@ -1,0 +1,508 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: MrHua269 <mrhua269@gmail.com>
+Date: Wed, 23 Jul 2025 22:35:16 +0800
+Subject: [PATCH] Parallel world ticking
+
+
+diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
+index 8f8268924ac92fca5df8a11e08031fa8416c6e05..235888cc7046e0b614ad70d0fffbca2e4be56bdc 100644
+--- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
++++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
+@@ -552,7 +552,7 @@ public final class ChunkTaskScheduler {
+ 
+         // we could do a simple spinwait here, since we do not need to process tasks while performing this load
+         // but we process tasks only because it's a better use of the time spent
+-        this.world.getChunkSource().mainThreadProcessor.managedBlock(() -> {
++        this.world.worldTaskQueueInstance.spinWait(() -> { // Octopus
+             return ((ChunkSystemServerLevel)this.world).moonrise$getSpecificChunkIfLoaded(chunkX, chunkZ, status) != null;
+         });
+ 
+diff --git a/net/minecraft/core/dispenser/DispenseItemBehavior.java b/net/minecraft/core/dispenser/DispenseItemBehavior.java
+index ca02c4c71a0a5a1a0ae8bbb40f0b1b7eac64e6fd..22d9fa825438465f67591a7df8d47a22d92dff17 100644
+--- a/net/minecraft/core/dispenser/DispenseItemBehavior.java
++++ b/net/minecraft/core/dispenser/DispenseItemBehavior.java
+@@ -401,8 +401,8 @@ public interface DispenseItemBehavior {
+                 // CraftBukkit start
+                 level.captureTreeGeneration = false;
+                 if (!level.capturedBlockStates.isEmpty()) {
+-                    org.bukkit.TreeType treeType = net.minecraft.world.level.block.SaplingBlock.treeType;
+-                    net.minecraft.world.level.block.SaplingBlock.treeType = null;
++                    org.bukkit.TreeType treeType = net.minecraft.world.level.block.SaplingBlock.treeTypeRT.get(); // Octopus
++                    net.minecraft.world.level.block.SaplingBlock.treeTypeRT.set(null); // Octopus
+                     org.bukkit.Location location = org.bukkit.craftbukkit.util.CraftLocation.toBukkit(blockPos, level.getWorld());
+                     List<org.bukkit.block.BlockState> states = new java.util.ArrayList<>(level.capturedBlockStates.values());
+                     level.capturedBlockStates.clear();
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index 7aac2a6889af3edaebfaf94deecbf00d00758b68..aee51eedbe4c7cdabf6518b137fa34b9265b3c79 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -1,5 +1,9 @@
+ package net.minecraft.server;
+ 
++// Octopus start
++import ca.spottedleaf.moonrise.common.util.TickThread;
++import org.apache.commons.lang3.tuple.Pair;
++// Octopus end
+ import com.google.common.base.Preconditions;
+ import com.google.common.base.Splitter;
+ import com.google.common.collect.ImmutableList;
+@@ -344,10 +344,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+             if (currTime - ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)world).moonrise$getLastMidTickFailure() <= TASK_EXECUTION_FAILURE_BACKOFF) {
+                 continue;
+             }
+-            if (!world.getChunkSource().pollTask()) {
++            if (!world.worldTaskQueueInstance.isOwnedByCurrentThread()) { // Octopus
+                 // we need to back off if this fails
+                 ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)world).moonrise$setLastMidTickFailure(currTime);
+             } else {
++                if (!world.worldTaskQueueInstance.pollTasks()) { // Octopus
++                    ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)world).moonrise$setLastMidTickFailure(currTime); // Octopus
++                } // Octopus
++
+                 executed = true;
+             }
+         }
+@@ -986,6 +990,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+             if (this.hasStopped) return;
+             this.hasStopped = true;
+         }
++        this.worldTickExecutor.shutdownNow(); // Octopus
+         if (!hasLoggedStop && isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread("Server stopped"); // Paper - Debugging
+         shutdownThread = Thread.currentThread(); // Paper - Improved watchdog support
+         org.spigotmc.WatchdogThread.doStop(); // Paper - Improved watchdog support
+@@ -1433,7 +1438,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+             boolean ret = false; // Paper - force execution of all worlds, do not just bias the first
+             if (this.tickRateManager.isSprinting() || this.haveTime()) {
+                 for (ServerLevel serverLevel : this.getAllLevels()) {
+-                    if (serverLevel.getChunkSource().pollTask()) {
++                    if (serverLevel.getChunkSource().pollTask() || (!this.isIteratingOverLevels && serverLevel.worldTaskQueueInstance.pollTasks())) { // Octopus
+                         ret = true; // Paper - force execution of all worlds, do not just bias the first
+                     }
+                 }
+@@ -1656,6 +1661,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+ 
+     public final io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList entitySchedulerTickList = new io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList(); // Paper - optimise Folia entity scheduler
+ 
++    // Octopus start
++    private final java.util.concurrent.atomic.AtomicInteger threadIdGenerator = new java.util.concurrent.atomic.AtomicInteger(0);
++    private final java.util.concurrent.ExecutorService worldTickExecutor = java.util.concurrent.Executors.newCachedThreadPool(task -> {
++        final TickThread wrapped = new TickThread(task, "Octopus World Tick Worker - " + threadIdGenerator.getAndIncrement());
++        wrapped.setPriority(6);
++        wrapped.setContextClassLoader(MinecraftServer.class.getClassLoader());
++        return wrapped;
++    });
++    // Octopus end
++
+     protected void tickChildren(BooleanSupplier hasTimeLeft) {
+         ProfilerFiller profilerFiller = Profiler.get();
+         this.getPlayerList().getPlayers().forEach(serverPlayer1 -> serverPlayer1.connection.suspendFlushing());
+@@ -1704,6 +1719,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+         }
+ 
+         this.isIteratingOverLevels = true; // Paper - Throw exception on world create while being ticked
++        final java.util.Deque<java.util.concurrent.Future<Pair<ServerLevel, Throwable>>> tasks = new java.util.ArrayDeque<>();
+         for (ServerLevel serverLevel : this.getAllLevels()) {
+             serverLevel.hasPhysicsEvent = org.bukkit.event.block.BlockPhysicsEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper - BlockPhysicsEvent
+             serverLevel.hasEntityMoveEvent = io.papermc.paper.event.entity.EntityMoveEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper - Add EntityMoveEvent
+@@ -1718,20 +1734,44 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+             }
+             // CraftBukkit end */
+ 
+-            profilerFiller.push("tick");
++            //profilerFiller.push("tick"); // Octopus
+ 
++            // Octopus start
++            java.util.concurrent.Callable<Pair<ServerLevel, Throwable>> tickingFunction = () -> {
++            serverLevel.worldTaskQueueInstance.acquirePoller(); // Octopus
+             try {
+                 serverLevel.tick(hasTimeLeft);
+             } catch (Throwable var7) {
+-                CrashReport crashReport = CrashReport.forThrowable(var7, "Exception ticking world");
+-                serverLevel.fillReportDetails(crashReport);
+-                throw new ReportedException(crashReport);
++                return Pair.of(serverLevel, var7);
++            }finally {
++                serverLevel.explosionDensityCache.clear(); // Paper - Optimize explosions // Octopus - Move up
++                serverLevel.worldTaskQueueInstance.releasePoller(); // Octopus
+             }
++                return Pair.of(serverLevel, null);
++            };
++            tasks.add(this.worldTickExecutor.submit(tickingFunction)); // Octopus
++            // Octopus end
+ 
+-            profilerFiller.pop();
+-            profilerFiller.pop();
++            //profilerFiller.pop(); // Octopus
++            //profilerFiller.pop(); // Octopus
+             serverLevel.explosionDensityCache.clear(); // Paper - Optimize explosions
+         }
++        // Octopus start
++        java.util.concurrent.Future<Pair<ServerLevel, Throwable>> tickTask;
++        while((tickTask = tasks.poll()) != null) {
++            try {
++                Pair<ServerLevel, Throwable> result = tickTask.get();
++
++                Throwable throwable = result.getRight();
++
++                if (throwable != null) {
++                    throwable.printStackTrace();
++                }
++            } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
++                e.printStackTrace();
++            }
++        }
++        // Octopus end
+         this.isIteratingOverLevels = false; // Paper - Throw exception on world create while being ticked
+ 
+         profilerFiller.popPush("connection");
+diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
+index 2882cd829d4d8e1f8615f085f6908efcdf68ac62..9a89f54e5839ed5c9faf43c6fb90172679be245d 100644
+--- a/net/minecraft/server/level/ServerChunkCache.java
++++ b/net/minecraft/server/level/ServerChunkCache.java
+@@ -118,7 +118,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+ 
+         if (ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this.level, chunkX, chunkZ)) {
+             ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler.pushChunkWait(this.level, chunkX, chunkZ);
+-            this.mainThreadProcessor.managedBlock(completable::isDone);
++            this.level.worldTaskQueueInstance.spinWait(completable::isDone);
+             ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler.popChunkWait();
+         }
+ 
+@@ -364,7 +364,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+         CompletableFuture<ChunkResult<ChunkAccess>> chunkFutureMainThread;
+         if (flag) {
+             chunkFutureMainThread = this.getChunkFutureMainThread(x, z, chunkStatus, requireChunk);
+-            this.mainThreadProcessor.managedBlock(chunkFutureMainThread::isDone);
++            this.level.worldTaskQueueInstance.spinWait(chunkFutureMainThread::isDone);
+         } else {
+             chunkFutureMainThread = CompletableFuture.<CompletableFuture<ChunkResult<ChunkAccess>>>supplyAsync(
+                     () -> this.getChunkFutureMainThread(x, z, chunkStatus, requireChunk), this.mainThreadProcessor
+@@ -437,6 +437,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+     }
+ 
+     public boolean pollTask() {
++        if (true) { return false; } // Octopus
+         return this.mainThreadProcessor.pollTask();
+     }
+ 
+@@ -642,7 +643,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+ 
+     @VisibleForTesting
+     public int getPendingTasksCount() {
+-        return this.mainThreadProcessor.getPendingTasksCount();
++        return this.level.worldTaskQueueInstance.taskQueueLength();
+     }
+ 
+     public ChunkGenerator getGenerator() {
+@@ -673,7 +674,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+ 
+     @Override
+     public void onLightUpdate(LightLayer type, SectionPos pos) {
+-        this.mainThreadProcessor.execute(() -> {
++        this.level.worldTaskQueueInstance.submitTask(() -> {
+             ChunkHolder visibleChunkIfPresent = this.getVisibleChunkIfPresent(pos.chunk().toLong());
+             if (visibleChunkIfPresent != null && visibleChunkIfPresent.sectionLightChanged(type, pos.y())) {
+                 this.chunkHoldersToBroadcast.add(visibleChunkIfPresent);
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index dda8d38ef61672cc714d9e5a475f9b0412ed5ff9..8f41bed57265846457a1f891b3113345046ad638 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -207,6 +207,24 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+     private final StructureCheck structureCheck;
+     private final boolean tickTime;
+     private final RandomSequences randomSequences;
++    // Octopus start
++    public final me.xiaozhangup.octopus.WorldTaskQueue worldTaskQueueInstance = new me.xiaozhangup.octopus.WorldTaskQueue(this);
++    public void submitCallbackTask(Runnable task) {
++        //worldTaskQueueInstance.submitCallbackTask(task);
++    }
++
++    public void submitScopedTask(Runnable task) {
++        //worldTaskQueueInstance.submitScopedTask(task);
++    }
++
++    public void submitCyclicalTask(String id, Runnable task) {
++        worldTaskQueueInstance.submitCyclicalTask(id, task);
++    }
++
++    public Runnable removeCyclicalTask(String id) {
++        return worldTaskQueueInstance.removeCyclicalTask(id);
++    }
++    // Octopus end
+ 
+     // CraftBukkit start
+     public final LevelStorageSource.LevelStorageAccess levelStorageAccess;
+diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
+index 3d2c0a4d3a1f9d3e5cc6cd0cdb988ae1205de821..b6f15d4a8a20793c417201f6829cbc65fe4aa846 100644
+--- a/net/minecraft/world/entity/Entity.java
++++ b/net/minecraft/world/entity/Entity.java
+@@ -4024,6 +4024,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+             // Paper end - Fix item duplication and teleport issues
+             entityx.restoreFrom(this);
+             this.removeAfterChangingDimensions();
++            var pendingAdd = (Runnable) () -> { // Octopus
+             entityx.teleportSetPosition(PositionMoveRotation.of(teleportTransition), teleportTransition.relatives());
+             if (this.inWorld) newLevel.addDuringTeleport(entityx); // CraftBukkit - Don't spawn the new entity if the current entity isn't spawned
+ 
+@@ -4035,6 +4036,10 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+             teleportTransition.postTeleportTransition().onTransition(entityx);
+             this.teleportSpectators(teleportTransition, oldLevel);
+             profilerFiller.pop();
++            }; // Octopus
++            // Octopus start - parallel level ticking
++            newLevel.worldTaskQueueInstance.submitTask(pendingAdd);
++            // Octopus end
+             return entityx;
+         }
+     }
+diff --git a/net/minecraft/world/entity/ai/behavior/GoToPotentialJobSite.java b/net/minecraft/world/entity/ai/behavior/GoToPotentialJobSite.java
+index 3614551856c594f3c0cfee984fcf03fad672b007..e5dfd01c7be5327ecae9aa47e0570d70a30737d0 100644
+--- a/net/minecraft/world/entity/ai/behavior/GoToPotentialJobSite.java
++++ b/net/minecraft/world/entity/ai/behavior/GoToPotentialJobSite.java
+@@ -47,10 +47,17 @@ public class GoToPotentialJobSite extends Behavior<Villager> {
+             ServerLevel level1 = level.getServer().getLevel(globalPos.dimension());
+             if (level1 != null) {
+                 PoiManager poiManager = level1.getPoiManager();
++                //Octopus start - Fix off world POI accessing
++                java.lang.Runnable scheduledRelease = () -> {
+                 if (poiManager.exists(blockPos, holder -> true)) {
+                     poiManager.release(blockPos);
+                 }
+-
++                };
++                if (!(level1.worldTaskQueueInstance.isOwnedByCurrentThread()))
++                    level1.worldTaskQueueInstance.submitTask(scheduledRelease);
++                else
++                    scheduledRelease.run();
++                //Octopus end
+                 DebugPackets.sendPoiTicketCountPacket(level, blockPos);
+             }
+         });
+diff --git a/net/minecraft/world/entity/ai/behavior/YieldJobSite.java b/net/minecraft/world/entity/ai/behavior/YieldJobSite.java
+index 44340aa26bc89faaf8842bb36048cf61dba34314..b0ffdda420de6ee0e8196e0e13fb0054b20579cd 100644
+--- a/net/minecraft/world/entity/ai/behavior/YieldJobSite.java
++++ b/net/minecraft/world/entity/ai/behavior/YieldJobSite.java
+@@ -33,7 +33,10 @@ public class YieldJobSite {
+                         } else if (!villager.getVillagerData().profession().is(VillagerProfession.NONE)) {
+                             return false;
+                         } else {
+-                            BlockPos blockPos = instance.<GlobalPos>get(potentialJobSite).pos();
++                            final GlobalPos globalPos = instance.<GlobalPos>get(potentialJobSite); //Octopus start - Fix off world POI accessing
++                            final net.minecraft.server.level.ServerLevel targetLevel = net.minecraft.server.MinecraftServer.getServer().getLevel(globalPos.dimension()); //Octopus start - Fix off world POI accessing
++                            BlockPos blockPos = globalPos.pos(); //Octopus start - Fix off world POI accessing
++                            if (!(targetLevel.worldTaskQueueInstance.isOwnedByCurrentThread())) return true; //Octopus start - Fix off world POI accessing
+                             Optional<Holder<PoiType>> type = level.getPoiManager().getType(blockPos);
+                             if (type.isEmpty()) {
+                                 return true;
+diff --git a/net/minecraft/world/level/block/FungusBlock.java b/net/minecraft/world/level/block/FungusBlock.java
+index 9711efb088bd0da9168e9bcd0496bd7caddd2974..989424a9427a1ba34c80f44483ba0ab616042613 100644
+--- a/net/minecraft/world/level/block/FungusBlock.java
++++ b/net/minecraft/world/level/block/FungusBlock.java
+@@ -76,9 +76,9 @@ public class FungusBlock extends VegetationBlock implements BonemealableBlock {
+             // CraftBukkit start
+             .map((value) -> {
+                 if (this == Blocks.WARPED_FUNGUS) {
+-                    SaplingBlock.treeType = org.bukkit.TreeType.WARPED_FUNGUS;
++                    SaplingBlock.treeTypeRT.set(org.bukkit.TreeType.WARPED_FUNGUS); // Octopus
+                 } else if (this == Blocks.CRIMSON_FUNGUS) {
+-                    SaplingBlock.treeType = org.bukkit.TreeType.CRIMSON_FUNGUS;
++                    SaplingBlock.treeTypeRT.set(org.bukkit.TreeType.CRIMSON_FUNGUS); // Octopus
+                 }
+                 return value;
+             })
+diff --git a/net/minecraft/world/level/block/MushroomBlock.java b/net/minecraft/world/level/block/MushroomBlock.java
+index d306f5f524dc64618df94c9783c2168dc561a5e3..da452eedc5c5adfbf1d47c159fa84397c85686d5 100644
+--- a/net/minecraft/world/level/block/MushroomBlock.java
++++ b/net/minecraft/world/level/block/MushroomBlock.java
+@@ -93,7 +93,7 @@ public class MushroomBlock extends VegetationBlock implements BonemealableBlock
+             return false;
+         } else {
+             level.removeBlock(pos, false);
+-            SaplingBlock.treeType = (this == Blocks.BROWN_MUSHROOM) ? org.bukkit.TreeType.BROWN_MUSHROOM : org.bukkit.TreeType.RED_MUSHROOM; // CraftBukkit
++            SaplingBlock.treeTypeRT.set((this == Blocks.BROWN_MUSHROOM) ? org.bukkit.TreeType.BROWN_MUSHROOM : org.bukkit.TreeType.RED_MUSHROOM); // CraftBukkit // Octopus
+             if (optional.get().value().place(level, level.getChunkSource().getGenerator(), random, pos)) {
+                 return true;
+             } else {
+diff --git a/net/minecraft/world/level/block/RedStoneWireBlock.java b/net/minecraft/world/level/block/RedStoneWireBlock.java
+index 1943a6aad888647953e2d9dbbeedb0bd81c6f9df..07f6eab468fb10c4e1575660d1c38a08e290f425 100644
+--- a/net/minecraft/world/level/block/RedStoneWireBlock.java
++++ b/net/minecraft/world/level/block/RedStoneWireBlock.java
+@@ -267,7 +267,7 @@ public class RedStoneWireBlock extends Block {
+ 
+     // Paper start - Optimize redstone (Eigencraft)
+     // The bulk of the new functionality is found in RedstoneWireTurbo.java
+-    io.papermc.paper.redstone.RedstoneWireTurbo turbo = new io.papermc.paper.redstone.RedstoneWireTurbo(this);
++    //io.papermc.paper.redstone.RedstoneWireTurbo turbo = new io.papermc.paper.redstone.RedstoneWireTurbo(this); // Octopus
+ 
+     /*
+      * Modified version of pre-existing updateSurroundingRedstone, which is called from
+@@ -275,7 +275,7 @@ public class RedStoneWireBlock extends Block {
+      * Note: Added 'source' argument so as to help determine direction of information flow
+      */
+     private void updateSurroundingRedstone(Level worldIn, BlockPos pos, BlockState state, @Nullable Orientation orientation, boolean blockAdded) {
+-        if (worldIn.paperConfig().misc.redstoneImplementation == io.papermc.paper.configuration.WorldConfiguration.Misc.RedstoneImplementation.EIGENCRAFT) {
++        if (false && worldIn.paperConfig().misc.redstoneImplementation == io.papermc.paper.configuration.WorldConfiguration.Misc.RedstoneImplementation.EIGENCRAFT) {
+             // since 24w33a the source pos is no longer given, but instead an Orientation parameter
+             // when this is not null, it can be used to find the source pos, which the turbo uses
+             // to find the direction of information flow
+@@ -283,8 +283,8 @@ public class RedStoneWireBlock extends Block {
+             if (orientation != null) {
+                 source = pos.relative(orientation.getFront().getOpposite());
+             }
+-            turbo.updateSurroundingRedstone(worldIn, pos, state, source);
+-            return;
++            //worldIn.turbo.updateSurroundingRedstone(worldIn, pos, state, source); // Octopus
++            //return; // Octopus
+         }
+         updatePowerStrength(worldIn, pos, state, orientation, blockAdded);
+     }
+@@ -310,9 +310,11 @@ public class RedStoneWireBlock extends Block {
+                 state = state.setValue(POWER, newPower);
+                 // [Space Walker] suppress shape updates and emit those manually to
+                 // bypass the new neighbor update stack.
+-                if (level.setBlock(pos, state, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS)) {
++                // Octopus start
++                /*if (level.setBlock(pos, state, Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_CLIENTS)) {
+                     turbo.updateNeighborShapes(level, pos, state);
+-                }
++                }*/
++                // Octopus end
+             }
+         }
+         return state;
+@@ -348,7 +350,7 @@ public class RedStoneWireBlock extends Block {
+     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+         if (!oldState.is(state.getBlock()) && !level.isClientSide) {
+             // Paper start - optimize redstone - replace call to updatePowerStrength
+-            if (level.paperConfig().misc.redstoneImplementation == io.papermc.paper.configuration.WorldConfiguration.Misc.RedstoneImplementation.ALTERNATE_CURRENT) {
++            if (false && level.paperConfig().misc.redstoneImplementation == io.papermc.paper.configuration.WorldConfiguration.Misc.RedstoneImplementation.ALTERNATE_CURRENT) { // Octopus
+                 level.getWireHandler().onWireAdded(pos, state); // Alternate Current
+             } else {
+                 this.updateSurroundingRedstone(level, pos, state, null, true); // Vanilla/Eigencraft
+@@ -371,7 +373,7 @@ public class RedStoneWireBlock extends Block {
+             }
+ 
+             // Paper start - optimize redstone - replace call to updatePowerStrength
+-            if (level.paperConfig().misc.redstoneImplementation == io.papermc.paper.configuration.WorldConfiguration.Misc.RedstoneImplementation.ALTERNATE_CURRENT) {
++            if (false && level.paperConfig().misc.redstoneImplementation == io.papermc.paper.configuration.WorldConfiguration.Misc.RedstoneImplementation.ALTERNATE_CURRENT) {
+                 level.getWireHandler().onWireRemoved(pos, state); // Alternate Current
+             } else {
+                 this.updateSurroundingRedstone(level, pos, state, null, false); // Vanilla/Eigencraft
+@@ -401,7 +403,7 @@ public class RedStoneWireBlock extends Block {
+         if (!level.isClientSide) {
+             // Paper start - optimize redstone (Alternate Current)
+             // Alternate Current handles breaking of redstone wires in the WireHandler.
+-            if (level.paperConfig().misc.redstoneImplementation == io.papermc.paper.configuration.WorldConfiguration.Misc.RedstoneImplementation.ALTERNATE_CURRENT) {
++            if (false && level.paperConfig().misc.redstoneImplementation == io.papermc.paper.configuration.WorldConfiguration.Misc.RedstoneImplementation.ALTERNATE_CURRENT) { // Octopus
+                 level.getWireHandler().onWireUpdated(pos, state, orientation);
+             } else
+                 // Paper end - optimize redstone (Alternate Current)
+diff --git a/net/minecraft/world/level/block/SaplingBlock.java b/net/minecraft/world/level/block/SaplingBlock.java
+index a22cb810622e0ae97bc2a0d6390d026d9482b783..8bf6fb051a3b9a1831facdecb7925e2d68a81742 100644
+--- a/net/minecraft/world/level/block/SaplingBlock.java
++++ b/net/minecraft/world/level/block/SaplingBlock.java
+@@ -25,7 +25,7 @@ public class SaplingBlock extends VegetationBlock implements BonemealableBlock {
+     public static final IntegerProperty STAGE = BlockStateProperties.STAGE;
+     private static final VoxelShape SHAPE = Block.column(12.0, 0.0, 12.0);
+     protected final TreeGrower treeGrower;
+-    public static @javax.annotation.Nullable org.bukkit.TreeType treeType; // CraftBukkit
++    public static final ThreadLocal<org.bukkit.TreeType> treeTypeRT = new ThreadLocal<>(); // CraftBukkit // Octopus (from Folia)
+ 
+     @Override
+     public MapCodec<? extends SaplingBlock> codec() {
+@@ -62,8 +62,8 @@ public class SaplingBlock extends VegetationBlock implements BonemealableBlock {
+                 this.treeGrower.growTree(level, level.getChunkSource().getGenerator(), pos, state, random);
+                 level.captureTreeGeneration = false;
+                 if (!level.capturedBlockStates.isEmpty()) {
+-                    org.bukkit.TreeType treeType = SaplingBlock.treeType;
+-                    SaplingBlock.treeType = null;
++                    org.bukkit.TreeType treeType = SaplingBlock.treeTypeRT.get(); // Octopus
++                    SaplingBlock.treeTypeRT.set(null); // Octopus
+                     org.bukkit.Location location = org.bukkit.craftbukkit.util.CraftLocation.toBukkit(pos, level.getWorld());
+                     java.util.List<org.bukkit.block.BlockState> blocks = new java.util.ArrayList<>(level.capturedBlockStates.values());
+                     level.capturedBlockStates.clear();
+diff --git a/net/minecraft/world/level/block/grower/TreeGrower.java b/net/minecraft/world/level/block/grower/TreeGrower.java
+index d23f255de9208f42125fa358a9e8194c984fe4d3..142be55f6e037c2cb2beab52f66d5a926bbcfd12 100644
+--- a/net/minecraft/world/level/block/grower/TreeGrower.java
++++ b/net/minecraft/world/level/block/grower/TreeGrower.java
+@@ -203,55 +203,57 @@ public final class TreeGrower {
+ 
+     // CraftBukkit start
+     private void setTreeType(Holder<ConfiguredFeature<?, ?>> feature) {
++        org.bukkit.TreeType treeType; // Octopus
+         if (feature.is(TreeFeatures.OAK) || feature.is(TreeFeatures.OAK_BEES_005)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.TREE;
++            treeType = org.bukkit.TreeType.TREE; // Octopus
+         } else if (feature.is(TreeFeatures.HUGE_RED_MUSHROOM)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.RED_MUSHROOM;
++            treeType = org.bukkit.TreeType.RED_MUSHROOM; // Octopus
+         } else if (feature.is(TreeFeatures.HUGE_BROWN_MUSHROOM)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.BROWN_MUSHROOM;
++            treeType = org.bukkit.TreeType.BROWN_MUSHROOM; // Octopus
+         } else if (feature.is(TreeFeatures.JUNGLE_TREE)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.COCOA_TREE;
++            treeType = org.bukkit.TreeType.COCOA_TREE; // Octopus
+         } else if (feature.is(TreeFeatures.JUNGLE_TREE_NO_VINE)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.SMALL_JUNGLE;
++            treeType = org.bukkit.TreeType.SMALL_JUNGLE; // Octopus
+         } else if (feature.is(TreeFeatures.PINE)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.TALL_REDWOOD;
++            treeType = org.bukkit.TreeType.TALL_REDWOOD; // Octopus
+         } else if (feature.is(TreeFeatures.SPRUCE)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.REDWOOD;
++            treeType = org.bukkit.TreeType.REDWOOD; // Octopus
+         } else if (feature.is(TreeFeatures.ACACIA)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.ACACIA;
++            treeType = org.bukkit.TreeType.ACACIA; // Octopus
+         } else if (feature.is(TreeFeatures.BIRCH) || feature.is(TreeFeatures.BIRCH_BEES_005)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.BIRCH;
++            treeType = org.bukkit.TreeType.BIRCH; // Octopus
+         } else if (feature.is(TreeFeatures.SUPER_BIRCH_BEES_0002)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.TALL_BIRCH;
++            treeType = org.bukkit.TreeType.TALL_BIRCH; // Octopus
+         } else if (feature.is(TreeFeatures.SWAMP_OAK)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.SWAMP;
++            treeType = org.bukkit.TreeType.SWAMP; // Octopus
+         } else if (feature.is(TreeFeatures.FANCY_OAK) || feature.is(TreeFeatures.FANCY_OAK_BEES_005)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.BIG_TREE;
++            treeType = org.bukkit.TreeType.BIG_TREE; // Octopus
+         } else if (feature.is(TreeFeatures.JUNGLE_BUSH)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.JUNGLE_BUSH;
++            treeType = org.bukkit.TreeType.JUNGLE_BUSH; // Octopus
+         } else if (feature.is(TreeFeatures.DARK_OAK)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.DARK_OAK;
++            treeType = org.bukkit.TreeType.DARK_OAK; // Octopus
+         } else if (feature.is(TreeFeatures.MEGA_SPRUCE)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.MEGA_REDWOOD;
++            treeType = org.bukkit.TreeType.MEGA_REDWOOD; // Octopus
+         } else if (feature.is(TreeFeatures.MEGA_PINE)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.MEGA_PINE;
++            treeType = org.bukkit.TreeType.MEGA_PINE; // Octopus
+         } else if (feature.is(TreeFeatures.MEGA_JUNGLE_TREE)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.JUNGLE;
++            treeType = org.bukkit.TreeType.JUNGLE; // Octopus
+         } else if (feature.is(TreeFeatures.AZALEA_TREE)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.AZALEA;
++            treeType = org.bukkit.TreeType.AZALEA; // Octopus
+         } else if (feature.is(TreeFeatures.MANGROVE)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.MANGROVE;
++            treeType = org.bukkit.TreeType.MANGROVE; // Octopus
+         } else if (feature.is(TreeFeatures.TALL_MANGROVE)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.TALL_MANGROVE;
++            treeType = org.bukkit.TreeType.TALL_MANGROVE; // Octopus
+         } else if (feature.is(TreeFeatures.CHERRY) || feature.is(TreeFeatures.CHERRY_BEES_005)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.CHERRY;
++            treeType = org.bukkit.TreeType.CHERRY; // Octopus
+         } else if (feature.is(TreeFeatures.PALE_OAK) || feature.is(TreeFeatures.PALE_OAK_BONEMEAL)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.PALE_OAK;
++            treeType = org.bukkit.TreeType.PALE_OAK; // Octopus
+         } else if (feature.is(TreeFeatures.PALE_OAK_CREAKING)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.PALE_OAK_CREAKING;
++            treeType = org.bukkit.TreeType.PALE_OAK_CREAKING; // Octopus
+         } else {
+             throw new IllegalArgumentException("Unknown tree generator " + feature);
+         }
++        net.minecraft.world.level.block.SaplingBlock.treeTypeRT.set(treeType); // Octopus
+     }
+     // CraftBukkit end
+ }
