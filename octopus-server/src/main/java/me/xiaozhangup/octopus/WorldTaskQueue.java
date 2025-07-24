@@ -51,7 +51,7 @@ public class WorldTaskQueue implements Executor {
     }
 
     public boolean pollTasks() {
-        if (!this.isOwnedByCurrentThread()) {
+        if (this.anyThreadHolding() && !this.isOwnedByCurrentThread()) {
             return false;
         }
 
@@ -95,6 +95,10 @@ public class WorldTaskQueue implements Executor {
         if (!OWNER_HANDLE.compareAndSet(this, currentThread, null)) {
             throw new IllegalStateException("Thread " + OWNER_HANDLE.getVolatile(this) + " has already owned this queue !");
         }
+    }
+
+    public boolean anyThreadHolding() {
+        return OWNER_HANDLE.getVolatile(this) != null;
     }
 
     public boolean isOwnedByCurrentThread() {

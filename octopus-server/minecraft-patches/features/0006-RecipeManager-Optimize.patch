@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Thu, 24 Jul 2025 22:56:16 +0800
+Subject: [PATCH] RecipeManager Optimize
+
+
+diff --git a/net/minecraft/world/item/crafting/RecipeManager.java b/net/minecraft/world/item/crafting/RecipeManager.java
+index 07d7c4737635f671f33b8f73001d67928fc75782..eecdda8e03485ffa0af5868bcc98dd5ed88fba5f 100644
+--- a/net/minecraft/world/item/crafting/RecipeManager.java
++++ b/net/minecraft/world/item/crafting/RecipeManager.java
+@@ -167,7 +167,7 @@ public class RecipeManager extends SimplePreparableReloadListener<RecipeMap> imp
+ 
+     public <I extends RecipeInput, T extends Recipe<I>> Optional<RecipeHolder<T>> getRecipeFor(RecipeType<T> recipeType, I input, Level level) {
+         // CraftBukkit start
+-        List<RecipeHolder<T>> list = this.recipes.getRecipesFor(recipeType, input, level).toList();
++        List<RecipeHolder<T>> list = this.recipes.getRecipesForList(recipeType, input, level); // DivineMC - Carpet-Fixes - Remove streams to be faster
+         return (list.isEmpty()) ? Optional.empty() : Optional.of(list.getLast()); // CraftBukkit - SPIGOT-4638: last recipe gets priority
+         // CraftBukkit end
+     }
+diff --git a/net/minecraft/world/item/crafting/RecipeMap.java b/net/minecraft/world/item/crafting/RecipeMap.java
+index 098753ddd215b6ef5915fac71d8c4f0b19cf4142..1778e58dca9430756d59d07bf017ebe4cc1f4ed4 100644
+--- a/net/minecraft/world/item/crafting/RecipeMap.java
++++ b/net/minecraft/world/item/crafting/RecipeMap.java
+@@ -75,4 +75,24 @@ public class RecipeMap {
+     public <I extends RecipeInput, T extends Recipe<I>> Stream<RecipeHolder<T>> getRecipesFor(RecipeType<T> type, I input, Level level) {
+         return input.isEmpty() ? Stream.empty() : this.byType(type).stream().filter(recipeHolder -> recipeHolder.value().matches(input, level));
+     }
++
++    // DivineMC start - Carpet-Fixes - Remove streams to be faster
++    public <I extends RecipeInput, T extends Recipe<I>> java.util.List<RecipeHolder<T>> getRecipesForList(RecipeType<T> type, I input, Level world) {
++        java.util.List<RecipeHolder<T>> list;
++
++        if (input.isEmpty()) {
++            return java.util.List.of();
++        } else {
++            list = new java.util.ArrayList<>();
++        }
++
++        for (RecipeHolder<T> recipeholder : this.byType(type)) {
++            if (recipeholder.value().matches(input, world)) {
++                list.add(recipeholder);
++            }
++        }
++
++        return list;
++    }
++    // DivineMC end - Carpet-Fixes - Remove streams to be faster
+ }

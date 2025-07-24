@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Thu, 24 Jul 2025 23:01:57 +0800
+Subject: [PATCH] Get the MSPT for a single world
+
+
+diff --git a/src/main/java/org/bukkit/World.java b/src/main/java/org/bukkit/World.java
+index 04a1379f5fe281ab72610d2f8f18e1355fe3a134..ab15072e601124b1e61e87405768fb9d1cfb5f50 100644
+--- a/src/main/java/org/bukkit/World.java
++++ b/src/main/java/org/bukkit/World.java
+@@ -99,6 +99,16 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+     void setVoidDamageMinBuildHeightOffset(double minBuildHeightOffset);
+     // Paper end - void damage configuration
+ 
++    // Octopus start - Get the MSPT for a single world
++    /**
++     * Get the mspt values from the last 5 seconds。
++     *
++     * @return a collection of mspt values.
++     */
++    @NotNull
++    public long[] getTickTimes();
++    // Octopus end - Get the MSPT for a single world
++
+     // Paper start
+     /**
+      * @return The amount of entities in this world

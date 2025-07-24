@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Thu, 24 Jul 2025 22:55:46 +0800
+Subject: [PATCH] Get the MSPT for a single world
+
+
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index f4249a3e5705db29a8c464400826468df25417e2..ceaf5dfa8dea9021281e65e65585c9defdbbbc23 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -589,6 +589,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+     public final MinecraftServer.TickTimes tickTimes60s = new MinecraftServer.TickTimes(1200);
+     // SparklyPaper end
+ 
++    // Octopus start - Get the MSPT for a single world
++    public long[] getTickTimes() {
++        return tickTimes5s.getTimes();
++    }
++    // Octopus end - Get the MSPT for a single world
++
+     public ServerLevel(
+         MinecraftServer server,
+         Executor dispatcher,

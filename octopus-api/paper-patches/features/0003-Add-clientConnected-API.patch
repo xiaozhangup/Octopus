@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Thu, 24 Jul 2025 23:04:02 +0800
+Subject: [PATCH] Add clientConnected API
+
+
+diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
+index 672d78811b27d046bea2fb60a5cd8da387d37b92..ea07625ed5f9ba6986a4ca8bc1267538167c75fb 100644
+--- a/src/main/java/org/bukkit/entity/Player.java
++++ b/src/main/java/org/bukkit/entity/Player.java
+@@ -3485,6 +3485,14 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+     }
+     // Paper end
+ 
++    // Octopus start
++    /**
++     * Gets whether the player is connected to the server.
++     * @return
++     */
++    boolean clientConnected();
++    // Octopus end
++
+     // Paper start - Player Profile API
+     /**
+      * Gets a copy of this players profile

@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Thu, 24 Jul 2025 22:55:15 +0800
+Subject: [PATCH] Track how much MSPT each world used
+
+
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index af871392f2595bff81653a00316e886c761799b9..125f1680e6fb783d176a56a7bb137507b1040248 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -1744,7 +1744,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+             java.util.concurrent.Callable<Pair<ServerLevel, Throwable>> tickingFunction = () -> {
+             serverLevel.worldTaskQueueInstance.acquirePoller(); // Octopus
+             try {
++                long i = Util.getNanos(); // SparklyPaper - track world's MSPT
+                 serverLevel.tick(hasTimeLeft);
++                // SparklyPaper start - track world's MSPT
++                long j = Util.getNanos() - i;
++
++                // These are from the "tickServer" function
++                serverLevel.tickTimes5s.add(this.tickCount, j);
++                serverLevel.tickTimes10s.add(this.tickCount, j);
++                serverLevel.tickTimes60s.add(this.tickCount, j);
++                // SparklyPaper end
+             } catch (Throwable var7) {
+                 return Pair.of(serverLevel, var7);
+             }finally {
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index 8f41bed57265846457a1f891b3113345046ad638..f4249a3e5705db29a8c464400826468df25417e2 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -583,6 +583,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+     }
+     // Paper end - chunk tick iteration
+ 
++        // SparklyPaper start - track world's MSPT
++    public final MinecraftServer.TickTimes tickTimes5s = new MinecraftServer.TickTimes(100);
++    public final MinecraftServer.TickTimes tickTimes10s = new MinecraftServer.TickTimes(200);
++    public final MinecraftServer.TickTimes tickTimes60s = new MinecraftServer.TickTimes(1200);
++    // SparklyPaper end
++
+     public ServerLevel(
+         MinecraftServer server,
+         Executor dispatcher,

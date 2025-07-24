@@ -1,0 +1,12 @@
+--- a/data/minecraft/tags/block/sniffer_diggable_block.json
++++ b/data/minecraft/tags/block/sniffer_diggable_block.json
+@@ -8,6 +_,8 @@
+     "minecraft:moss_block",
+     "minecraft:pale_moss_block",
+     "minecraft:mud",
+-    "minecraft:muddy_mangrove_roots"
++    "minecraft:muddy_mangrove_roots",
++    "minecraft:sand",
++    "minecraft:gravel"
+   ]
+ }

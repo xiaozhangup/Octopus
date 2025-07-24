@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Thu, 24 Jul 2025 21:49:00 +0800
+Subject: [PATCH] Disable structure blocks place
+
+
+diff --git a/net/minecraft/world/level/levelgen/structure/StructureStart.java b/net/minecraft/world/level/levelgen/structure/StructureStart.java
+index f9a15c3769f29af1952ef880f6fcd2612119ecf0..ac263675e0416cc5849bc158ab321f9b844d8997 100644
+--- a/net/minecraft/world/level/levelgen/structure/StructureStart.java
++++ b/net/minecraft/world/level/levelgen/structure/StructureStart.java
+@@ -104,14 +104,14 @@ public final class StructureStart {
+                 org.bukkit.craftbukkit.util.TransformerGeneratorAccess transformerAccess = new org.bukkit.craftbukkit.util.TransformerGeneratorAccess();
+                 transformerAccess.setDelegate(level);
+                 transformerAccess.setStructureTransformer(new org.bukkit.craftbukkit.util.CraftStructureTransformer(this.generationEventCause, level, structureManager, this.structure, box, chunkPos));
+-                for (StructurePiece piece : pieces) {
+-                    piece.postProcess(transformerAccess, structureManager, generator, random, box, chunkPos, blockPos);
+-                }
++//                for (StructurePiece piece : pieces) {
++//                    piece.postProcess(transformerAccess, structureManager, generator, random, box, chunkPos, blockPos);
++//                }
+                 transformerAccess.getStructureTransformer().discard();
+             }
+             // CraftBukkit end
+ 
+-            this.structure.afterPlace(level, structureManager, generator, random, box, chunkPos, this.pieceContainer);
++//            this.structure.afterPlace(level, structureManager, generator, random, box, chunkPos, this.pieceContainer);
+         }
+     }
+ 
