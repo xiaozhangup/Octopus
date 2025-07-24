@@ -294,6 +294,21 @@ index 44340aa26bc89faaf8842bb36048cf61dba34314..b0ffdda420de6ee0e8196e0e13fb0054
                              Optional<Holder<PoiType>> type = level.getPoiManager().getType(blockPos);
                              if (type.isEmpty()) {
                                  return true;
+diff --git a/net/minecraft/world/item/ItemStack.java b/net/minecraft/world/item/ItemStack.java
+index da16f4831c875e07c25d7ed041bed493db614658..109b5acd6c7c622d36ced05f269aa077690f78f6 100644
+--- a/net/minecraft/world/item/ItemStack.java
++++ b/net/minecraft/world/item/ItemStack.java
+@@ -398,8 +398,8 @@ public final class ItemStack implements DataComponentHolder {
+             if (interactionResult.consumesAction() && serverLevel.captureTreeGeneration && !serverLevel.capturedBlockStates.isEmpty()) {
+                 serverLevel.captureTreeGeneration = false;
+                 org.bukkit.Location location = org.bukkit.craftbukkit.util.CraftLocation.toBukkit(clickedPos, serverLevel.getWorld());
+-                org.bukkit.TreeType treeType = net.minecraft.world.level.block.SaplingBlock.treeType;
+-                net.minecraft.world.level.block.SaplingBlock.treeType = null;
++                org.bukkit.TreeType treeType = net.minecraft.world.level.block.SaplingBlock.treeTypeRT.get();
++                net.minecraft.world.level.block.SaplingBlock.treeTypeRT.set(null);
+                 List<org.bukkit.craftbukkit.block.CraftBlockState> blocks = new java.util.ArrayList<>(serverLevel.capturedBlockStates.values());
+                 serverLevel.capturedBlockStates.clear();
+                 org.bukkit.event.world.StructureGrowEvent structureEvent = null;
 diff --git a/net/minecraft/world/level/block/FungusBlock.java b/net/minecraft/world/level/block/FungusBlock.java
 index 9711efb088bd0da9168e9bcd0496bd7caddd2974..989424a9427a1ba34c80f44483ba0ab616042613 100644
 --- a/net/minecraft/world/level/block/FungusBlock.java

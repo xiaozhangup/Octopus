@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Thu, 24 Jul 2025 18:10:12 +0800
+Subject: [PATCH] Parallel world ticking
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
+index 6809f9dcf8510c714145d99d250eb69f98d9bf27..7292ef3b2adf7f0364a4e8b062c931d2de7fb0fd 100644
+--- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
++++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
+@@ -559,8 +559,8 @@ public class CraftBlock implements Block {
+         world.captureTreeGeneration = false;
+ 
+         if (!world.capturedBlockStates.isEmpty()) {
+-            TreeType treeType = SaplingBlock.treeType;
+-            SaplingBlock.treeType = null;
++            TreeType treeType = SaplingBlock.treeTypeRT.get();
++            SaplingBlock.treeTypeRT.set(null);
+             List<BlockState> states = new ArrayList<>(world.capturedBlockStates.values());
+             world.capturedBlockStates.clear();
+             StructureGrowEvent structureEvent = null;
