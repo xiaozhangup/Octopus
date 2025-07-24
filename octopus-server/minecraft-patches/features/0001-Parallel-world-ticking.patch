@@ -33,7 +33,7 @@ index ca02c4c71a0a5a1a0ae8bbb40f0b1b7eac64e6fd..22d9fa825438465f67591a7df8d47a22
                      List<org.bukkit.block.BlockState> states = new java.util.ArrayList<>(level.capturedBlockStates.values());
                      level.capturedBlockStates.clear();
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 7aac2a6889af3edaebfaf94deecbf00d00758b68..6e442761f863c627bc01ad631e9a76f1dced94fa 100644
+index 7aac2a6889af3edaebfaf94deecbf00d00758b68..af871392f2595bff81653a00316e886c761799b9 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -1,5 +1,9 @@
@@ -75,7 +75,7 @@ index 7aac2a6889af3edaebfaf94deecbf00d00758b68..6e442761f863c627bc01ad631e9a76f1
              if (this.tickRateManager.isSprinting() || this.haveTime()) {
                  for (ServerLevel serverLevel : this.getAllLevels()) {
 -                    if (serverLevel.getChunkSource().pollTask()) {
-+                    if (serverLevel.getChunkSource().pollTask() || (!this.isIteratingOverLevels && serverLevel.worldTaskQueueInstance.pollTasks())) { // Octopus
++                    if (serverLevel.getChunkSource().pollTask() || (serverLevel.worldTaskQueueInstance.pollTasks())) { // Octopus
                          ret = true; // Paper - force execution of all worlds, do not just bias the first
                      }
                  }
