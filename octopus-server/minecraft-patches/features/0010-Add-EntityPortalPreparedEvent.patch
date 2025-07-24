@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Fri, 25 Jul 2025 00:20:14 +0800
+Subject: [PATCH] Add EntityPortalPreparedEvent
+
+
+diff --git a/net/minecraft/world/level/block/EndPortalBlock.java b/net/minecraft/world/level/block/EndPortalBlock.java
+index f6c64277c3d6e16250e2bf963b6427404e27aa9b..6c5cdeb6bd4a4d54b5594509c14733d1731d529e 100644
+--- a/net/minecraft/world/level/block/EndPortalBlock.java
++++ b/net/minecraft/world/level/block/EndPortalBlock.java
+@@ -77,6 +77,13 @@ public class EndPortalBlock extends BaseEntityBlock implements Portal {
+     @Nullable
+     @Override
+     public TeleportTransition getPortalDestination(ServerLevel level, Entity entity, BlockPos pos) {
++        // Octopus start - Add EntityPortalPreparedEvent
++        org.bukkit.event.entity.EntityPortalPreparedEvent portalPreparedEvent = new org.bukkit.event.entity.EntityPortalPreparedEvent(entity.getBukkitEntity(), org.bukkit.PortalType.ENDER);
++        if (!portalPreparedEvent.callEvent()) {
++                entity.portalProcess = null;
++                return null;
++            }
++        // Octopus end - Add EntityPortalPreparedEvent
+         ResourceKey<Level> resourceKey = level.getTypeKey() == net.minecraft.world.level.dimension.LevelStem.END ? Level.OVERWORLD : Level.END; // CraftBukkit - SPIGOT-6152: send back to main overworld in custom ends
+         ServerLevel level1 = level.getServer().getLevel(resourceKey);
+         if (level1 == null) {
+diff --git a/net/minecraft/world/level/block/NetherPortalBlock.java b/net/minecraft/world/level/block/NetherPortalBlock.java
+index 6c5629a6f5f91496a55eb0bf281ceae1567915b1..6b8bde58424cb79a05cc25bda2e1821bb2cc9182 100644
+--- a/net/minecraft/world/level/block/NetherPortalBlock.java
++++ b/net/minecraft/world/level/block/NetherPortalBlock.java
+@@ -140,6 +140,13 @@ public class NetherPortalBlock extends Block implements Portal {
+     @Nullable
+     @Override
+     public TeleportTransition getPortalDestination(ServerLevel level, Entity entity, BlockPos pos) {
++        // Octopus start - Add EntityPortalPreparedEvent
++        org.bukkit.event.entity.EntityPortalPreparedEvent portalPreparedEvent = new org.bukkit.event.entity.EntityPortalPreparedEvent(entity.getBukkitEntity(), org.bukkit.PortalType.NETHER);
++        if (!portalPreparedEvent.callEvent()) {
++            entity.portalProcess = null;
++            return null;
++        }
++        // Octopus end - Add EntityPortalPreparedEvent
+         // CraftBukkit start
+         ResourceKey<Level> resourceKey = level.getTypeKey() == net.minecraft.world.level.dimension.LevelStem.NETHER ? Level.OVERWORLD : Level.NETHER;
+         ServerLevel level1 = level.getServer().getLevel(resourceKey);
