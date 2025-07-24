@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: MrHua269 <mrhua269@gmail.com>
+Date: Thu, 24 Jul 2025 11:18:56 +0800
+Subject: [PATCH] Rebrand to Octopus
+
+
+diff --git a/src/main/java/io/papermc/paper/ServerBuildInfo.java b/src/main/java/io/papermc/paper/ServerBuildInfo.java
+index 652ff54e7c50412503725d628bfe72ed03059790..eb269a5f7f8a521617d700ebd58d8944a9bcf750 100644
+--- a/src/main/java/io/papermc/paper/ServerBuildInfo.java
++++ b/src/main/java/io/papermc/paper/ServerBuildInfo.java
+@@ -18,6 +18,7 @@ public interface ServerBuildInfo {
+      * The brand id for Paper.
+      */
+     Key BRAND_PAPER_ID = Key.key("papermc", "paper");
++    Key BRAND_OCTOPUS_ID = Key.key("happyland", "octopus");
+ 
+     /**
+      * Gets the {@code ServerBuildInfo}.
