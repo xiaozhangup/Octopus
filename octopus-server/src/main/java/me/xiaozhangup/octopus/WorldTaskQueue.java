@@ -24,6 +24,7 @@ public class WorldTaskQueue implements Executor {
     private final ConcurrentMap<String, Runnable> cyclicalTasks = new ConcurrentHashMap<>();
     private final ServerLevel world;
 
+    private Thread currentOwner;
     private static final VarHandle OWNER_HANDLE = ConcurrentUtil.getVarHandle(WorldTaskQueue.class, "currentOwner", Thread.class);
 
     public WorldTaskQueue(ServerLevel world) {
