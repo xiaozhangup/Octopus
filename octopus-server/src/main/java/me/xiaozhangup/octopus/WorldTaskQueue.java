@@ -2,6 +2,9 @@ package me.xiaozhangup.octopus;
 
 import ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue;
 import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
+import com.mojang.logging.LogUtils;
+import net.minecraft.DefaultUncaughtExceptionHandler;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,12 +16,14 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
 
 public class WorldTaskQueue implements Executor {
+    private final Thread.UncaughtExceptionHandler exceptionHandler = new DefaultUncaughtExceptionHandler(LogUtils.getLogger());
     private final MultiThreadedQueue<Runnable> internalTaskQueue = new MultiThreadedQueue<>();
 
+    private final MultiThreadedQueue<Runnable> scopedTasks = new MultiThreadedQueue<>();
+    private final MultiThreadedQueue<Runnable> callbackTasks = new MultiThreadedQueue<>();
     private final ConcurrentMap<String, Runnable> cyclicalTasks = new ConcurrentHashMap<>();
     private final ServerLevel world;
 
-    private Thread currentOwner;
     private static final VarHandle OWNER_HANDLE = ConcurrentUtil.getVarHandle(WorldTaskQueue.class, "currentOwner", Thread.class);
 
     public WorldTaskQueue(ServerLevel world) {
@@ -33,12 +38,61 @@ public class WorldTaskQueue implements Executor {
         }
     }
 
+    public void submitScopedTask(Runnable runnable) {
+        this.scopedTasks.offer(runnable);
+        this.tryNotifyOwner();
+    }
+
+    public void submitCallbackTask(Runnable task) {
+        this.callbackTasks.offer(task);
+    }
+
     public void submitCyclicalTask(String id, Runnable task) {
         this.cyclicalTasks.put(id, task);
     }
 
     public Runnable removeCyclicalTask(String id) {
         return this.cyclicalTasks.remove(id);
+    }
+
+    public void finalizeCallbackTasks() {
+        if (anyThreadHolding())
+            throw new IllegalStateException("Queue doesn't get out of using state!");
+
+        Runnable task;
+        while ((task = this.callbackTasks.poll()) != null) {
+            try {
+                task.run();
+            } catch (Throwable e){
+                this.exceptionHandler.uncaughtException(Thread.currentThread(), e);
+            }
+        }
+    }
+
+    public void finalizeScopedTasks() {
+        if (!this.isFullyHeldByCurrentThread()) {
+            throw new IllegalStateException("Task queue not owned by current thread!");
+        }
+
+        Runnable task;
+        while ((task = this.scopedTasks.poll()) != null) {
+            try {
+                task.run();
+            } catch (Throwable e){
+                this.exceptionHandler.uncaughtException(Thread.currentThread(), e);
+            }
+        }
+    }
+
+    public void finalizeCyclicalTasks() {
+        cyclicalTasks.forEach((id, task) -> {
+            try {
+                task.run();
+            } catch (Throwable e){
+                MinecraftServer.LOGGER.error("Cyclical task {} failed in {}", id, this.world.getWorld().getName());
+                this.exceptionHandler.uncaughtException(Thread.currentThread(), e);
+            }
+        });
     }
 
     public void submitTask(Runnable runnable) {
@@ -103,6 +157,13 @@ public class WorldTaskQueue implements Executor {
 
     public boolean isOwnedByCurrentThread() {
         return OWNER_HANDLE.getVolatile(this) == Thread.currentThread();
+    }
+
+    public boolean isFullyHeldByCurrentThread() {
+        if (OWNER_HANDLE.getVolatile(this) == null)
+            return false;
+
+        return isOwnedByCurrentThread();
     }
 
     @Override

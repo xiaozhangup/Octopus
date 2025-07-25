@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Fri, 25 Jul 2025 16:28:47 +0800
+Subject: [PATCH] Parallel world ticking
+
+
+diff --git a/src/main/java/org/bukkit/World.java b/src/main/java/org/bukkit/World.java
+index ab15072e601124b1e61e87405768fb9d1cfb5f50..6a490c411ad31e013a2ff58bfd3838a9a97a8499 100644
+--- a/src/main/java/org/bukkit/World.java
++++ b/src/main/java/org/bukkit/World.java
+@@ -4413,6 +4413,34 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+     @NotNull
+     public Collection<GeneratedStructure> getStructures(int x, int z, @NotNull Structure structure);
+ 
++    /**
++     * Submit a task to be executed on the world thread.
++     * Usually after all other thread tasks have been executed.
++     * @param task the task to execute
++     */
++    void submitCallbackTask(Runnable task);
++
++    /**
++     * Submit a task to be executed on the world thread.
++     * Usually after all this world thread tasks have been executed.
++     * @param task the task to execute
++     */
++    void submitScopedTask(Runnable task);
++
++    /**
++     * Submit a task to be executed on the world thread every tick.
++     * @param id
++     * @param task
++     */
++    void submitCyclicalTask(String id, Runnable task);
++
++    /**
++     * Removes a cyclical task
++     * @param id
++     * @return
++     */
++    Runnable removeCyclicalTask(String id);
++
+     /**
+      * Represents various map environment types that a world may be
+      */

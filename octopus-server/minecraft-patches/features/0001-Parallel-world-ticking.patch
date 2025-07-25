@@ -33,7 +33,7 @@ index ca02c4c71a0a5a1a0ae8bbb40f0b1b7eac64e6fd..22d9fa825438465f67591a7df8d47a22
                      List<org.bukkit.block.BlockState> states = new java.util.ArrayList<>(level.capturedBlockStates.values());
                      level.capturedBlockStates.clear();
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 7aac2a6889af3edaebfaf94deecbf00d00758b68..af871392f2595bff81653a00316e886c761799b9 100644
+index 7aac2a6889af3edaebfaf94deecbf00d00758b68..8bbccb299f48436f63916e55e240f07344651a9d 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -1,5 +1,9 @@
@@ -104,7 +104,7 @@ index 7aac2a6889af3edaebfaf94deecbf00d00758b68..af871392f2595bff81653a00316e886c
          for (ServerLevel serverLevel : this.getAllLevels()) {
              serverLevel.hasPhysicsEvent = org.bukkit.event.block.BlockPhysicsEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper - BlockPhysicsEvent
              serverLevel.hasEntityMoveEvent = io.papermc.paper.event.entity.EntityMoveEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper - Add EntityMoveEvent
-@@ -1718,20 +1738,44 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1718,20 +1738,48 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              }
              // CraftBukkit end */
  
@@ -121,7 +121,9 @@ index 7aac2a6889af3edaebfaf94deecbf00d00758b68..af871392f2595bff81653a00316e886c
 -                serverLevel.fillReportDetails(crashReport);
 -                throw new ReportedException(crashReport);
 +                return Pair.of(serverLevel, var7);
-+            }finally {
++            } finally {
++                serverLevel.worldTaskQueueInstance.finalizeScopedTasks(); // Octopus
++                serverLevel.worldTaskQueueInstance.finalizeCyclicalTasks(); // Octopus
 +                serverLevel.explosionDensityCache.clear(); // Paper - Optimize explosions // Octopus - Move up
 +                serverLevel.worldTaskQueueInstance.releasePoller(); // Octopus
              }
@@ -141,6 +143,8 @@ index 7aac2a6889af3edaebfaf94deecbf00d00758b68..af871392f2595bff81653a00316e886c
 +        while((tickTask = tasks.poll()) != null) {
 +            try {
 +                Pair<ServerLevel, Throwable> result = tickTask.get();
++
++                result.getLeft().worldTaskQueueInstance.finalizeCallbackTasks(); // Octopus
 +
 +                Throwable throwable = result.getRight();
 +
@@ -204,7 +208,7 @@ index 2882cd829d4d8e1f8615f085f6908efcdf68ac62..9a89f54e5839ed5c9faf43c6fb901726
              if (visibleChunkIfPresent != null && visibleChunkIfPresent.sectionLightChanged(type, pos.y())) {
                  this.chunkHoldersToBroadcast.add(visibleChunkIfPresent);
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index dda8d38ef61672cc714d9e5a475f9b0412ed5ff9..8f41bed57265846457a1f891b3113345046ad638 100644
+index dda8d38ef61672cc714d9e5a475f9b0412ed5ff9..8e8fc18136cd0444873c20bd8359da61b37b26fc 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -207,6 +207,24 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
@@ -214,11 +218,11 @@ index dda8d38ef61672cc714d9e5a475f9b0412ed5ff9..8f41bed57265846457a1f891b3113345
 +    // Octopus start
 +    public final me.xiaozhangup.octopus.WorldTaskQueue worldTaskQueueInstance = new me.xiaozhangup.octopus.WorldTaskQueue(this);
 +    public void submitCallbackTask(Runnable task) {
-+        //worldTaskQueueInstance.submitCallbackTask(task);
++        worldTaskQueueInstance.submitCallbackTask(task);
 +    }
 +
 +    public void submitScopedTask(Runnable task) {
-+        //worldTaskQueueInstance.submitScopedTask(task);
++        worldTaskQueueInstance.submitScopedTask(task);
 +    }
 +
 +    public void submitCyclicalTask(String id, Runnable task) {

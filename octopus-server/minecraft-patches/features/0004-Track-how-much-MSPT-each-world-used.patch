@@ -5,7 +5,7 @@ Subject: [PATCH] Track how much MSPT each world used
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index af871392f2595bff81653a00316e886c761799b9..125f1680e6fb783d176a56a7bb137507b1040248 100644
+index 8bbccb299f48436f63916e55e240f07344651a9d..db87bd7064f4c5b63236bfa69f2c61ee3d369367 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -1744,7 +1744,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -24,9 +24,9 @@ index af871392f2595bff81653a00316e886c761799b9..125f1680e6fb783d176a56a7bb137507
 +                // SparklyPaper end
              } catch (Throwable var7) {
                  return Pair.of(serverLevel, var7);
-             }finally {
+             } finally {
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 8f41bed57265846457a1f891b3113345046ad638..f4249a3e5705db29a8c464400826468df25417e2 100644
+index 8e8fc18136cd0444873c20bd8359da61b37b26fc..3dbd2eef590f1e110bee643a96c91691a6bf3d74 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -583,6 +583,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
