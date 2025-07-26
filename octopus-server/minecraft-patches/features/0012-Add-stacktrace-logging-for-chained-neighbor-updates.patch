@@ -1,0 +1,20 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Sun, 27 Jul 2025 01:01:29 +0800
+Subject: [PATCH] Add stacktrace logging for chained neighbor updates
+
+
+diff --git a/net/minecraft/world/level/redstone/CollectingNeighborUpdater.java b/net/minecraft/world/level/redstone/CollectingNeighborUpdater.java
+index 028eae2f9a459b60e92f3344091083aa93b54485..efdcff16f213de7ce1467cd2e31b90489f14d41e 100644
+--- a/net/minecraft/world/level/redstone/CollectingNeighborUpdater.java
++++ b/net/minecraft/world/level/redstone/CollectingNeighborUpdater.java
+@@ -57,7 +57,8 @@ public class CollectingNeighborUpdater implements NeighborUpdater {
+                 this.stack.push(updates);
+             }
+         } else if (this.count - 1 == this.maxChainedNeighborUpdates) {
+-            LOGGER.error("Too many chained neighbor updates. Skipping the rest. First skipped position: " + pos.toShortString());
++            LOGGER.error("Too many chained neighbor updates. Skipping the rest. First skipped position: " + pos.toShortString() + " (" + level.getWorld().getName() + ")");
++            LOGGER.error("Stack trace: ", new Throwable("Stack trace for chained neighbor updates"));
+         }
+ 
+         if (!flag) {
