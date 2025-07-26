@@ -109,7 +109,7 @@ index 16e06085ed3c0f6a0b35c730b63b75824f44a905..a9711ecb0baf9e995e1baca52d9f5437
          } catch (IOException var2) {
              LOGGER.error("Couldn't save stats", (Throwable)var2);
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
-index fe44d8d17d2622b3d6021c11579af85ef96737bb..5f00711537caca12f4e5a863a3f68f7b024a786e 100644
+index fe44d8d17d2622b3d6021c11579af85ef96737bb..69a12ff9cb683fe356bc1d58e82d99087ce59a53 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
 +++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
 @@ -24,6 +24,13 @@ public class PlayerDataStorage {
@@ -155,7 +155,7 @@ index fe44d8d17d2622b3d6021c11579af85ef96737bb..5f00711537caca12f4e5a863a3f68f7b
          File file = new File(this.playerDir, stringUuid + suffix); // CraftBukkit
          // Spigot start
          boolean usingWrongFile = false;
-@@ -91,6 +113,23 @@ public class PlayerDataStorage {
+@@ -91,6 +113,27 @@ public class PlayerDataStorage {
      }
  
      public Optional<ValueInput> load(Player player, ProblemReporter problemReporter) {
@@ -164,7 +164,11 @@ index fe44d8d17d2622b3d6021c11579af85ef96737bb..5f00711537caca12f4e5a863a3f68f7b
 +            if (dataSource != null) {
 +                Optional<CompoundTag> data = dataSource.load(player);
 +                if (data.isPresent()) {
-+                    return data.map(tag -> {
++                    return data.map(compoundTag -> {
++                        int dataVersion = NbtUtils.getDataVersion(compoundTag, -1);
++                        compoundTag = ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry.PLAYER, compoundTag, dataVersion, ca.spottedleaf.dataconverter.minecraft.util.Version.getCurrentVersion());
++                        return compoundTag;
++                    }).map(tag -> {
 +                        ValueInput valueInput = TagValueInput.create(problemReporter, player.registryAccess(), tag);
 +                        player.load(valueInput);
 +                        return valueInput;
