@@ -5,10 +5,10 @@ Subject: [PATCH] Parallel world ticking
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-index 68351e47609ae06f0a1641b4ad2013ce6261ae4e..7c340f320889db8e47560bf1e528f21612ca1f6f 100644
+index aa0a61d7f3128543b698647663fa4a9af2a8255a..8704d9af920fe3f1e325841baa29e6cbe4ba6e4f 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-@@ -2374,6 +2374,26 @@ public class CraftWorld extends CraftRegionAccessor implements World {
+@@ -2375,6 +2375,26 @@ public class CraftWorld extends CraftRegionAccessor implements World {
          return (this.getHandle().getDragonFight() == null) ? null : new CraftDragonBattle(this.getHandle().getDragonFight());
      }
  

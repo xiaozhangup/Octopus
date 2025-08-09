@@ -5,7 +5,7 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index db87bd7064f4c5b63236bfa69f2c61ee3d369367..0c4c3cb484bdc21e059d841b303e6a1ed68a4116 100644
+index a469ec6c83b0625ba2181a6f5b48b4fc28c30d0e..58798cd0e250a4d91227ab26f74f162c1dfea8a5 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -207,6 +207,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -53,10 +53,10 @@ index fdeca41d40705f28864ce4443d01cd872c9d51b0..f5a0d39eeed860055c85e08da967ef93
  
              try (Writer bufferedWriter = Files.newBufferedWriter(this.playerSavePath, StandardCharsets.UTF_8)) {
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index ab45873a13e7ef89449db06aede64487ec0d8403..719b212e3e90134492ed85b6332ad829727c648d 100644
+index afbb79555d8ea8eb95da0e882ffca8ca8803bf3b..aa84e780b761336825ab7f08280dc38225534683 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -1306,7 +1306,7 @@ public abstract class PlayerList {
+@@ -1304,7 +1304,7 @@ public abstract class PlayerList {
                  }
              }
  
