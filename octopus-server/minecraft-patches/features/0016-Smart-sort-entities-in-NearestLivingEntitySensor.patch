@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Sat, 9 Aug 2025 15:10:58 +0800
+Subject: [PATCH] Smart sort entities in NearestLivingEntitySensor
+
+
+diff --git a/net/minecraft/world/entity/ai/sensing/NearestLivingEntitySensor.java b/net/minecraft/world/entity/ai/sensing/NearestLivingEntitySensor.java
+index b0c5e41fefc7c9adf1a61bd5b52861736657d37e..2f13022abbb241a19e1784b96413ffd3e248daa0 100644
+--- a/net/minecraft/world/entity/ai/sensing/NearestLivingEntitySensor.java
++++ b/net/minecraft/world/entity/ai/sensing/NearestLivingEntitySensor.java
+@@ -13,17 +13,27 @@ import net.minecraft.world.entity.ai.memory.NearestVisibleLivingEntities;
+ import net.minecraft.world.phys.AABB;
+ 
+ public class NearestLivingEntitySensor<T extends LivingEntity> extends Sensor<T> {
++
++    // Leaf start - Smart sort entities in NearestLivingEntitySensor
++    private final me.xiaozhangup.octopus.FastBitRadixSort sorter;
++    public NearestLivingEntitySensor() {
++        this.sorter = new me.xiaozhangup.octopus.FastBitRadixSort();
++    }
++    // Leaf end - Smart sort entities in NearestLivingEntitySensor
++
+     @Override
+     protected void doTick(ServerLevel level, T entity) {
+         double attributeValue = entity.getAttributeValue(Attributes.FOLLOW_RANGE);
+         AABB aabb = entity.getBoundingBox().inflate(attributeValue, attributeValue, attributeValue);
+-        List<LivingEntity> entitiesOfClass = level.getEntitiesOfClass(
+-            LivingEntity.class, aabb, matchableEntity -> matchableEntity != entity && matchableEntity.isAlive()
+-        );
+-        entitiesOfClass.sort(Comparator.comparingDouble(entity::distanceToSqr));
++        // Leaf start - Smart sort entities in NearestLivingEntitySensor
++        double rangeSqr = attributeValue * attributeValue;
++        List<LivingEntity> entities = level.getEntitiesOfClass(LivingEntity.class, aabb, e -> e != entity && e.isAlive() && entity.distanceToSqr(e) <= rangeSqr);
++        LivingEntity[] sorted = this.sorter.sort(entities, entity, LivingEntity.class);
++        List<LivingEntity> sortedList = java.util.Arrays.asList(sorted);
+         Brain<?> brain = entity.getBrain();
+-        brain.setMemory(MemoryModuleType.NEAREST_LIVING_ENTITIES, entitiesOfClass);
+-        brain.setMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES, new NearestVisibleLivingEntities(level, entity, entitiesOfClass));
++        brain.setMemory(MemoryModuleType.NEAREST_LIVING_ENTITIES, sortedList);
++        brain.setMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES, new NearestVisibleLivingEntities(level, entity, sortedList));
++        // Leaf end - Smart sort entities in NearestLivingEntitySensor
+     }
+ 
+     @Override
