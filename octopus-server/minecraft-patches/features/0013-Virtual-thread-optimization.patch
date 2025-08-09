@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Sat, 9 Aug 2025 12:41:43 +0800
+Subject: [PATCH] Virtual thread optimization
+
+
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index 0c4c3cb484bdc21e059d841b303e6a1ed68a4116..106916b1ed99252ccef1a09542f58bbc78aa1afc 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -2789,7 +2789,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+     }
+ 
+     public final java.util.concurrent.ExecutorService chatExecutor = java.util.concurrent.Executors.newCachedThreadPool(
+-        new com.google.common.util.concurrent.ThreadFactoryBuilder().setDaemon(true).setNameFormat("Async Chat Thread - #%d").setUncaughtExceptionHandler(new net.minecraft.DefaultUncaughtExceptionHandlerWithName(net.minecraft.server.MinecraftServer.LOGGER)).build()); // Paper
++        new com.google.common.util.concurrent.ThreadFactoryBuilder().setDaemon(true).setNameFormat("Async Chat Thread - #%d").setThreadFactory(Thread.ofVirtual().factory()).setUncaughtExceptionHandler(new net.minecraft.DefaultUncaughtExceptionHandlerWithName(net.minecraft.server.MinecraftServer.LOGGER)).build()); // Paper
+     public final ChatDecorator improvedChatDecorator = new io.papermc.paper.adventure.ImprovedChatDecorator(this); // Paper - adventure
+ 
+     public ChatDecorator getChatDecorator() {
+diff --git a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+index ebf4d4516233c002b33084f1679044b23869d848..18b1b44e071c9e877f2bc0e58f3688cfa6c096cc 100644
+--- a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+@@ -53,7 +53,7 @@ import org.bukkit.event.player.PlayerPreLoginEvent;
+ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener, TickablePacketListener {
+     private static final AtomicInteger UNIQUE_THREAD_ID = new AtomicInteger(0);
+     static final Logger LOGGER = LogUtils.getLogger();
+-    private static final java.util.concurrent.ExecutorService authenticatorPool = java.util.concurrent.Executors.newCachedThreadPool(new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("User Authenticator #%d").setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LOGGER)).build()); // Paper - Cache authenticator threads
++    private static final java.util.concurrent.ExecutorService authenticatorPool = java.util.concurrent.Executors.newCachedThreadPool(new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("User Authenticator #%d").setThreadFactory(Thread.ofVirtual().factory()).setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LOGGER)).build()); // Paper - Cache authenticator threads
+     private static final int MAX_TICKS_BEFORE_LOGIN = 600;
+     private final byte[] challenge;
+     final MinecraftServer server;
