@@ -15,6 +15,7 @@ Powered by ```HAPPYLAND AssiahLand```
 - 为聊天和验证使用虚拟线程 (Leaf)
 - 优化了一些实体移动的数据包相关 (Leaf)
 - 优化了 NearestLivingEntitySensor (Leaf)
+- 优化了 getEntities (Leaf)
 - 优化了 RecipeManager (DivineMC)
 - 禁用了结构生成方块 (Octopus)
 ```
