@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mrhua269 <mrhua269@gmail.com>
+Date: Sun, 24 Aug 2025 20:50:16 +0800
+Subject: [PATCH] KioCG Chunk API
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftChunk.java b/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
+index 400e632208d133a3f49fc7f14bceb48a1026769b..631bec0adee5b01bfb931c25195b949eaf2efd27 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
+@@ -422,4 +422,12 @@ public class CraftChunk implements Chunk {
+     static {
+         Arrays.fill(FULL_LIGHT, (byte) 0xFF);
+     }
++
++    // KioCG start - ChunkHot
++    @Override
++    public long getChunkHotAvg() {
++        final net.minecraft.world.level.chunk.LevelChunk target = this.level.getChunkIfLoaded(this.x,this.z);
++        return target == null ? -1 : target.getChunkHot().getAverage();
++    }
++    // KioCG end
+ }
