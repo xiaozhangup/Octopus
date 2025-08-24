@@ -27,7 +27,7 @@ index 4c2a3bc382ecb6a0daeb01dfbe21a67535aa90b6..402fa46a60dc485bfc065ec60d1794e4
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 @@ -3534,4 +3534,9 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
      public PlayerGameConnection getConnection() {
-         return this.getHandle().connection.playerGameinConnection;
+         return this.getHandle().connection.playerGameConnection;
      }
 +
 +    @Override
