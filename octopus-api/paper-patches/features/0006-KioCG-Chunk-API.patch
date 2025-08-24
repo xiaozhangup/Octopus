@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: mrhua269 <mrhua269@gmail.com>
+Date: Sun, 24 Aug 2025 20:50:16 +0800
+Subject: [PATCH] KioCG Chunk API
+
+
+diff --git a/src/main/java/org/bukkit/Chunk.java b/src/main/java/org/bukkit/Chunk.java
+index 9f8414f854646ad7429fe806e35a13e32a07ddaa..9a0995bf82830b45b2d72b2a1cff2bfdd4f7a638 100644
+--- a/src/main/java/org/bukkit/Chunk.java
++++ b/src/main/java/org/bukkit/Chunk.java
+@@ -388,4 +388,6 @@ public interface Chunk extends PersistentDataHolder {
+          */
+         UNLOADED;
+     }
++
++    long getChunkHotAvg(); // KioCG
+ }
+diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
+index ea07625ed5f9ba6986a4ca8bc1267538167c75fb..5fdef5e6a996cef2e2c1d838c418a3c7efac8e2a 100644
+--- a/src/main/java/org/bukkit/entity/Player.java
++++ b/src/main/java/org/bukkit/entity/Player.java
+@@ -3940,4 +3940,6 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+      */
+     @ApiStatus.Experimental
+     PlayerGameConnection getConnection();
++
++    long getNearbyChunkHot(); // KioCG
+ }
