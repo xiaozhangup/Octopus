@@ -7,6 +7,7 @@ Powered by ```HAPPYLAND AssiahLand```
 ### 更改列表
 ```
 - 新增获取每个世界 MSPT 的 API (SparklyPaper)
+- 新增区块热度统计 API (KioCG)
 - 新增获取客户端连接状态的 API (Octopus)
 - 新增自定义服务器数据源的 API (Octopus)
 - 新增 ComposterProductEvent (Octopus)
@@ -20,4 +21,6 @@ Powered by ```HAPPYLAND AssiahLand```
 - 优化了 getEntities (Leaf)
 - 优化了 RecipeManager (DivineMC)
 - 禁用了结构生成方块 (Octopus)
+- 禁止村民在狭小空间内进行上货外的行为 (Purpur)
+- 防止 NaturalSpawner 过多次尝试 (Leaf & Paper)
 ```
