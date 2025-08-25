@@ -21,6 +21,5 @@ Powered by ```HAPPYLAND AssiahLand```
 - 优化了 getEntities (Leaf)
 - 优化了 RecipeManager (DivineMC)
 - 禁用了结构生成方块 (Octopus)
-- 禁止村民在狭小空间内进行上货外的行为 (Purpur)
 - 防止 NaturalSpawner 过多次尝试 (Leaf & Paper)
 ```
