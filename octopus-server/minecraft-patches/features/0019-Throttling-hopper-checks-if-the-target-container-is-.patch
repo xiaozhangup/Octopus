@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Tue, 26 Aug 2025 12:09:22 +0800
+Subject: [PATCH] Throttling hopper checks if the target container is full
+
+
+diff --git a/net/minecraft/world/level/block/entity/HopperBlockEntity.java b/net/minecraft/world/level/block/entity/HopperBlockEntity.java
+index 800b7e78ae989868ed0b9e060c80dcd002759412..f92a2118d03e39c9ac768ebfbe6555992b6bde80 100644
+--- a/net/minecraft/world/level/block/entity/HopperBlockEntity.java
++++ b/net/minecraft/world/level/block/entity/HopperBlockEntity.java
+@@ -423,6 +423,7 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+         } else {
+             Direction opposite = blockEntity.facing.getOpposite();
+             if (isFullContainer(attachedContainer, opposite)) {
++                blockEntity.setCooldown(8);
+                 return false;
+             } else {
+                 // Paper start - Perf: Optimize Hoppers
