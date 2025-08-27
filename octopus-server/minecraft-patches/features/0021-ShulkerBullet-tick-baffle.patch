@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Wed, 27 Aug 2025 23:51:38 +0800
+Subject: [PATCH] ShulkerBullet tick baffle
+
+
+diff --git a/net/minecraft/world/entity/projectile/ShulkerBullet.java b/net/minecraft/world/entity/projectile/ShulkerBullet.java
+index 00154ba80175bcb07b3378f19514fec1700c94e9..1a93f4a7e6b48596a0d8fc85b867dabb2c4952c6 100644
+--- a/net/minecraft/world/entity/projectile/ShulkerBullet.java
++++ b/net/minecraft/world/entity/projectile/ShulkerBullet.java
+@@ -35,6 +35,10 @@ import net.minecraft.world.phys.Vec3;
+ 
+ public class ShulkerBullet extends Projectile {
+     private static final double SPEED = 0.15;
++    // Octopus start - ShulkerBullet tick baffle
++    private static final int BAFFLE_RATE = 3;
++    private int tickCounter = 0;
++    // Octopus end - ShulkerBullet tick baffle
+     @Nullable
+     private EntityReference<Entity> finalTarget;
+     @Nullable
+@@ -207,7 +211,7 @@ public class ShulkerBullet extends Projectile {
+         super.tick();
+         Entity entity = !this.level().isClientSide() ? EntityReference.get(this.finalTarget, this.level(), Entity.class) : null;
+         HitResult hitResult = null;
+-        if (!this.level().isClientSide) {
++        if (!this.level().isClientSide && (tickCounter % BAFFLE_RATE) == 0) { // Octopus - ShulkerBullet tick baffle
+             if (entity == null) {
+                 this.finalTarget = null;
+             }
+@@ -269,6 +273,8 @@ public class ShulkerBullet extends Projectile {
+                 }
+             }
+         }
++
++        tickCounter = (tickCounter + 1) % BAFFLE_RATE; // Octopus - ShulkerBullet tick baffle
+     }
+ 
+     @Override
