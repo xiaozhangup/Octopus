@@ -233,8 +233,7 @@ index 18563961e9dba1a11265c6ea708881d4e46846ff..d7eef96e12c738cd06a8e16efe48b767
      private final double defaultValue;
      private boolean syncable;
      private final String descriptionId;
--    public Attribute.Sentiment sentiment = Attribute.Sentiment.POSITIVE;
-+    private Attribute.Sentiment sentiment = Attribute.Sentiment.POSITIVE;
+     public Attribute.Sentiment sentiment = Attribute.Sentiment.POSITIVE;
 +    // Leaf start - Optimize AttributeMap
 +    public final int uid;
 +    private static int SIZE = 0;
