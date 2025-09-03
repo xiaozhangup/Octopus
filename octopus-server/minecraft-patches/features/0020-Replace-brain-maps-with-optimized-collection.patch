@@ -226,11 +226,10 @@ index 98652c2c549bd7657a606d25ba4fe3cffa0548da..1bdebb1b862a7b1608dd0f18642a3c7b
  
      private boolean activityRequirementsAreMet(Activity activity) {
 diff --git a/net/minecraft/world/entity/ai/attributes/Attribute.java b/net/minecraft/world/entity/ai/attributes/Attribute.java
-index 18563961e9dba1a11265c6ea708881d4e46846ff..d7eef96e12c738cd06a8e16efe48b7673f2a8608 100644
+index 18563961e9dba1a11265c6ea708881d4e46846ff..0033ab86e312cac187a1e49aaf437868b5d37c77 100644
 --- a/net/minecraft/world/entity/ai/attributes/Attribute.java
 +++ b/net/minecraft/world/entity/ai/attributes/Attribute.java
-@@ -15,11 +15,16 @@ public class Attribute {
-     private final double defaultValue;
+@@ -16,10 +16,15 @@ public class Attribute {
      private boolean syncable;
      private final String descriptionId;
      public Attribute.Sentiment sentiment = Attribute.Sentiment.POSITIVE;
