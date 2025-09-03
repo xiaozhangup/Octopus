@@ -17,7 +17,7 @@ index 975a2e4ea1f84e81fa3526395b43cb8157a06243..7ed06ebe43c18283ae43421f984ceea2
      }
  
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index ea07196b1664201f5a5277a62a670dd5a9068884..3615f93314ce7aa1f83608845697b8b785ae1885 100644
+index 169aaac198fd0dd3c0fec651b43d7e830bb6f7b3..239207118dd79ccb4dc93f43511ffe41c28e5ee1 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -31,17 +31,7 @@ import java.nio.file.FileStore;
@@ -39,7 +39,7 @@ index ea07196b1664201f5a5277a62a670dd5a9068884..3615f93314ce7aa1f83608845697b8b7
  import java.util.Map.Entry;
  import java.util.concurrent.CompletableFuture;
  import java.util.concurrent.Executor;
-@@ -1542,7 +1532,39 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1543,7 +1533,39 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          new com.destroystokyo.paper.event.server.ServerTickStartEvent(this.tickCount+1).callEvent(); // Paper - Server Tick Events
          this.tickCount++;
          this.tickRateManager.tick();
@@ -171,7 +171,7 @@ index ec20a5a6d7c8f65abda528fec36bec7bc71117f6..b971cd61db1cfa05b8f2fd6c8a2dac2e
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index cb433f393044a997430e3138c2696139fa0fdec7..afb0b2e2a770805aea0806701d2e00fc8e633941 100644
+index cb1fe1415279c7bb86a0f6dd3ecdbf9a34619994..862276dbf805669e4e4b82e7447854ae21e53782 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -5380,4 +5380,6 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess

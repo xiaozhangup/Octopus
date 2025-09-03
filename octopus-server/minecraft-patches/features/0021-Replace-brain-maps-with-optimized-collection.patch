@@ -1,6 +1,6 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: xiaozhangup <xiaozhangshiw@163.com>
-Date: Tue, 26 Aug 2025 12:33:41 +0800
+Date: Wed, 3 Sep 2025 12:10:55 +0800
 Subject: [PATCH] Replace brain maps with optimized collection
 
 
@@ -226,13 +226,15 @@ index 98652c2c549bd7657a606d25ba4fe3cffa0548da..1bdebb1b862a7b1608dd0f18642a3c7b
  
      private boolean activityRequirementsAreMet(Activity activity) {
 diff --git a/net/minecraft/world/entity/ai/attributes/Attribute.java b/net/minecraft/world/entity/ai/attributes/Attribute.java
-index f8419dde44ebc7324e783f8bee42132d5ec973c3..d7eef96e12c738cd06a8e16efe48b7673f2a8608 100644
+index 18563961e9dba1a11265c6ea708881d4e46846ff..d7eef96e12c738cd06a8e16efe48b7673f2a8608 100644
 --- a/net/minecraft/world/entity/ai/attributes/Attribute.java
 +++ b/net/minecraft/world/entity/ai/attributes/Attribute.java
-@@ -16,10 +16,15 @@ public class Attribute {
+@@ -15,11 +15,16 @@ public class Attribute {
+     private final double defaultValue;
      private boolean syncable;
      private final String descriptionId;
-     private Attribute.Sentiment sentiment = Attribute.Sentiment.POSITIVE;
+-    public Attribute.Sentiment sentiment = Attribute.Sentiment.POSITIVE;
++    private Attribute.Sentiment sentiment = Attribute.Sentiment.POSITIVE;
 +    // Leaf start - Optimize AttributeMap
 +    public final int uid;
 +    private static int SIZE = 0;
