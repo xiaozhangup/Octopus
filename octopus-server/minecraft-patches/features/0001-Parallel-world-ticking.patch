@@ -33,7 +33,7 @@ index ca02c4c71a0a5a1a0ae8bbb40f0b1b7eac64e6fd..22d9fa825438465f67591a7df8d47a22
                      List<org.bukkit.block.BlockState> states = new java.util.ArrayList<>(level.capturedBlockStates.values());
                      level.capturedBlockStates.clear();
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 9243bb11e3f968d0bf0eb2e3dc9295c0232bc15d..1785a1d4a8dd975f00168ccce75751b1b86a1730 100644
+index 9243bb11e3f968d0bf0eb2e3dc9295c0232bc15d..05953a0d750bdf036888969eaf316aa005c51853 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -1,5 +1,9 @@
@@ -100,11 +100,11 @@ index 9243bb11e3f968d0bf0eb2e3dc9295c0232bc15d..1785a1d4a8dd975f00168ccce75751b1
          }
  
          this.isIteratingOverLevels = true; // Paper - Throw exception on world create while being ticked
-+        final java.util.Deque<java.util.concurrent.Future<Pair<ServerLevel, Throwable>>> tasks = new java.util.ArrayDeque<>();
++        final java.util.Deque<me.xiaozhangup.octopus.WorldTickFutureTask> tasks = new java.util.ArrayDeque<>();
          for (ServerLevel serverLevel : this.getAllLevels()) {
              serverLevel.hasPhysicsEvent = org.bukkit.event.block.BlockPhysicsEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper - BlockPhysicsEvent
              serverLevel.hasEntityMoveEvent = io.papermc.paper.event.entity.EntityMoveEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper - Add EntityMoveEvent
-@@ -1719,20 +1739,48 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1719,20 +1739,57 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              }
              // CraftBukkit end */
  
@@ -129,7 +129,10 @@ index 9243bb11e3f968d0bf0eb2e3dc9295c0232bc15d..1785a1d4a8dd975f00168ccce75751b1
              }
 +                return Pair.of(serverLevel, null);
 +            };
-+            tasks.add(this.worldTickExecutor.submit(tickingFunction)); // Octopus
++
++            me.xiaozhangup.octopus.WorldTickFutureTask task = new me.xiaozhangup.octopus.WorldTickFutureTask(serverLevel, tickingFunction);
++            this.worldTickExecutor.submit(task);
++            tasks.add(task);
 +            // Octopus end
  
 -            profilerFiller.pop();
@@ -139,10 +142,16 @@ index 9243bb11e3f968d0bf0eb2e3dc9295c0232bc15d..1785a1d4a8dd975f00168ccce75751b1
              serverLevel.explosionDensityCache.clear(); // Paper - Optimize explosions
          }
 +        // Octopus start
-+        java.util.concurrent.Future<Pair<ServerLevel, Throwable>> tickTask;
++        me.xiaozhangup.octopus.WorldTickFutureTask tickTask;
 +        while((tickTask = tasks.poll()) != null) {
 +            try {
-+                Pair<ServerLevel, Throwable> result = tickTask.get();
++                Pair<ServerLevel, Throwable> result;
++                try {
++                    result = tickTask.get(2, java.util.concurrent.TimeUnit.SECONDS);
++                } catch (java.util.concurrent.TimeoutException te) {
++                    MinecraftServer.LOGGER.warn("World tick task has not completed after 2 seconds: " + tickTask.getLevelName());
++                    result = tickTask.get();
++                }
 +
 +                result.getLeft().worldTaskQueueInstance.finalizeCallbackTasks(); // Octopus
 +
