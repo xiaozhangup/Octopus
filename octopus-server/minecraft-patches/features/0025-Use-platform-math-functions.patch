@@ -1,0 +1,65 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Tue, 9 Sep 2025 22:59:43 +0800
+Subject: [PATCH] Use platform math functions
+
+
+diff --git a/net/minecraft/util/Mth.java b/net/minecraft/util/Mth.java
+index 73e04606e2cc5f30377550d1f2a5aa355b173257..c4d5dad5dc02534ef76d65e75e89058ced9699b0 100644
+--- a/net/minecraft/util/Mth.java
++++ b/net/minecraft/util/Mth.java
+@@ -58,18 +58,15 @@ public class Mth {
+     }
+ 
+     public static int floor(float value) {
+-        int i = (int)value;
+-        return value < i ? i - 1 : i;
++        return (int) Math.floor(value); // Gale - use platform math functions
+     }
+ 
+     public static int floor(double value) {
+-        int i = (int)value;
+-        return value < i ? i - 1 : i;
++        return (int) Math.floor(value); // Gale - use platform math functions
+     }
+ 
+     public static long lfloor(double value) {
+-        long l = (long)value;
+-        return value < l ? l - 1L : l;
++        return (long) Math.floor(value); // Gale - use platform math functions
+     }
+ 
+     public static float abs(float value) {
+@@ -81,13 +78,11 @@ public class Mth {
+     }
+ 
+     public static int ceil(float value) {
+-        int i = (int)value;
+-        return value > i ? i + 1 : i;
++        return (int) Math.ceil(value); // Gale - use platform math functions
+     }
+ 
+     public static int ceil(double value) {
+-        int i = (int)value;
+-        return value > i ? i + 1 : i;
++        return (int) Math.ceil(value); // Gale - use platform math functions
+     }
+ 
+     public static int clamp(int value, int min, int max) {
+@@ -123,15 +118,7 @@ public class Mth {
+     }
+ 
+     public static double absMax(double x, double y) {
+-        if (x < 0.0) {
+-            x = -x;
+-        }
+-
+-        if (y < 0.0) {
+-            y = -y;
+-        }
+-
+-        return Math.max(x, y);
++        return Math.max(Math.abs(x), Math.abs(y)); // Gale - use platform math functions
+     }
+ 
+     public static int floorDiv(int dividend, int divisor) {

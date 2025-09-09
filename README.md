@@ -26,4 +26,5 @@ Powered by ```HAPPYLAND AssiahLand```
 - 防止 NaturalSpawner 过多次尝试 (Leaf & Paper)
 - 新增获取每个世界 MSPT 的 API (SparklyPaper)
 - 新增区块热度统计 API (KioCG)
+- 使用平台自带的 Math 方法 (Gale)
 ```
