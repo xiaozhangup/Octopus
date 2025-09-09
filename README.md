@@ -24,4 +24,6 @@ Powered by ```HAPPYLAND AssiahLand```
 - 降低了 ShulkerBullet 的计算频次 (Octopus)
 - 禁用了结构生成方块 (Octopus)
 - 防止 NaturalSpawner 过多次尝试 (Leaf & Paper)
+- 修复经验球对离线玩家的引用导致的内存泄漏 (Octopus)
+- 限制 CombatTracker 的记录数量防止内存泄漏 (Octopus)
 ```
