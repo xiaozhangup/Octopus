@@ -11,7 +11,7 @@ public class FixedSizeList<E> extends AbstractList<E> {
 
     public FixedSizeList(int capacity) {
         this.capacity = capacity;
-        this.data = new ObjectArrayList<>(capacity);
+        this.data = new ObjectArrayList<>();
     }
 
     @Override
