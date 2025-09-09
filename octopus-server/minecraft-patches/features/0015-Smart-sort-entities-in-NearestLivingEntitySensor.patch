@@ -5,7 +5,7 @@ Subject: [PATCH] Smart sort entities in NearestLivingEntitySensor
 
 
 diff --git a/net/minecraft/world/entity/ai/sensing/NearestLivingEntitySensor.java b/net/minecraft/world/entity/ai/sensing/NearestLivingEntitySensor.java
-index b0c5e41fefc7c9adf1a61bd5b52861736657d37e..2f13022abbb241a19e1784b96413ffd3e248daa0 100644
+index b0c5e41fefc7c9adf1a61bd5b52861736657d37e..ef87b95d53e5ea2555778e6020ea07a11c474961 100644
 --- a/net/minecraft/world/entity/ai/sensing/NearestLivingEntitySensor.java
 +++ b/net/minecraft/world/entity/ai/sensing/NearestLivingEntitySensor.java
 @@ -13,17 +13,27 @@ import net.minecraft.world.entity.ai.memory.NearestVisibleLivingEntities;
@@ -14,9 +14,9 @@ index b0c5e41fefc7c9adf1a61bd5b52861736657d37e..2f13022abbb241a19e1784b96413ffd3
  public class NearestLivingEntitySensor<T extends LivingEntity> extends Sensor<T> {
 +
 +    // Leaf start - Smart sort entities in NearestLivingEntitySensor
-+    private final me.xiaozhangup.octopus.FastBitRadixSort sorter;
++    private final org.dreeam.leaf.util.FastBitRadixSort sorter;
 +    public NearestLivingEntitySensor() {
-+        this.sorter = new me.xiaozhangup.octopus.FastBitRadixSort();
++        this.sorter = new org.dreeam.leaf.util.FastBitRadixSort();
 +    }
 +    // Leaf end - Smart sort entities in NearestLivingEntitySensor
 +
