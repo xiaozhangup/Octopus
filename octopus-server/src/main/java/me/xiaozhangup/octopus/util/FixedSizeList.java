@@ -37,5 +37,12 @@ public class FixedSizeList<E> extends AbstractList<E> {
     public int size() {
         return size;
     }
+
+    @Override
+    public void clear() {
+        data.clear();
+        head = 0;
+        size = 0;
+    }
 }
 
