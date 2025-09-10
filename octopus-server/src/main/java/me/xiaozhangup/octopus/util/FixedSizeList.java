@@ -28,8 +28,10 @@ public class FixedSizeList<E> extends AbstractList<E> {
 
     @Override
     public E get(int index) {
-        if (index >= size) throw new IndexOutOfBoundsException();
-        int actualIndex = (head - size + index + capacity) % capacity;
+        if (index < 0 || index >= size) {
+            throw new IndexOutOfBoundsException("Index " + index + " out of bounds, size=" + size);
+        }
+        int actualIndex = (head + index) % capacity;
         return data.get(actualIndex);
     }
 
@@ -45,4 +47,3 @@ public class FixedSizeList<E> extends AbstractList<E> {
         size = 0;
     }
 }
-
