@@ -5,10 +5,10 @@ Subject: [PATCH] Get the MSPT for a single world
 
 
 diff --git a/src/main/java/org/bukkit/World.java b/src/main/java/org/bukkit/World.java
-index 04a1379f5fe281ab72610d2f8f18e1355fe3a134..ab15072e601124b1e61e87405768fb9d1cfb5f50 100644
+index ae342a5cebf12b0c6fea3171d8035b75bc7a00e8..f59f46dc2c860edd32226d411ee13fb308872100 100644
 --- a/src/main/java/org/bukkit/World.java
 +++ b/src/main/java/org/bukkit/World.java
-@@ -99,6 +99,16 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+@@ -100,6 +100,16 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
      void setVoidDamageMinBuildHeightOffset(double minBuildHeightOffset);
      // Paper end - void damage configuration
  
