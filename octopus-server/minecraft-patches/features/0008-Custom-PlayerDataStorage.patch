@@ -5,7 +5,7 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index a469ec6c83b0625ba2181a6f5b48b4fc28c30d0e..58798cd0e250a4d91227ab26f74f162c1dfea8a5 100644
+index 756cc8c3ecfcf6bc33dc7e269d7439892aedf78c..6de908f59ab3c072e25bec5a0d7925b45cf07d66 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -207,6 +207,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -109,7 +109,7 @@ index 16e06085ed3c0f6a0b35c730b63b75824f44a905..a9711ecb0baf9e995e1baca52d9f5437
          } catch (IOException var2) {
              LOGGER.error("Couldn't save stats", (Throwable)var2);
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
-index fe44d8d17d2622b3d6021c11579af85ef96737bb..69a12ff9cb683fe356bc1d58e82d99087ce59a53 100644
+index fe44d8d17d2622b3d6021c11579af85ef96737bb..5888f10ebff6184725d0339fb99eb3439a13f9eb 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
 +++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
 @@ -24,6 +24,13 @@ public class PlayerDataStorage {
@@ -126,16 +126,20 @@ index fe44d8d17d2622b3d6021c11579af85ef96737bb..69a12ff9cb683fe356bc1d58e82d9908
  
      public PlayerDataStorage(LevelStorageSource.LevelStorageAccess levelStorageAccess, DataFixer fixerUpper) {
          this.fixerUpper = fixerUpper;
-@@ -39,6 +46,12 @@ public class PlayerDataStorage {
-             Path path = this.playerDir.toPath();
-             Path path1 = Files.createTempFile(path, player.getStringUUID() + "-", ".dat");
-             CompoundTag compoundTag = tagValueOutput.buildResult();
+@@ -36,9 +43,15 @@ public class PlayerDataStorage {
+         try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(player.problemPath(), LOGGER)) {
+             TagValueOutput tagValueOutput = TagValueOutput.createWithContext(scopedCollector, player.registryAccess());
+             player.saveWithoutId(tagValueOutput);
++            CompoundTag compoundTag = tagValueOutput.buildResult();
 +            // Octopus start - PlayerDataSource
 +            if (dataSource != null) {
 +                dataSource.save(player, compoundTag);
 +                return;
 +            }
 +            // Octopus end - PlayerDataSource
+             Path path = this.playerDir.toPath();
+             Path path1 = Files.createTempFile(path, player.getStringUUID() + "-", ".dat");
+-            CompoundTag compoundTag = tagValueOutput.buildResult();
              NbtIo.writeCompressed(compoundTag, path1);
              Path path2 = path.resolve(player.getStringUUID() + ".dat");
              Path path3 = path.resolve(player.getStringUUID() + ".dat_old");
