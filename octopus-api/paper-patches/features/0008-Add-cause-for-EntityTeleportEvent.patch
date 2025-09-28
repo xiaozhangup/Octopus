@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Sun, 28 Sep 2025 00:03:34 +0800
+Subject: [PATCH] Add cause for EntityTeleportEvent
+
+
+diff --git a/src/main/java/com/destroystokyo/paper/event/entity/EntityTeleportEndGatewayEvent.java b/src/main/java/com/destroystokyo/paper/event/entity/EntityTeleportEndGatewayEvent.java
+index cea029bfbd526d21509dee69bbfad44323107cf2..537e2e549fe7f182c78f4a74b37e9fc3ec08743c 100644
+--- a/src/main/java/com/destroystokyo/paper/event/entity/EntityTeleportEndGatewayEvent.java
++++ b/src/main/java/com/destroystokyo/paper/event/entity/EntityTeleportEndGatewayEvent.java
+@@ -17,7 +17,7 @@ public class EntityTeleportEndGatewayEvent extends EntityTeleportEvent {
+ 
+     @ApiStatus.Internal
+     public EntityTeleportEndGatewayEvent(final Entity entity, final Location from, final Location to, final EndGateway gateway) {
+-        super(entity, from, to);
++        super(entity, from, to, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.END_GATEWAY);
+         this.gateway = gateway;
+     }
+ 
+diff --git a/src/main/java/org/bukkit/event/entity/EntityTeleportEvent.java b/src/main/java/org/bukkit/event/entity/EntityTeleportEvent.java
+index e27cd3a6f4bc7bff642512b6ba442e9062e5f717..8f175f4c1589093f90c3dece84bc1ad4c72cd2bd 100644
+--- a/src/main/java/org/bukkit/event/entity/EntityTeleportEvent.java
++++ b/src/main/java/org/bukkit/event/entity/EntityTeleportEvent.java
+@@ -4,6 +4,7 @@ import org.bukkit.Location;
+ import org.bukkit.entity.Entity;
+ import org.bukkit.event.Cancellable;
+ import org.bukkit.event.HandlerList;
++import org.bukkit.event.player.PlayerTeleportEvent;
+ import org.jetbrains.annotations.ApiStatus;
+ import org.jetbrains.annotations.NotNull;
+ import org.jetbrains.annotations.Nullable;
+@@ -20,6 +21,7 @@ public class EntityTeleportEvent extends EntityEvent implements Cancellable {
+ 
+     private Location from;
+     private Location to;
++    private PlayerTeleportEvent.TeleportCause cause = PlayerTeleportEvent.TeleportCause.UNKNOWN;
+ 
+     private boolean cancelled;
+ 
+@@ -30,6 +32,24 @@ public class EntityTeleportEvent extends EntityEvent implements Cancellable {
+         this.to = to;
+     }
+ 
++    @ApiStatus.Internal
++    public EntityTeleportEvent(@NotNull Entity entity, @NotNull Location from, @Nullable Location to, @NotNull PlayerTeleportEvent.TeleportCause cause) {
++        super(entity);
++        this.from = from;
++        this.to = to;
++        this.cause = cause;
++    }
++
++    /**
++     * Gets the cause of this teleportation event
++     *
++     * @return Cause of the event
++     */
++    @NotNull
++    public PlayerTeleportEvent.TeleportCause getCause() {
++        return this.cause;
++    }
++
+     /**
+      * Gets the location that this entity moved from
+      *
