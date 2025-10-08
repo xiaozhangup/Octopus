@@ -55,45 +55,29 @@ index fdeca41d40705f28864ce4443d01cd872c9d51b0..f5a0d39eeed860055c85e08da967ef93
  
              try (Writer bufferedWriter = Files.newBufferedWriter(this.playerSavePath, StandardCharsets.UTF_8)) {
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 296784d2f78aea9003e8cac396d969f6e3cf0634..67db10362cb4b5bc919a208070707f08bb0da906 100644
+index 296784d2f78aea9003e8cac396d969f6e3cf0634..0cac488b5fd58b35604428c2582b528bd799ff3f 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -2173,6 +2173,21 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
-     public MapItemSavedData getMapData(MapId mapId) {
-         // Paper start - Call missing map initialize event and set id
-         final DimensionDataStorage storage = this.getServer().overworld().getDataStorage();
-+        // Octopus start - Custom DataSource
-+        final me.xiaozhangup.octopus.WorldMapDataSource mapSource = this.getServer().worldMapSource;
-+        if (mapSource != null) {
-+            final Optional<net.minecraft.nbt.CompoundTag> sourceData = mapSource.getMapData(mapId.id());
-+            if (sourceData.isPresent()) {
-+                final MapItemSavedData mapData = storage.readSavedData(MapItemSavedData.type(mapId), sourceData.get());
-+                if (mapData != null) { // map was read, init it and return
-+                    mapData.id = mapId;
-+                    new org.bukkit.event.server.MapInitializeEvent(mapData.mapView).callEvent();
-+                    return mapData;
-+                }
-+            }
-+            return null;
-+        }
-+        // Octopus end - Custom DataSource
+@@ -2176,7 +2176,18 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
  
          final Optional<net.minecraft.world.level.saveddata.SavedData> cacheEntry = storage.cache.get(MapItemSavedData.type(mapId));
          if (cacheEntry == null) { // Cache did not contain, try to load and may init
-@@ -2201,6 +2216,13 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
-         org.bukkit.event.server.MapInitializeEvent event = new org.bukkit.event.server.MapInitializeEvent(data.mapView);
-         event.callEvent();
-         // CraftBukkit end
-+        // Octopus start - Custom DataSource
-+        if (this.getServer().worldMapSource != null) {
-+            net.minecraft.nbt.CompoundTag tag = this.getServer().overworld().getDataStorage().encodeUnchecked(MapItemSavedData.type(mapId), data);
-+            this.getServer().worldMapSource.saveMapData(mapId.id(), tag);
-+            return;
-+        }
-+        // Octopus end - Custom DataSource
-         this.getServer().overworld().getDataStorage().set(MapItemSavedData.type(mapId), data);
-     }
- 
+-            final MapItemSavedData mapData = storage.get(MapItemSavedData.type(mapId)); // get populates the cache
++            // Octopus start - Custom DataSource
++            MapItemSavedData mapData = null;
++            final me.xiaozhangup.octopus.WorldMapDataSource mapSource = this.getServer().worldMapSource;
++            if (mapSource != null) {
++                final Optional<net.minecraft.nbt.CompoundTag> sourceData = mapSource.getMapData(mapId.id());
++                if (sourceData.isPresent()) {
++                    mapData = storage.getWithTag(MapItemSavedData.type(mapId), sourceData.get());
++                }
++            } else {
++                mapData = storage.get(MapItemSavedData.type(mapId)); // get populates the cache
++            }
++            // Octopus end - Custom DataSource
+             if (mapData != null) { // map was read, init it and return
+                 mapData.id = mapId;
+                 new org.bukkit.event.server.MapInitializeEvent(mapData.mapView).callEvent();
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
 index afbb79555d8ea8eb95da0e882ffca8ca8803bf3b..aa84e780b761336825ab7f08280dc38225534683 100644
 --- a/net/minecraft/server/players/PlayerList.java
@@ -166,16 +150,36 @@ index 06025d79cc2297119b22224d777aca79f9d3d9c1..d109cab658946b06859a20587b26a081
          this.setDirty();
          return mapId;
 diff --git a/net/minecraft/world/level/storage/DimensionDataStorage.java b/net/minecraft/world/level/storage/DimensionDataStorage.java
-index 1ff0b19a077333ad9da9cab7f5a891eeaa2109a9..237c2898b5bb164f4d04e8f15dd0f12909dbbf40 100644
+index 1ff0b19a077333ad9da9cab7f5a891eeaa2109a9..62a0a83856571158d3fe8d23cbc9b5a3e80ec4e2 100644
 --- a/net/minecraft/world/level/storage/DimensionDataStorage.java
 +++ b/net/minecraft/world/level/storage/DimensionDataStorage.java
-@@ -98,6 +98,26 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -78,6 +78,19 @@ public class DimensionDataStorage implements AutoCloseable {
+         return (T)optional.orElse(null);
+     }
+ 
++    // Octopus start - Custom DataSource
++    @Nullable
++    public <T extends SavedData> T getWithTag(SavedDataType<T> type, CompoundTag tag) {
++        Optional<SavedData> optional = this.cache.get(type);
++        if (optional == null) {
++            optional = Optional.ofNullable(this.readSavedDataWithTag(type, tag));
++            this.cache.put(type, optional);
++        }
++
++        return (T)optional.orElse(null);
++    }
++    // Octopus end - Custom DataSource
++
+     @Nullable
+     private <T extends SavedData> T readSavedData(SavedDataType<T> type) {
+         try {
+@@ -98,6 +111,26 @@ public class DimensionDataStorage implements AutoCloseable {
          return null;
      }
  
 +    // Octopus start - Custom DataSource
 +    @Nullable
-+    public <T extends SavedData> T readSavedData(SavedDataType<T> type, CompoundTag tag) {
++    private <T extends SavedData> T readSavedDataWithTag(SavedDataType<T> type, CompoundTag tag) {
 +        try {
 +            int dataVersion = NbtUtils.getDataVersion(tag, 1343);
 +            CompoundTag tagFixed = type.dataFixType().update(this.fixerUpper, tag, dataVersion, SharedConstants.getCurrentVersion().dataVersion().version());
@@ -196,24 +200,22 @@ index 1ff0b19a077333ad9da9cab7f5a891eeaa2109a9..237c2898b5bb164f4d04e8f15dd0f129
      public <T extends SavedData> void set(SavedDataType<T> type, T value) {
          this.cache.put(type, Optional.of(value));
          value.setDirty();
-@@ -199,6 +219,17 @@ public class DimensionDataStorage implements AutoCloseable {
-         return compoundTag;
-     }
- 
-+    // Octopus start - Custom DataSource
-+    public  <T extends SavedData> CompoundTag encodeUnchecked(SavedDataType<T> type, SavedData data) {
-+        Codec<T> codec = type.codec().apply(this.context);
-+        RegistryOps<Tag> registryOps = this.registries.createSerializationContext(NbtOps.INSTANCE);
-+        CompoundTag compoundTag = new CompoundTag();
-+        compoundTag.put("data", codec.encodeStart(registryOps, (T)data).getOrThrow());
-+        NbtUtils.addCurrentDataVersion(compoundTag);
-+        return compoundTag;
-+    }
-+    // Octopus end - Custom DataSource
-+
-     private void tryWrite(SavedDataType<?> type, CompoundTag tag) {
-         Path dataFile = this.getDataFile(type.id());
- 
+@@ -185,7 +218,14 @@ public class DimensionDataStorage implements AutoCloseable {
+         Map<SavedDataType<?>, CompoundTag> map = new Object2ObjectArrayMap<>();
+         RegistryOps<Tag> registryOps = this.registries.createSerializationContext(NbtOps.INSTANCE);
+         this.cache.forEach((savedDataType, optional) -> optional.filter(SavedData::isDirty).ifPresent(savedData -> {
+-            map.put(savedDataType, this.encodeUnchecked(savedDataType, savedData, registryOps));
++            // Octopus start - Custom DataSource
++            me.xiaozhangup.octopus.WorldMapDataSource mapSource = net.minecraft.server.MinecraftServer.getServer().worldMapSource;
++            if (mapSource != null && savedData instanceof net.minecraft.world.level.saveddata.maps.MapItemSavedData) {
++                mapSource.saveMapData(((net.minecraft.world.level.saveddata.maps.MapItemSavedData) savedData).id.id(), this.encodeUnchecked(savedDataType, savedData, registryOps));
++            } else {
++                map.put(savedDataType, this.encodeUnchecked(savedDataType, savedData, registryOps));
++            }
++            // Octopus end - Custom DataSource
+             savedData.setDirty(false);
+         }));
+         return map;
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
 index fe44d8d17d2622b3d6021c11579af85ef96737bb..5888f10ebff6184725d0339fb99eb3439a13f9eb 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
