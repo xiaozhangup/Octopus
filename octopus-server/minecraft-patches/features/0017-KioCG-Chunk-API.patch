@@ -17,7 +17,7 @@ index 975a2e4ea1f84e81fa3526395b43cb8157a06243..7ed06ebe43c18283ae43421f984ceea2
      }
  
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 169aaac198fd0dd3c0fec651b43d7e830bb6f7b3..239207118dd79ccb4dc93f43511ffe41c28e5ee1 100644
+index e77bbce2af70748a13df1f68a189ad3a6d6677f2..666a6b4e7bf8c5b79a59cc060942b02d60e9f3a7 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -31,17 +31,7 @@ import java.nio.file.FileStore;
@@ -39,7 +39,7 @@ index 169aaac198fd0dd3c0fec651b43d7e830bb6f7b3..239207118dd79ccb4dc93f43511ffe41
  import java.util.Map.Entry;
  import java.util.concurrent.CompletableFuture;
  import java.util.concurrent.Executor;
-@@ -1543,7 +1533,39 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1545,7 +1535,39 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          new com.destroystokyo.paper.event.server.ServerTickStartEvent(this.tickCount+1).callEvent(); // Paper - Server Tick Events
          this.tickCount++;
          this.tickRateManager.tick();
@@ -80,7 +80,7 @@ index 169aaac198fd0dd3c0fec651b43d7e830bb6f7b3..239207118dd79ccb4dc93f43511ffe41
              this.lastServerStatus = nanos;
              this.status = this.buildServerStatus();
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 296784d2f78aea9003e8cac396d969f6e3cf0634..1e23fab2d40e434109e44f19db7a47d2b70bc7fa 100644
+index 67db10362cb4b5bc919a208070707f08bb0da906..e6805ca7342a24c10cb366992e2a4afced9b9dc7 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -1303,11 +1303,14 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe

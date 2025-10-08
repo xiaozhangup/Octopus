@@ -5,10 +5,10 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 756cc8c3ecfcf6bc33dc7e269d7439892aedf78c..6de908f59ab3c072e25bec5a0d7925b45cf07d66 100644
+index 756cc8c3ecfcf6bc33dc7e269d7439892aedf78c..04e1f13e993d0b0b744e774c4e967e0cc4b6e6e3 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -207,6 +207,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -207,6 +207,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      private Consumer<ProfileResults> onMetricsRecordingStopped = results -> this.stopRecordingMetrics();
      private Consumer<Path> onMetricsRecordingFinished = path -> {};
      private boolean willStartRecordingMetrics;
@@ -17,6 +17,8 @@ index 756cc8c3ecfcf6bc33dc7e269d7439892aedf78c..6de908f59ab3c072e25bec5a0d7925b4
 +    public me.xiaozhangup.octopus.PlayerJsonDataSource achievementsSource = null;
 +    @Nullable
 +    public me.xiaozhangup.octopus.PlayerJsonDataSource statsSource = null;
++    @Nullable
++    public me.xiaozhangup.octopus.WorldMapDataSource worldMapSource = null;
 +    // Octopus end - Custom DataSource
      @Nullable
      private MinecraftServer.TimeProfiler debugCommandProfiler;
@@ -52,6 +54,46 @@ index fdeca41d40705f28864ce4443d01cd872c9d51b0..f5a0d39eeed860055c85e08da967ef93
              FileUtil.createDirectoriesSafe(this.playerSavePath.getParent());
  
              try (Writer bufferedWriter = Files.newBufferedWriter(this.playerSavePath, StandardCharsets.UTF_8)) {
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index 296784d2f78aea9003e8cac396d969f6e3cf0634..67db10362cb4b5bc919a208070707f08bb0da906 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -2173,6 +2173,21 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+     public MapItemSavedData getMapData(MapId mapId) {
+         // Paper start - Call missing map initialize event and set id
+         final DimensionDataStorage storage = this.getServer().overworld().getDataStorage();
++        // Octopus start - Custom DataSource
++        final me.xiaozhangup.octopus.WorldMapDataSource mapSource = this.getServer().worldMapSource;
++        if (mapSource != null) {
++            final Optional<net.minecraft.nbt.CompoundTag> sourceData = mapSource.getMapData(mapId.id());
++            if (sourceData.isPresent()) {
++                final MapItemSavedData mapData = storage.readSavedData(MapItemSavedData.type(mapId), sourceData.get());
++                if (mapData != null) { // map was read, init it and return
++                    mapData.id = mapId;
++                    new org.bukkit.event.server.MapInitializeEvent(mapData.mapView).callEvent();
++                    return mapData;
++                }
++            }
++            return null;
++        }
++        // Octopus end - Custom DataSource
+ 
+         final Optional<net.minecraft.world.level.saveddata.SavedData> cacheEntry = storage.cache.get(MapItemSavedData.type(mapId));
+         if (cacheEntry == null) { // Cache did not contain, try to load and may init
+@@ -2201,6 +2216,13 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+         org.bukkit.event.server.MapInitializeEvent event = new org.bukkit.event.server.MapInitializeEvent(data.mapView);
+         event.callEvent();
+         // CraftBukkit end
++        // Octopus start - Custom DataSource
++        if (this.getServer().worldMapSource != null) {
++            net.minecraft.nbt.CompoundTag tag = this.getServer().overworld().getDataStorage().encodeUnchecked(MapItemSavedData.type(mapId), data);
++            this.getServer().worldMapSource.saveMapData(mapId.id(), tag);
++            return;
++        }
++        // Octopus end - Custom DataSource
+         this.getServer().overworld().getDataStorage().set(MapItemSavedData.type(mapId), data);
+     }
+ 
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
 index afbb79555d8ea8eb95da0e882ffca8ca8803bf3b..aa84e780b761336825ab7f08280dc38225534683 100644
 --- a/net/minecraft/server/players/PlayerList.java
@@ -108,6 +150,70 @@ index 16e06085ed3c0f6a0b35c730b63b75824f44a905..a9711ecb0baf9e995e1baca52d9f5437
              FileUtils.writeStringToFile(this.file, this.toJson());
          } catch (IOException var2) {
              LOGGER.error("Couldn't save stats", (Throwable)var2);
+diff --git a/net/minecraft/world/level/saveddata/maps/MapIndex.java b/net/minecraft/world/level/saveddata/maps/MapIndex.java
+index 06025d79cc2297119b22224d777aca79f9d3d9c1..d109cab658946b06859a20587b26a0817226eaf6 100644
+--- a/net/minecraft/world/level/saveddata/maps/MapIndex.java
++++ b/net/minecraft/world/level/saveddata/maps/MapIndex.java
+@@ -23,6 +23,10 @@ public class MapIndex extends SavedData {
+     }
+ 
+     public MapId getNextMapId() {
++        me.xiaozhangup.octopus.WorldMapDataSource mapSource = net.minecraft.server.MinecraftServer.getServer().worldMapSource;
++        if (mapSource != null) {
++            return new MapId(mapSource.getNextMapId());
++        }
+         MapId mapId = new MapId(++this.lastMapId);
+         this.setDirty();
+         return mapId;
+diff --git a/net/minecraft/world/level/storage/DimensionDataStorage.java b/net/minecraft/world/level/storage/DimensionDataStorage.java
+index 1ff0b19a077333ad9da9cab7f5a891eeaa2109a9..237c2898b5bb164f4d04e8f15dd0f12909dbbf40 100644
+--- a/net/minecraft/world/level/storage/DimensionDataStorage.java
++++ b/net/minecraft/world/level/storage/DimensionDataStorage.java
+@@ -98,6 +98,26 @@ public class DimensionDataStorage implements AutoCloseable {
+         return null;
+     }
+ 
++    // Octopus start - Custom DataSource
++    @Nullable
++    public <T extends SavedData> T readSavedData(SavedDataType<T> type, CompoundTag tag) {
++        try {
++            int dataVersion = NbtUtils.getDataVersion(tag, 1343);
++            CompoundTag tagFixed = type.dataFixType().update(this.fixerUpper, tag, dataVersion, SharedConstants.getCurrentVersion().dataVersion().version());
++            RegistryOps<Tag> registryOps = this.registries.createSerializationContext(NbtOps.INSTANCE);
++            return type.codec()
++                    .apply(this.context)
++                    .parse(registryOps, tagFixed.get("data"))
++                    .resultOrPartial(string -> LOGGER.error("Failed to parse saved data for '{}': {}", type, string))
++                    .orElse(null);
++        } catch (Exception var5) {
++            LOGGER.error("Error loading saved data: {}", type, var5);
++        }
++
++        return null;
++    }
++    // Octopus end - Custom DataSource
++
+     public <T extends SavedData> void set(SavedDataType<T> type, T value) {
+         this.cache.put(type, Optional.of(value));
+         value.setDirty();
+@@ -199,6 +219,17 @@ public class DimensionDataStorage implements AutoCloseable {
+         return compoundTag;
+     }
+ 
++    // Octopus start - Custom DataSource
++    public  <T extends SavedData> CompoundTag encodeUnchecked(SavedDataType<T> type, SavedData data) {
++        Codec<T> codec = type.codec().apply(this.context);
++        RegistryOps<Tag> registryOps = this.registries.createSerializationContext(NbtOps.INSTANCE);
++        CompoundTag compoundTag = new CompoundTag();
++        compoundTag.put("data", codec.encodeStart(registryOps, (T)data).getOrThrow());
++        NbtUtils.addCurrentDataVersion(compoundTag);
++        return compoundTag;
++    }
++    // Octopus end - Custom DataSource
++
+     private void tryWrite(SavedDataType<?> type, CompoundTag tag) {
+         Path dataFile = this.getDataFile(type.id());
+ 
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
 index fe44d8d17d2622b3d6021c11579af85ef96737bb..5888f10ebff6184725d0339fb99eb3439a13f9eb 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
