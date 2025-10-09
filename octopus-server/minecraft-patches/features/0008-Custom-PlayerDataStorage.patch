@@ -149,8 +149,39 @@ index 06025d79cc2297119b22224d777aca79f9d3d9c1..d109cab658946b06859a20587b26a081
          MapId mapId = new MapId(++this.lastMapId);
          this.setDirty();
          return mapId;
+diff --git a/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java b/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
+index c8f23011a8942a5be970c606f67142cbd202b97e..349318798d72689226fc5e32978d5ff31813ac27 100644
+--- a/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
++++ b/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
+@@ -742,4 +742,26 @@ public class MapItemSavedData extends SavedData {
+         };
+     }
+     // Paper end - store target world by uuid in addition to dimension
++
++    // Octopus start - Custom DataSource
++    @Override
++    public void setDirty() {
++        me.xiaozhangup.octopus.WorldMapDataSource mapSource = net.minecraft.server.MinecraftServer.getServer().worldMapSource;
++        net.minecraft.server.level.ServerLevel overworld = net.minecraft.server.MinecraftServer.getServer().overworld();
++        net.minecraft.world.level.storage.DimensionDataStorage storage = overworld.getDataStorage();
++        if (mapSource != null) {
++            mapSource.saveMapData(
++                    this.id.id(),
++                    storage.encodeUnchecked(
++                            MapItemSavedData.type(this.id),
++                            this,
++                            overworld.registryAccess().createSerializationContext(net.minecraft.nbt.NbtOps.INSTANCE)
++                    )
++            );
++            return;
++        }
++
++        super.setDirty();
++    }
++    // Octopus end - Custom DataSource
+ }
 diff --git a/net/minecraft/world/level/storage/DimensionDataStorage.java b/net/minecraft/world/level/storage/DimensionDataStorage.java
-index 1ff0b19a077333ad9da9cab7f5a891eeaa2109a9..62a0a83856571158d3fe8d23cbc9b5a3e80ec4e2 100644
+index 1ff0b19a077333ad9da9cab7f5a891eeaa2109a9..9c9bbba2daa1971e6102570473c1b2045b7ee77e 100644
 --- a/net/minecraft/world/level/storage/DimensionDataStorage.java
 +++ b/net/minecraft/world/level/storage/DimensionDataStorage.java
 @@ -78,6 +78,19 @@ public class DimensionDataStorage implements AutoCloseable {
@@ -200,7 +231,7 @@ index 1ff0b19a077333ad9da9cab7f5a891eeaa2109a9..62a0a83856571158d3fe8d23cbc9b5a3
      public <T extends SavedData> void set(SavedDataType<T> type, T value) {
          this.cache.put(type, Optional.of(value));
          value.setDirty();
-@@ -185,7 +218,14 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -185,13 +218,20 @@ public class DimensionDataStorage implements AutoCloseable {
          Map<SavedDataType<?>, CompoundTag> map = new Object2ObjectArrayMap<>();
          RegistryOps<Tag> registryOps = this.registries.createSerializationContext(NbtOps.INSTANCE);
          this.cache.forEach((savedDataType, optional) -> optional.filter(SavedData::isDirty).ifPresent(savedData -> {
@@ -216,6 +247,13 @@ index 1ff0b19a077333ad9da9cab7f5a891eeaa2109a9..62a0a83856571158d3fe8d23cbc9b5a3
              savedData.setDirty(false);
          }));
          return map;
+     }
+ 
+-    private <T extends SavedData> CompoundTag encodeUnchecked(SavedDataType<T> type, SavedData data, RegistryOps<Tag> ops) {
++    public <T extends SavedData> CompoundTag encodeUnchecked(SavedDataType<T> type, SavedData data, RegistryOps<Tag> ops) { // Octopus - Custom DataSource
+         Codec<T> codec = type.codec().apply(this.context);
+         CompoundTag compoundTag = new CompoundTag();
+         compoundTag.put("data", codec.encodeStart(ops, (T)data).getOrThrow());
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
 index fe44d8d17d2622b3d6021c11579af85ef96737bb..5888f10ebff6184725d0339fb99eb3439a13f9eb 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
