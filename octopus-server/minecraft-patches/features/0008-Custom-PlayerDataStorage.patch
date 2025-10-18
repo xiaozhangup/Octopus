@@ -150,10 +150,10 @@ index 06025d79cc2297119b22224d777aca79f9d3d9c1..d109cab658946b06859a20587b26a081
          this.setDirty();
          return mapId;
 diff --git a/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java b/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
-index c8f23011a8942a5be970c606f67142cbd202b97e..349318798d72689226fc5e32978d5ff31813ac27 100644
+index c8f23011a8942a5be970c606f67142cbd202b97e..d8534616ad2a1d3707ad0f6c44222d4016a73602 100644
 --- a/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
 +++ b/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
-@@ -742,4 +742,26 @@ public class MapItemSavedData extends SavedData {
+@@ -742,4 +742,15 @@ public class MapItemSavedData extends SavedData {
          };
      }
      // Paper end - store target world by uuid in addition to dimension
@@ -161,22 +161,11 @@ index c8f23011a8942a5be970c606f67142cbd202b97e..349318798d72689226fc5e32978d5ff3
 +    // Octopus start - Custom DataSource
 +    @Override
 +    public void setDirty() {
-+        me.xiaozhangup.octopus.WorldMapDataSource mapSource = net.minecraft.server.MinecraftServer.getServer().worldMapSource;
-+        net.minecraft.server.level.ServerLevel overworld = net.minecraft.server.MinecraftServer.getServer().overworld();
-+        net.minecraft.world.level.storage.DimensionDataStorage storage = overworld.getDataStorage();
-+        if (mapSource != null) {
-+            mapSource.saveMapData(
-+                    this.id.id(),
-+                    storage.encodeUnchecked(
-+                            MapItemSavedData.type(this.id),
-+                            this,
-+                            overworld.registryAccess().createSerializationContext(net.minecraft.nbt.NbtOps.INSTANCE)
-+                    )
-+            );
-+            return;
-+        }
-+
 +        super.setDirty();
++        me.xiaozhangup.octopus.WorldMapDataSource mapSource = net.minecraft.server.MinecraftServer.getServer().worldMapSource;
++        if (mapSource != null) {
++            mapSource.setDirty(this.id.id());
++        }
 +    }
 +    // Octopus end - Custom DataSource
  }
