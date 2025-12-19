@@ -5,7 +5,7 @@ Subject: [PATCH] ShulkerBullet tick baffle
 
 
 diff --git a/net/minecraft/world/entity/projectile/ShulkerBullet.java b/net/minecraft/world/entity/projectile/ShulkerBullet.java
-index 00154ba80175bcb07b3378f19514fec1700c94e9..1a93f4a7e6b48596a0d8fc85b867dabb2c4952c6 100644
+index 00154ba80175bcb07b3378f19514fec1700c94e9..a972760ab20e7263060d91f2ad1c37d6ce6fddc7 100644
 --- a/net/minecraft/world/entity/projectile/ShulkerBullet.java
 +++ b/net/minecraft/world/entity/projectile/ShulkerBullet.java
 @@ -35,6 +35,10 @@ import net.minecraft.world.phys.Vec3;
@@ -19,16 +19,21 @@ index 00154ba80175bcb07b3378f19514fec1700c94e9..1a93f4a7e6b48596a0d8fc85b867dabb
      @Nullable
      private EntityReference<Entity> finalTarget;
      @Nullable
-@@ -207,7 +211,7 @@ public class ShulkerBullet extends Projectile {
-         super.tick();
-         Entity entity = !this.level().isClientSide() ? EntityReference.get(this.finalTarget, this.level(), Entity.class) : null;
-         HitResult hitResult = null;
--        if (!this.level().isClientSide) {
-+        if (!this.level().isClientSide && (tickCounter % BAFFLE_RATE) == 0) { // Octopus - ShulkerBullet tick baffle
-             if (entity == null) {
-                 this.finalTarget = null;
+@@ -225,9 +229,13 @@ public class ShulkerBullet extends Projectile {
+                     )
+                 );
              }
-@@ -269,6 +273,8 @@ public class ShulkerBullet extends Projectile {
++        }
+ 
++        // Octopus start - ShulkerBullet tick baffle
++        if (!this.level().isClientSide && (tickCounter % BAFFLE_RATE) == 0) {
+             hitResult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
+         }
++        // Octopus end - ShulkerBullet tick baffle
+ 
+         Vec3 deltaMovement = this.getDeltaMovement();
+         this.setPos(this.position().add(deltaMovement));
+@@ -269,6 +277,8 @@ public class ShulkerBullet extends Projectile {
                  }
              }
          }
