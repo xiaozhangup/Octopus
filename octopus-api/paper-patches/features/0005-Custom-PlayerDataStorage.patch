@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Wed, 31 Dec 2025 23:12:06 +0800
+Subject: [PATCH] Custom PlayerDataStorage
+
+
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index 0ec885b97d655c03371840d739b47063494ed36f..23fec7cbb4fef9e7e53c3d2ccc01140b522a8c4d 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -2761,4 +2761,28 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+      */
+     void allowPausing(@NotNull org.bukkit.plugin.Plugin plugin, boolean value);
+     // Paper end - API to check if the server is sleeping
++
++    /**
++     * Sets the profile source for the server.
++     * @param source
++     */
++    void setProfileSource(me.xiaozhangup.octopus.ProfileSource source);
++
++    /**
++     * Sets the stats source for the server.
++     * @param source
++     */
++    void setStatsSource(me.xiaozhangup.octopus.JsonDataSource source);
++
++    /**
++     * Sets the achievements source for the server.
++     * @param source
++     */
++    void setAchievementsSource(me.xiaozhangup.octopus.JsonDataSource source);
++
++    /**
++     * Sets the maps source for the server.
++     * @param source
++     */
++    void setMapSource(me.xiaozhangup.octopus.MapSource source);
+ }

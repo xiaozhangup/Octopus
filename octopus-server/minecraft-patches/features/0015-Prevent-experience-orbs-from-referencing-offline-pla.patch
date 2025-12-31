@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Wed, 31 Dec 2025 22:40:20 +0800
+Subject: [PATCH] Prevent experience orbs from referencing offline players
+
+
+diff --git a/net/minecraft/world/entity/ExperienceOrb.java b/net/minecraft/world/entity/ExperienceOrb.java
+index f2ec0bd8cca3c08d558790537e17a8a2f95f1953..a23e745f8ea1f9041a959764c35f517d9ca2502a 100644
+--- a/net/minecraft/world/entity/ExperienceOrb.java
++++ b/net/minecraft/world/entity/ExperienceOrb.java
+@@ -197,7 +197,7 @@ public class ExperienceOrb extends Entity {
+ 
+     private void followNearbyPlayer() {
+         Player prevTarget = this.followingPlayer; // CraftBukkit - store old target
+-        if (this.followingPlayer == null || this.followingPlayer.isSpectator() || this.followingPlayer.distanceToSqr(this) > 64.0) {
++        if (this.followingPlayer == null || this.followingPlayer.isSpectator() || this.followingPlayer.distanceToSqr(this) > 64.0 || this.followingPlayer.isRemoved()) {
+             Player nearestPlayer = this.level().getNearestPlayer(this, 8.0);
+             if (nearestPlayer != null && !nearestPlayer.isSpectator() && !nearestPlayer.isDeadOrDying()) {
+                 this.followingPlayer = nearestPlayer;

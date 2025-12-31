@@ -1,0 +1,89 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Wed, 31 Dec 2025 22:10:03 +0800
+Subject: [PATCH] Redundant move packet optimization
+
+
+diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
+index 3a817c92147bb78c60238f3ddc1644b721aed7a2..76a339da985b972bbb30db655ceebe9f04c09252 100644
+--- a/net/minecraft/server/level/ServerEntity.java
++++ b/net/minecraft/server/level/ServerEntity.java
+@@ -181,18 +181,23 @@ public class ServerEntity {
+                     packet = ClientboundEntityPositionSyncPacket.of(this.entity);
+                     flag3 = true;
+                     flag4 = true;
+-                } else if ((!flag2 || !flag) && !(this.entity instanceof AbstractArrow)) {
+-                    if (flag2) {
+-                        packet = new ClientboundMoveEntityPacket.Pos(this.entity.getId(), (short)l, (short)l1, (short)l2, this.entity.onGround());
+-                        flag3 = true;
+-                    } else if (flag) {
+-                        packet = new ClientboundMoveEntityPacket.Rot(this.entity.getId(), b, b1, this.entity.onGround());
+-                        flag4 = true;
+-                    }
++                // Gale start - Airplane - better checking for useless move packets
+                 } else {
+-                    packet = new ClientboundMoveEntityPacket.PosRot(this.entity.getId(), (short)l, (short)l1, (short)l2, b, b1, this.entity.onGround());
+-                    flag3 = true;
+-                    flag4 = true;
++                    if (flag2 || flag || this.entity instanceof AbstractArrow) {
++                        if ((!flag2 || !flag) && !(this.entity instanceof AbstractArrow)) {
++                            if (flag2) {
++                                packet = new ClientboundMoveEntityPacket.Pos(this.entity.getId(), (short) l, (short) l1, (short) l2, this.entity.onGround());
++                                flag3 = true;
++                            } else if (flag) {
++                                packet = new ClientboundMoveEntityPacket.Rot(this.entity.getId(), b, b1, this.entity.onGround());
++                                flag4 = true;
++                            }
++                        } else {
++                            packet = new ClientboundMoveEntityPacket.PosRot(this.entity.getId(), (short) l, (short) l1, (short) l2, b, b1, this.entity.onGround());
++                            flag3 = true;
++                            flag4 = true;
++                        }
++                    }
+                 }
+ 
+                 if (this.entity.needsSync || this.trackDelta || this.entity instanceof LivingEntity && ((LivingEntity)this.entity).isFallFlying()) {
+@@ -215,6 +220,7 @@ public class ServerEntity {
+                         }
+                     }
+                 }
++                // Gale end - Airplane - better checking for useless move packets
+ 
+                 if (packet != null) {
+                     this.synchronizer.sendToTrackingPlayers(packet);
+diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
+index a63a86e856110e60a69c896161283f2f62cecf14..fd04ff121b8e930e62bb215d85ab648af1b160c7 100644
+--- a/net/minecraft/world/entity/Entity.java
++++ b/net/minecraft/world/entity/Entity.java
+@@ -265,6 +265,7 @@ public abstract class Entity implements SyncedDataHolder, DebugValueSource, Name
+     public float yRotO;
+     public float xRotO;
+     private AABB bb = INITIAL_AABB;
++    private boolean boundingBoxChanged = false; // Gale - VMP - skip entity move if movement is zero
+     public boolean onGround;
+     public boolean horizontalCollision;
+     public boolean verticalCollision;
+@@ -1112,6 +1113,11 @@ public abstract class Entity implements SyncedDataHolder, DebugValueSource, Name
+     // Paper end - detailed watchdog information
+ 
+     public void move(MoverType type, Vec3 movement) {
++        // Gale start - VMP - skip entity move if movement is zero
++        if (!this.boundingBoxChanged && movement.equals(Vec3.ZERO)) {
++            return;
++        }
++        // Gale end - VMP - skip entity move if movement is zero
+         final Vec3 originalMovement = movement; // Paper - Expose pre-collision velocity
+         // Paper start - detailed watchdog information
+         ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread("Cannot move an entity off-main");
+@@ -4458,6 +4464,11 @@ public abstract class Entity implements SyncedDataHolder, DebugValueSource, Name
+     }
+ 
+     public final void setBoundingBox(AABB bb) {
++        // Gale start - VMP - skip entity move if movement is zero
++        if (!this.bb.equals(bb)) {
++            this.boundingBoxChanged = true;
++        }
++        // Gale end - VMP - skip entity move if movement is zero
+         // CraftBukkit start - block invalid bounding boxes
+         double minX = bb.minX,
+                 minY = bb.minY,

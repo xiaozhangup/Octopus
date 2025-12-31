@@ -1,0 +1,309 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Wed, 31 Dec 2025 22:42:32 +0800
+Subject: [PATCH] KioCG Chunk API
+
+
+diff --git a/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java b/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java
+index 3e7b616cbd196f56393719e84c7118ab47308337..12e1cab15d275db8ff13d36be174b3e1988022f3 100644
+--- a/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java
++++ b/ca/spottedleaf/moonrise/paper/util/BaseChunkSystemHooks.java
+@@ -118,6 +118,7 @@ public abstract class BaseChunkSystemHooks implements ca.spottedleaf.moonrise.co
+ 
+     @Override
+     public void onChunkNotTicking(final LevelChunk chunk, final ChunkHolder holder) {
++        chunk.getChunkHot().clear(); // KioCG
+         ((ChunkSystemServerLevel)((ServerLevel)chunk.getLevel())).moonrise$getTickingChunks().remove(chunk);
+     }
+ 
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index 8798af85e344173ea31d6998896a549685eb3d04..d3354c8201ff5269321413d47209ad923b9e265e 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -27,17 +27,7 @@ import java.nio.file.FileStore;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
+ import java.security.KeyPair;
+-import java.util.Arrays;
+-import java.util.Collection;
+-import java.util.Collections;
+-import java.util.Comparator;
+-import java.util.List;
+-import java.util.Locale;
+-import java.util.Map;
+-import java.util.Objects;
+-import java.util.Optional;
+-import java.util.Set;
+-import java.util.UUID;
++import java.util.*;
+ import java.util.Map.Entry;
+ import java.util.concurrent.CompletableFuture;
+ import java.util.concurrent.Executor;
+@@ -1627,7 +1617,39 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+         new com.destroystokyo.paper.event.server.ServerTickStartEvent(this.tickCount+1).callEvent(); // Paper - Server Tick Events
+         this.tickCount++;
+         this.tickRateManager.tick();
++        // KioCG start - ChunkHot
++        final ca.spottedleaf.moonrise.common.list.IteratorSafeOrderedReferenceSet<net.minecraft.world.level.chunk.LevelChunk> chunks = new ca.spottedleaf.moonrise.common.list.IteratorSafeOrderedReferenceSet<>();
++        final List<ServerLevel> allLevelsCopy = new ArrayList<>(this.levels.values());
++        for (ServerLevel level : allLevelsCopy) {
++            for (net.minecraft.world.level.chunk.LevelChunk chunk : level.moonrise$getTickingChunks()) {
++                chunks.add(chunk);
++            }
++        }
++        if (this.tickCount % 20 == 0){
++            final java.util.Iterator<net.minecraft.world.level.chunk.LevelChunk> chunkIterator = chunks.unsafeIterator();
++            while (chunkIterator.hasNext()){
++                final net.minecraft.world.level.chunk.LevelChunk targetChunk = chunkIterator.next();
++
++                targetChunk.getChunkHot().nextTick();
++                targetChunk.getChunkHot().start();
++            }
++        }
++        //KioCG end
+         this.tickChildren(hasTimeLeft);
++        // KioCG start - ChunkHot
++        if (this.tickCount % 20 == 0){
++            final java.util.Iterator<net.minecraft.world.level.chunk.LevelChunk> chunkIterator = chunks.unsafeIterator();
++            while (chunkIterator.hasNext()){
++                final net.minecraft.world.level.chunk.LevelChunk targetChunk = chunkIterator.next();
++
++                if (!targetChunk.getChunkHot().isStarted()){
++                    continue;
++                }
++
++                targetChunk.getChunkHot().stop();
++            }
++        }
++        //KioCG end
+         if (nanos - this.lastServerStatus >= STATUS_EXPIRE_TIME_NANOS) {
+             this.lastServerStatus = nanos;
+             this.status = this.buildServerStatus();
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index 753f53a2b5dfa594d7d4463db07558e7b188fcce..8eae3f87a43ba12dfa024cff8e6baf65e47910d2 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -1380,11 +1380,14 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+         profilerFiller.push(() -> BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
+         profilerFiller.incrementCounter("tickNonPassenger");
+         final boolean isActive = io.papermc.paper.entity.activation.ActivationRange.checkIfActive(entity); // Paper - EAR 2
++            LevelChunk levelChunk = entity.shouldTickHot() ? this.getChunkIfLoaded(entity.moonrise$getSectionX(),entity.moonrise$getSectionZ()) : null; // KioCG
++            if (levelChunk != null) levelChunk.getChunkHot().startTicking(); try { // KioCG
+         if (isActive) { // Paper - EAR 2
+         entity.tick();
+         entity.postTick(); // CraftBukkit
+         } else {entity.inactiveTick();} // Paper - EAR 2
+         profilerFiller.pop();
++        } finally { if (levelChunk != null) levelChunk.getChunkHot().stopTickingAndCount(); } // KioCG
+ 
+         for (Entity entity1 : entity.getPassengers()) {
+             this.tickPassenger(entity, entity1, isActive); // Paper - EAR 2
+@@ -1402,6 +1405,8 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+         if (passengerEntity.isRemoved() || passengerEntity.getVehicle() != ridingEntity) {
+             passengerEntity.stopRiding();
+         } else if (passengerEntity instanceof Player || this.entityTickList.contains(passengerEntity)) {
++            LevelChunk levelChunk = !(passengerEntity instanceof Player) ? this.getChunkIfLoaded(passengerEntity.blockPosition()) : null; // KioCG
++            if (levelChunk != null) levelChunk.getChunkHot().startTicking(); try { // KioCG
+             passengerEntity.setOldPosAndRot();
+             passengerEntity.tickCount++;
+             passengerEntity.totalEntityAge++; // Paper - age-like counter for all entities
+@@ -1420,6 +1425,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+             }
+             // Paper end - EAR 2
+             profilerFiller.pop();
++            } finally { if (levelChunk != null) levelChunk.getChunkHot().stopTickingAndCount(); } // KioCG
+ 
+             for (Entity entity : passengerEntity.getPassengers()) {
+                 this.tickPassenger(passengerEntity, entity, isActive); // Paper - EAR 2
+diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
+index 785045f119ee2f9b9df4efc6e2f10134a1cbb160..57f31add4e25aaa486d0902183d1ad24c6db0986 100644
+--- a/net/minecraft/server/level/ServerPlayer.java
++++ b/net/minecraft/server/level/ServerPlayer.java
+@@ -763,7 +763,34 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+         this.trackEnteredOrExitedLavaOnVehicle();
+         this.updatePlayerAttributes();
+         this.advancements.flushDirty(this, true);
++
++        // KioCG start - ChunkHot
++        if (this.tickCount % 20 == 0){
++            this.nearbyChunkHot = this.refreshNearbyChunkHot();
++        }
++        // KioCG end
++    }
++
++    // KioCG start - ChunkHot
++    private volatile long nearbyChunkHot = 0;
++
++    public long getNearbyChunkHot() { return this.nearbyChunkHot; }
++
++    private long refreshNearbyChunkHot() {
++        long total = 0L;
++        int searchRadius = ((ServerLevel) this.level()).moonrise$getViewDistanceHolder().getViewDistances().tickViewDistance();
++        for (int i = this.moonrise$getSectionX() - searchRadius; i <= this.moonrise$getSectionX() + searchRadius; ++i) {
++            for (int j = this.moonrise$getSectionZ() - searchRadius; j <= this.moonrise$getSectionZ() + searchRadius; ++j) {
++                net.minecraft.world.level.chunk.LevelChunk targetChunk = this.level().getChunkIfLoaded(i, j);
++                if (targetChunk != null) {
++                    total += targetChunk.getChunkHot().getAverage();
++                }
++            }
++        }
++        return total;
+     }
++    // KioCG end
++
+ 
+     private void updatePlayerAttributes() {
+         AttributeInstance attribute = this.getAttribute(Attributes.BLOCK_INTERACTION_RANGE);
+diff --git a/net/minecraft/world/entity/AreaEffectCloud.java b/net/minecraft/world/entity/AreaEffectCloud.java
+index 75f80787966cdda6f51f55a8f6cb22183fbf91ea..68bd96ab0ffc68be593e4e94c1bea7a7de6d0da0 100644
+--- a/net/minecraft/world/entity/AreaEffectCloud.java
++++ b/net/minecraft/world/entity/AreaEffectCloud.java
+@@ -419,4 +419,11 @@ public class AreaEffectCloud extends Entity implements TraceableEntity {
+             return super.applyImplicitComponent(component, value);
+         }
+     }
++
++    // KioCG start
++    @Override
++    public boolean shouldTickHot() {
++        return false;
++    }
++    // KioCG end
+ }
+diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
+index fd04ff121b8e930e62bb215d85ab648af1b160c7..a0eb89f8f8789e40cdef9f9961943a0fe5f73ccc 100644
+--- a/net/minecraft/world/entity/Entity.java
++++ b/net/minecraft/world/entity/Entity.java
+@@ -5446,4 +5446,6 @@ public abstract class Entity implements SyncedDataHolder, DebugValueSource, Name
+         return ((ServerLevel) this.level()).isPositionEntityTicking(this.blockPosition());
+     }
+     // Paper end - Expose entity id counter
++
++    public boolean shouldTickHot() { return this.tickCount > 20 * 10 && this.isAlive(); } // KioCG
+ }
+diff --git a/net/minecraft/world/entity/LightningBolt.java b/net/minecraft/world/entity/LightningBolt.java
+index e81eabf901e755e1254fff98cdd1e609cf07aab8..2e8925f1b2efde6f4bba97e253500e88a2293df6 100644
+--- a/net/minecraft/world/entity/LightningBolt.java
++++ b/net/minecraft/world/entity/LightningBolt.java
+@@ -279,4 +279,11 @@ public class LightningBolt extends Entity {
+     public final boolean hurtServer(ServerLevel level, DamageSource damageSource, float amount) {
+         return false;
+     }
++
++    // KioCG start
++    @Override
++    public boolean shouldTickHot() {
++        return false;
++    }
++    // KioCG end
+ }
+diff --git a/net/minecraft/world/entity/Mob.java b/net/minecraft/world/entity/Mob.java
+index a6ed274cb0cf86a1ca93588f946ed52a58354546..2ab7e52026d87b810052607585795a5e502a211a 100644
+--- a/net/minecraft/world/entity/Mob.java
++++ b/net/minecraft/world/entity/Mob.java
+@@ -1672,4 +1672,11 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
+     public float chargeSpeedModifier() {
+         return 1.0F;
+     }
++
++    // KioCG start
++    @Override
++    public boolean shouldTickHot() {
++        return super.shouldTickHot() && (!this.removeWhenFarAway(0.0) || this.isPersistenceRequired() || this.requiresCustomPersistence());
++    }
++    // KioCG end
+ }
+diff --git a/net/minecraft/world/entity/animal/equine/TraderLlama.java b/net/minecraft/world/entity/animal/equine/TraderLlama.java
+index 44f85dc4075e9fc000dc89ba01e2039c01989dde..579a982c4cd8d81ceb385b22756dee04727dfc59 100644
+--- a/net/minecraft/world/entity/animal/equine/TraderLlama.java
++++ b/net/minecraft/world/entity/animal/equine/TraderLlama.java
+@@ -155,4 +155,11 @@ public class TraderLlama extends Llama {
+             super.start();
+         }
+     }
++
++    // KioCG start
++    @Override
++    public boolean shouldTickHot() {
++        return super.shouldTickHot() && !this.canDespawn();
++    }
++    // KioCG end
+ }
+diff --git a/net/minecraft/world/entity/player/Player.java b/net/minecraft/world/entity/player/Player.java
+index 7bf160cef8bd772d27d4a71f04d5d9861ef67984..44cf83f1e6772d625eae438881460a42ef0ec491 100644
+--- a/net/minecraft/world/entity/player/Player.java
++++ b/net/minecraft/world/entity/player/Player.java
+@@ -1415,6 +1415,13 @@ public abstract class Player extends Avatar implements ContainerUser {
+         return true;
+     }
+ 
++    // KioCG start
++    @Override
++    public boolean shouldTickHot() {
++        return false;
++    }
++    // KioCG end
++
+     public Either<Player.BedSleepingProblem, Unit> startSleepInBed(BlockPos bedPos) {
+         // CraftBukkit start
+         return this.startSleepInBed(bedPos, false);
+diff --git a/net/minecraft/world/entity/projectile/Projectile.java b/net/minecraft/world/entity/projectile/Projectile.java
+index 6298e6de25f1dd9ff880a9ad2882dc7ccb2f100c..a35691baf9156e8909c08bf9674447cf21d8712f 100644
+--- a/net/minecraft/world/entity/projectile/Projectile.java
++++ b/net/minecraft/world/entity/projectile/Projectile.java
+@@ -475,4 +475,11 @@ public abstract class Projectile extends Entity implements TraceableEntity {
+     public interface ProjectileFactory<T extends Projectile> {
+         T create(ServerLevel level, LivingEntity owner, ItemStack spawnedFrom);
+     }
++
++    // KioCG start
++    @Override
++    public boolean shouldTickHot() {
++        return false;
++    }
++    // KioCG end
+ }
+diff --git a/net/minecraft/world/level/chunk/LevelChunk.java b/net/minecraft/world/level/chunk/LevelChunk.java
+index 3acc1374a7ef968d88e9f566ce7b812fb8d580af..ba571abb4fc90598216c50dff3a22ddbf3e34b6e 100644
+--- a/net/minecraft/world/level/chunk/LevelChunk.java
++++ b/net/minecraft/world/level/chunk/LevelChunk.java
+@@ -105,6 +105,7 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
+     // Paper start - rewrite chunk system
+     private boolean postProcessingDone;
+     private ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder chunkAndHolder;
++    private final com.kiocg.ChunkHot chunkHot = new com.kiocg.ChunkHot(); public com.kiocg.ChunkHot getChunkHot() { return this.chunkHot; } // KioCG
+ 
+     @Override
+     public final boolean moonrise$isPostProcessingDone() {
+@@ -954,6 +955,7 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
+                     try {
+                         ProfilerFiller profilerFiller = Profiler.get();
+                         profilerFiller.push(this::getType);
++                        LevelChunk.this.chunkHot.startTicking(); // KioCG
+                         BlockState blockState = LevelChunk.this.getBlockState(blockPos);
+                         if (this.blockEntity.getType().isValid(blockState)) {
+                             this.ticker.tick(LevelChunk.this.level, this.blockEntity.getBlockPos(), blockState, this.blockEntity);
+@@ -976,6 +978,8 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
+                         net.minecraft.world.level.chunk.LevelChunk.this.level.getCraftServer().getPluginManager().callEvent(new com.destroystokyo.paper.event.server.ServerExceptionEvent(new com.destroystokyo.paper.exception.ServerInternalException(msg, var5))); // Paper - ServerExceptionEvent
+                         LevelChunk.this.removeBlockEntity(this.getPos());
+                         // Paper end - Prevent block entity and entity crashes
++                    }finally {
++                        LevelChunk.this.chunkHot.stopTickingAndCount();
+                     }
+                 }
+             }
+diff --git a/net/minecraft/world/level/redstone/NeighborUpdater.java b/net/minecraft/world/level/redstone/NeighborUpdater.java
+index 87512434ccd8d46d8db718228c790465c64b2c20..af21821513f11011e7bf3841d2f79cb99e4cd517 100644
+--- a/net/minecraft/world/level/redstone/NeighborUpdater.java
++++ b/net/minecraft/world/level/redstone/NeighborUpdater.java
+@@ -57,7 +57,10 @@ public interface NeighborUpdater {
+                 return;
+             }
+             // CraftBukkit end
++            net.minecraft.world.level.chunk.LevelChunk levelChunk = level.getChunkIfLoaded(pos); // KioCG
++            if (levelChunk != null) levelChunk.getChunkHot().startTicking(); try { // KioCG
+             state.handleNeighborChanged(level, pos, neighborBlock, orientation, movedByPiston);
++            } finally { if (levelChunk != null) levelChunk.getChunkHot().stopTickingAndCount(); } // KioCG
+             // Spigot start
+         } catch (StackOverflowError ex) {
+             level.lastPhysicsProblem = pos.immutable();

@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Wed, 31 Dec 2025 22:58:20 +0800
+Subject: [PATCH] KioCG Chunk API
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftChunk.java b/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
+index 09baa8c13a56e0f503815a436042b7b79b1698e4..ea6f7b18796fe94e8b7c382c672ca2aa7aabe6b8 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
+@@ -408,4 +408,12 @@ public class CraftChunk implements Chunk {
+     static {
+         Arrays.fill(FULL_LIGHT, (byte) 0xFF);
+     }
++
++    // KioCG start - ChunkHot
++    @Override
++    public long getChunkHotAvg() {
++        final net.minecraft.world.level.chunk.LevelChunk target = this.level.getChunkIfLoaded(this.x,this.z);
++        return target == null ? -1 : target.getChunkHot().getAverage();
++    }
++    // KioCG end
+ }
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+index 22a5eee68004404b6219e2d81217c6c3dae6b86b..fbbbc2b7b427f79ad149de8f32c8fa6c7d8785cb 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+@@ -3303,6 +3303,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+         return this.getHandle().connection.playerGameConnection;
+     }
+ 
++    @Override
++    public long getNearbyChunkHot() {
++        return this.getHandle().getNearbyChunkHot();
++    }
++
+     @Override
+     public org.bukkit.entity.Entity releaseLeftShoulderEntity() {
+         if (!getHandle().getShoulderEntityLeft().isEmpty()) {

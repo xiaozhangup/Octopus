@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Wed, 31 Dec 2025 22:50:35 +0800
+Subject: [PATCH] Add EndPortalCreateEvent
+
+
+diff --git a/net/minecraft/world/item/EnderEyeItem.java b/net/minecraft/world/item/EnderEyeItem.java
+index e2df0204dd21185c24ef2dc1f900247ca3655721..d31298dd84a004f32104561df6da1a9bfd9b8611 100644
+--- a/net/minecraft/world/item/EnderEyeItem.java
++++ b/net/minecraft/world/item/EnderEyeItem.java
+@@ -61,8 +61,15 @@ public class EnderEyeItem extends Item {
+                 for (int i = 0; i < 3; i++) {
+                     for (int i1 = 0; i1 < 3; i1++) {
+                         BlockPos blockPos1 = blockPos.offset(i, 0, i1);
+-                        level.destroyBlock(blockPos1, true, null);
+-                        level.setBlock(blockPos1, Blocks.END_PORTAL.defaultBlockState(), Block.UPDATE_CLIENTS);
++                        // Octopus start - Add EndPortalCreateEvent
++                        org.bukkit.block.Block block = level.getWorld().getBlockAt(blockPos1.getX(), blockPos1.getY(), blockPos1.getZ());
++                        org.bukkit.event.block.EndPortalCreateEvent event = new org.bukkit.event.block.EndPortalCreateEvent(block, block);
++                        level.getCraftServer().getPluginManager().callEvent(event);
++                        if (!event.isCancelled()) {
++                            level.destroyBlock(blockPos1, true, null);
++                            level.setBlock(blockPos1, Blocks.END_PORTAL.defaultBlockState(), Block.UPDATE_CLIENTS);
++                        }
++                        // Octopus end - Add EndPortalCreateEvent
+                     }
+                 }
+ 

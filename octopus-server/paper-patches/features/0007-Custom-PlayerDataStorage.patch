@@ -1,0 +1,131 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Wed, 31 Dec 2025 22:59:09 +0800
+Subject: [PATCH] Custom PlayerDataStorage
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index b2961752b50e98d95adf3af4f658e2fdb2127d43..12fd7d87ea66ea35816af0a2e1770a66046de27c 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -2842,6 +2842,120 @@ public final class CraftServer implements Server {
+         return this.adventure$audiences;
+     }
+ 
++    @Override
++    public void setProfileSource(@Nullable me.xiaozhangup.octopus.ProfileSource source) {
++        if (source == null) {
++            MinecraftServer.getServer().getPlayerList().playerIo.setDataSource(null);
++            return;
++        }
++        MinecraftServer.getServer().getPlayerList().playerIo.setDataSource(
++                new me.xiaozhangup.octopus.PlayerDataSource() {
++                    @Override
++                    public boolean save(net.minecraft.world.entity.player.Player player, net.minecraft.nbt.CompoundTag data) throws IOException {
++                        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
++                        net.minecraft.nbt.NbtIo.writeCompressed(data, outStream);
++                        return source.save(((ServerPlayer) player).getBukkitEntity(), outStream.toByteArray());
++                    }
++
++                    @Override
++                    public Optional<net.minecraft.nbt.CompoundTag> load(net.minecraft.world.entity.player.Player player) throws IOException {
++                        Optional<byte[]> data = source.load(((ServerPlayer) player).getBukkitEntity());
++                        if (data.isEmpty()) return Optional.empty();
++                        java.io.ByteArrayInputStream inStream = new java.io.ByteArrayInputStream(data.get());
++                        return Optional.of(net.minecraft.nbt.NbtIo.readCompressed(inStream, net.minecraft.nbt.NbtAccounter.unlimitedHeap()));
++                    }
++
++                    @Override
++                    public Optional<net.minecraft.nbt.CompoundTag> load(String playerName, String uuid) throws IOException {
++                        Optional<byte[]> data = source.load(playerName, uuid);
++                        if (data.isEmpty()) return Optional.empty();
++                        java.io.ByteArrayInputStream inStream = new java.io.ByteArrayInputStream(data.get());
++                        return Optional.of(net.minecraft.nbt.NbtIo.readCompressed(inStream, net.minecraft.nbt.NbtAccounter.unlimitedHeap()));
++                    }
++                }
++        );
++    }
++
++    @Override
++    public void setStatsSource(@Nullable me.xiaozhangup.octopus.JsonDataSource source) {
++        if (source == null) {
++            MinecraftServer.getServer().statsSource = null;
++            return;
++        }
++        MinecraftServer.getServer().statsSource = new me.xiaozhangup.octopus.PlayerJsonDataSource() {
++            @Override
++            public void save(String json, String uuid) {
++                source.save(json, uuid);
++            }
++
++            @Override
++            public @Nullable String load(String uuid) {
++                return source.load(uuid);
++            }
++        };
++    }
++
++    @Override
++    public void setAchievementsSource(@Nullable me.xiaozhangup.octopus.JsonDataSource source) {
++        if (source == null) {
++            MinecraftServer.getServer().achievementsSource = null;
++            return;
++        }
++        MinecraftServer.getServer().achievementsSource = new me.xiaozhangup.octopus.PlayerJsonDataSource() {
++            @Override
++            public void save(String json, String uuid) {
++                source.save(json, uuid);
++            }
++
++            @Override
++            public @Nullable String load(String uuid) {
++                return source.load(uuid);
++            }
++        };
++    }
++
++    @Override
++    public void setMapSource(@Nullable me.xiaozhangup.octopus.MapSource source) {
++        if (source == null) {
++            MinecraftServer.getServer().worldMapSource = null;
++            return;
++        }
++        MinecraftServer.getServer().worldMapSource = new me.xiaozhangup.octopus.WorldMapDataSource() {
++            @Override
++            public int getNextMapId() {
++                return source.getNextMapId();
++            }
++
++            @Override
++            public Optional<net.minecraft.nbt.CompoundTag> getMapData(int mapId) {
++                Optional<byte[]> data = source.getMapData(mapId);
++                if (data.isEmpty()) return Optional.empty();
++                java.io.ByteArrayInputStream inStream = new java.io.ByteArrayInputStream(data.get());
++                try {
++                    return Optional.of(net.minecraft.nbt.NbtIo.readCompressed(inStream, net.minecraft.nbt.NbtAccounter.unlimitedHeap()));
++                } catch (IOException e) {
++                    throw new RuntimeException(e);
++                }
++            }
++
++            @Override
++            public void saveMapData(int mapId, net.minecraft.nbt.CompoundTag data) {
++                ByteArrayOutputStream outStream = new ByteArrayOutputStream();
++                try {
++                    net.minecraft.nbt.NbtIo.writeCompressed(data, outStream);
++                } catch (IOException e) {
++                    throw new RuntimeException(e);
++                }
++                source.saveMapData(mapId, outStream.toByteArray());
++            }
++
++            @Override
++            public void setDirty(int mapId) {
++                source.setDirty(mapId);
++            }
++        };
++    }
++
+     @Override
+     public void reloadPermissions() {
+         pluginManager.clearPermissions();

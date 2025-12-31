@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Wed, 31 Dec 2025 22:56:12 +0800
+Subject: [PATCH] Add clientConnected API
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+index e3c9327de894fdfb252781772817f4c8bc079cce..22a5eee68004404b6219e2d81217c6c3dae6b86b 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+@@ -242,6 +242,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+     private int hash = 0;
+     private double health = 20;
+     private boolean scaledHealth = false;
++    private boolean clientConnected = true;
+     private double healthScale = 20;
+     private CraftWorldBorder clientWorldBorder = null;
+     private BorderChangeListener clientWorldBorderListener = this.createWorldBorderListener();
+@@ -2761,6 +2762,17 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+         return this.getHandle().allowsListing();
+     }
+ 
++    // Octopus start
++    @Override
++    public boolean clientConnected() {
++        return clientConnected;
++    }
++
++    public void setClientConnected(boolean clientConnected) {
++        this.clientConnected = clientConnected;
++    }
++    // Octopus end
++
+     // Paper start
+     @Override
+     public net.kyori.adventure.text.Component displayName() {

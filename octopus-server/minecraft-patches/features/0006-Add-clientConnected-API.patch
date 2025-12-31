@@ -1,0 +1,18 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Wed, 31 Dec 2025 22:05:51 +0800
+Subject: [PATCH] Add clientConnected API
+
+
+diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
+index 989ac565c47a70c7947cb7315d0f5c2cfecd0363..4e5d30a7bc159fb2ab620333142afc10a7de1cc1 100644
+--- a/net/minecraft/server/players/PlayerList.java
++++ b/net/minecraft/server/players/PlayerList.java
+@@ -439,6 +439,7 @@ public abstract class PlayerList {
+             player.closeContainer(org.bukkit.event.inventory.InventoryCloseEvent.Reason.DISCONNECT); // Paper - Inventory close reason
+         }
+ 
++        player.getBukkitEntity().setClientConnected(false); // Octopus
+         org.bukkit.event.player.PlayerQuitEvent playerQuitEvent = new org.bukkit.event.player.PlayerQuitEvent(player.getBukkitEntity(), leaveMessage, player.quitReason); // Paper - Adventure & Add API for quit reason
+         this.cserver.getPluginManager().callEvent(playerQuitEvent);
+         player.getBukkitEntity().disconnect();
