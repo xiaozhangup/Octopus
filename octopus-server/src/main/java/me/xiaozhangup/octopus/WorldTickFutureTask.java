@@ -15,11 +15,11 @@ public class WorldTickFutureTask extends FutureTask<Pair<ServerLevel, Throwable>
     }
 
     public String getLevelName() {
-        return level.dimension().location().toString();
+        return level.dimension().identifier().toDebugFileName();
     }
 
     @Override
     public String toString() {
-        return "WorldTickFutureTask{" + level.dimension().location() + "}";
+        return "WorldTickFutureTask{" + this.getLevelName() + "}";
     }
 }
