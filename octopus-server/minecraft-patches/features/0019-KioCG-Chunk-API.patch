@@ -17,7 +17,7 @@ index 3e7b616cbd196f56393719e84c7118ab47308337..12e1cab15d275db8ff13d36be174b3e1
      }
  
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 8798af85e344173ea31d6998896a549685eb3d04..d3354c8201ff5269321413d47209ad923b9e265e 100644
+index 1754c98073cbe5812d49b85f28f31c1f662523eb..94a26fb0f72298d9a91a91070cacee7e7f808bea 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -27,17 +27,7 @@ import java.nio.file.FileStore;
@@ -39,7 +39,7 @@ index 8798af85e344173ea31d6998896a549685eb3d04..d3354c8201ff5269321413d47209ad92
  import java.util.Map.Entry;
  import java.util.concurrent.CompletableFuture;
  import java.util.concurrent.Executor;
-@@ -1627,7 +1617,39 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1624,7 +1614,39 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          new com.destroystokyo.paper.event.server.ServerTickStartEvent(this.tickCount+1).callEvent(); // Paper - Server Tick Events
          this.tickCount++;
          this.tickRateManager.tick();

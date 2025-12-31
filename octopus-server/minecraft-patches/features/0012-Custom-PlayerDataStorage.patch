@@ -5,20 +5,17 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 88127d326ae7a71cca07d034a28c3c715a1cbb7d..8798af85e344173ea31d6998896a549685eb3d04 100644
+index 88127d326ae7a71cca07d034a28c3c715a1cbb7d..1754c98073cbe5812d49b85f28f31c1f662523eb 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -220,6 +220,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -220,6 +220,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      private Consumer<ProfileResults> onMetricsRecordingStopped = results -> this.stopRecordingMetrics();
      private Consumer<Path> onMetricsRecordingFinished = path -> {};
      private boolean willStartRecordingMetrics;
 +    // Octopus start - Custom DataSource
-+    @Nullable
-+    public me.xiaozhangup.octopus.PlayerJsonDataSource achievementsSource = null;
-+    @Nullable
-+    public me.xiaozhangup.octopus.PlayerJsonDataSource statsSource = null;
-+    @Nullable
-+    public me.xiaozhangup.octopus.WorldMapDataSource worldMapSource = null;
++    public me.xiaozhangup.octopus.@Nullable PlayerJsonDataSource achievementsSource = null;
++    public me.xiaozhangup.octopus.@Nullable PlayerJsonDataSource statsSource = null;
++    public me.xiaozhangup.octopus.@Nullable WorldMapDataSource worldMapSource = null;
 +    // Octopus end - Custom DataSource
      private MinecraftServer.@Nullable TimeProfiler debugCommandProfiler;
      private boolean debugCommandProfilerDelayStart;
@@ -174,7 +171,7 @@ index 1af585f9554278983148096c73c86e18166f5471..d40772cebb8e07029b22c5afda759401
 +    // Octopus end - Custom DataSource
  }
 diff --git a/net/minecraft/world/level/storage/DimensionDataStorage.java b/net/minecraft/world/level/storage/DimensionDataStorage.java
-index b932e6236975fd4a755bdbf4b7a958599383f3f8..763c5d586788dc5f8ad5aa3740e67d04b934a129 100644
+index b932e6236975fd4a755bdbf4b7a958599383f3f8..dfb4da508c228d650daacf8c12d72215489a37c3 100644
 --- a/net/minecraft/world/level/storage/DimensionDataStorage.java
 +++ b/net/minecraft/world/level/storage/DimensionDataStorage.java
 @@ -75,6 +75,18 @@ public class DimensionDataStorage implements AutoCloseable {
@@ -196,7 +193,7 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..763c5d586788dc5f8ad5aa3740e67d04
      private <T extends SavedData> @Nullable T readSavedData(SavedDataType<T> type) {
          try {
              Path dataFile = this.getDataFile(type.id());
-@@ -93,6 +105,26 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -93,6 +105,25 @@ public class DimensionDataStorage implements AutoCloseable {
          return null;
      }
  
@@ -208,7 +205,6 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..763c5d586788dc5f8ad5aa3740e67d04
 +            CompoundTag tagFixed = type.dataFixType().update(this.fixerUpper, tag, dataVersion, SharedConstants.getCurrentVersion().dataVersion().version());
 +            RegistryOps<Tag> registryOps = this.registries.createSerializationContext(NbtOps.INSTANCE);
 +            return type.codec()
-+                    .apply(this.context)
 +                    .parse(registryOps, tagFixed.get("data"))
 +                    .resultOrPartial(string -> LOGGER.error("Failed to parse saved data for '{}': {}", type, string))
 +                    .orElse(null);
@@ -223,7 +219,7 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..763c5d586788dc5f8ad5aa3740e67d04
      public <T extends SavedData> void set(SavedDataType<T> type, T value) {
          this.cache.put(type, Optional.of(value));
          value.setDirty();
-@@ -180,13 +212,20 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -180,13 +211,20 @@ public class DimensionDataStorage implements AutoCloseable {
          Map<SavedDataType<?>, CompoundTag> map = new Object2ObjectArrayMap<>();
          RegistryOps<Tag> registryOps = this.registries.createSerializationContext(NbtOps.INSTANCE);
          this.cache.forEach((savedDataType, optional) -> optional.filter(SavedData::isDirty).ifPresent(savedData -> {

@@ -5,7 +5,7 @@ Subject: [PATCH] ShulkerBullet tick baffle
 
 
 diff --git a/net/minecraft/world/entity/projectile/ShulkerBullet.java b/net/minecraft/world/entity/projectile/ShulkerBullet.java
-index 7ab335a90c2b873b7d4eff148303bcc3f031dd64..62d705237dde34ac994682973f36c2d8c95b8436 100644
+index 7ab335a90c2b873b7d4eff148303bcc3f031dd64..71faba1b5e18c4ccf4cc5a4e36c1193e51cc465a 100644
 --- a/net/minecraft/world/entity/projectile/ShulkerBullet.java
 +++ b/net/minecraft/world/entity/projectile/ShulkerBullet.java
 @@ -35,6 +35,10 @@ import org.jspecify.annotations.Nullable;
@@ -26,7 +26,7 @@ index 7ab335a90c2b873b7d4eff148303bcc3f031dd64..62d705237dde34ac994682973f36c2d8
 +        }
  
 +        // Octopus start - ShulkerBullet tick baffle
-+        if (!this.level().isClientSide && (tickCounter % BAFFLE_RATE) == 0) {
++        if (!this.level().isClientSide() && (tickCounter % BAFFLE_RATE) == 0) {
              hitResult = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
          }
 +        // Octopus end - ShulkerBullet tick baffle

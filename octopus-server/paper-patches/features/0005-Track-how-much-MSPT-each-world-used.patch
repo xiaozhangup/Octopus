@@ -5,7 +5,7 @@ Subject: [PATCH] Track how much MSPT each world used
 
 
 diff --git a/src/main/java/io/papermc/paper/command/MSPTCommand.java b/src/main/java/io/papermc/paper/command/MSPTCommand.java
-index 04b8097b147350f97fdee16c0b8aa78a87fddd33..e84f1d7c0280d26f409a5451031465b52820b7d0 100644
+index 04b8097b147350f97fdee16c0b8aa78a87fddd33..dcd5c5b62f4c31a25bc1517c7d567c18579c60ea 100644
 --- a/src/main/java/io/papermc/paper/command/MSPTCommand.java
 +++ b/src/main/java/io/papermc/paper/command/MSPTCommand.java
 @@ -82,6 +82,46 @@ public final class MSPTCommand extends Command {
@@ -55,3 +55,33 @@ index 04b8097b147350f97fdee16c0b8aa78a87fddd33..e84f1d7c0280d26f409a5451031465b5
          return true;
      }
  
+@@ -93,6 +133,29 @@ public final class MSPTCommand extends Command {
+         return Arrays.asList(getColor(avgD), getColor(minD), getColor(maxD));
+     }
+ 
++    // Octopus start
++    private static List<Component> eval(long[] times) {
++        if (times.length == 0) {
++            return Arrays.asList(getColor(0.0), getColor(0.0), getColor(0.0));
++        }
++        double sum = 0.0;
++        double min = Double.MAX_VALUE;
++        double max = Double.MIN_VALUE;
++        for (long time : times) {
++            double mspt = time * 1.0E-6D;
++            sum += mspt;
++            if (mspt < min) {
++                min = mspt;
++            }
++            if (mspt > max) {
++                max = mspt;
++            }
++        }
++        double avg = sum / times.length;
++        return Arrays.asList(getColor(avg), getColor(min), getColor(max));
++    }
++    // Octopus end
++
+     private static Component getColor(double avg) {
+         return text(ONE_DECIMAL_PLACES.get().format(avg), avg >= 50 ? RED : avg >= 40 ? YELLOW : GREEN);
+     }
