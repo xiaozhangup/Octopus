@@ -8,6 +8,5 @@ import java.util.Optional;
 
 public interface PlayerDataSource {
     boolean save(Player player, CompoundTag data) throws IOException;
-    Optional<CompoundTag> load(Player player) throws IOException;
     Optional<CompoundTag> load(String playerName, String uuid) throws IOException;
 }

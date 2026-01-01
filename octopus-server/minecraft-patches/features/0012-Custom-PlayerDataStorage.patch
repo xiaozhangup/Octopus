@@ -243,7 +243,7 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..dfb4da508c228d650daacf8c12d72215
          CompoundTag compoundTag = new CompoundTag();
          compoundTag.put("data", codec.encodeStart(ops, (T)data).getOrThrow());
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
-index b8ef50bc3d07890c9da2c98d5f009a3adc52f4b0..e1e89edc122b091b25655585cd46a04818667312 100644
+index b8ef50bc3d07890c9da2c98d5f009a3adc52f4b0..53daad79525449e181787b63a8db0f8767ebf433 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
 +++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
 @@ -24,6 +24,14 @@ public class PlayerDataStorage {
@@ -278,25 +278,7 @@ index b8ef50bc3d07890c9da2c98d5f009a3adc52f4b0..e1e89edc122b091b25655585cd46a048
              NbtIo.writeCompressed(compoundTag, path1);
              Path path2 = path.resolve(player.getStringUUID() + ".dat");
              Path path3 = path.resolve(player.getStringUUID() + ".dat_old");
-@@ -62,6 +76,17 @@ public class PlayerDataStorage {
-     }
- 
-     private Optional<CompoundTag> load(NameAndId nameAndId, String suffix) {
-+        // Octopus start - PlayerDataSource
-+        if (dataSource != null) {
-+            try {
-+                return dataSource.load(nameAndId.name(), nameAndId.id().toString());
-+            } catch (Exception e) {
-+                LOGGER.warn("Failed to load player data for {}", nameAndId.name(), e); // Paper - Print exception
-+            }
-+
-+            return Optional.empty();
-+        }
-+        // Octopus end - PlayerDataSource
-         File file = new File(this.playerDir, nameAndId.id() + suffix);
-         // Spigot start
-         boolean usingWrongFile = false;
-@@ -91,6 +116,23 @@ public class PlayerDataStorage {
+@@ -91,6 +105,23 @@ public class PlayerDataStorage {
      }
  
      public Optional<CompoundTag> load(NameAndId nameAndId) {

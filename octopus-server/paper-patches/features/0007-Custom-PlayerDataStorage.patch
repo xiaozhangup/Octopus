@@ -5,10 +5,10 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index b2961752b50e98d95adf3af4f658e2fdb2127d43..12fd7d87ea66ea35816af0a2e1770a66046de27c 100644
+index b2961752b50e98d95adf3af4f658e2fdb2127d43..28be82930e55ef8a070fd6dba39935e0412f82a1 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -2842,6 +2842,120 @@ public final class CraftServer implements Server {
+@@ -2842,6 +2842,112 @@ public final class CraftServer implements Server {
          return this.adventure$audiences;
      }
  
@@ -25,14 +25,6 @@ index b2961752b50e98d95adf3af4f658e2fdb2127d43..12fd7d87ea66ea35816af0a2e1770a66
 +                        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 +                        net.minecraft.nbt.NbtIo.writeCompressed(data, outStream);
 +                        return source.save(((ServerPlayer) player).getBukkitEntity(), outStream.toByteArray());
-+                    }
-+
-+                    @Override
-+                    public Optional<net.minecraft.nbt.CompoundTag> load(net.minecraft.world.entity.player.Player player) throws IOException {
-+                        Optional<byte[]> data = source.load(((ServerPlayer) player).getBukkitEntity());
-+                        if (data.isEmpty()) return Optional.empty();
-+                        java.io.ByteArrayInputStream inStream = new java.io.ByteArrayInputStream(data.get());
-+                        return Optional.of(net.minecraft.nbt.NbtIo.readCompressed(inStream, net.minecraft.nbt.NbtAccounter.unlimitedHeap()));
 +                    }
 +
 +                    @Override
