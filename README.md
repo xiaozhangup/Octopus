@@ -11,6 +11,7 @@ Powered by ```HAPPYLAND AssiahLand```
 - 新增 ComposterProductEvent (Octopus)
 - 新增 EntityPortalPreparedEvent (Octopus)
 - 新增 EndPortalCreateEvent (Octopus)
+- 新增 PlayerMessagePreSendEvent (Octopus)
 - 并行世界 Tick (Octopus)
 - 更详细的 Too many chained neighbor updates 报错 (Octopus)
 - 修复经验球对离线玩家的引用导致的内存泄漏 (Octopus)

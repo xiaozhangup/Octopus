@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Sun, 1 Feb 2026 15:54:02 +0800
+Subject: [PATCH] Add PlayerMessagePreSendEvent
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+index fbbbc2b7b427f79ad149de8f32c8fa6c7d8785cb..909fc3b8fb0d14ff8e0496d0f0db4cbaf886731c 100644
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
+@@ -2841,7 +2841,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+     public void sendMessage(final net.kyori.adventure.identity.Identity identity, final net.kyori.adventure.text.Component message, final net.kyori.adventure.audience.MessageType type) {
+         if (getHandle().connection == null) return;
+         final net.minecraft.core.Registry<net.minecraft.network.chat.ChatType> chatTypeRegistry = this.getHandle().level().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.CHAT_TYPE);
+-        this.getHandle().connection.send(new net.minecraft.network.protocol.game.ClientboundSystemChatPacket(message, false));
++        // Octopus start - Add PlayerMessagePreSendEvent
++        org.bukkit.event.player.PlayerMessagePreSendEvent event = new org.bukkit.event.player.PlayerMessagePreSendEvent(this, message);
++        if (event.callEvent()) {
++            this.getHandle().connection.send(new net.minecraft.network.protocol.game.ClientboundSystemChatPacket(event.getComponent(), false));
++        }
++        // Octopus end - Add PlayerMessagePreSendEvent
+     }
+ 
+     @Override
+@@ -3102,8 +3107,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+         @Override
+         public void sendMessage(net.md_5.bungee.api.ChatMessageType position, UUID sender, BaseComponent... components) {
+             if (CraftPlayer.this.getHandle().connection == null) return;
+-
+-            CraftPlayer.this.getHandle().connection.send(new net.minecraft.network.protocol.game.ClientboundSystemChatPacket(components, position == net.md_5.bungee.api.ChatMessageType.ACTION_BAR));
++            // Octopus start - Add PlayerMessagePreSendEvent
++            org.bukkit.event.player.PlayerMessagePreSendEvent event = new org.bukkit.event.player.PlayerMessagePreSendEvent(CraftPlayer.this, components);
++            if (event.callEvent()) {
++                CraftPlayer.this.getHandle().connection.send(new net.minecraft.network.protocol.game.ClientboundSystemChatPacket(event.getComponent(), position == net.md_5.bungee.api.ChatMessageType.ACTION_BAR));
++            }
++            // Octopus end - Add PlayerMessagePreSendEvent
+         }
+ 
+         // Paper start
