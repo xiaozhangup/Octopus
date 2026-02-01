@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Mon, 2 Feb 2026 01:08:26 +0800
+Subject: [PATCH] Add PlayerMessagePreSendEvent
+
+
+diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
+index 57f31add4e25aaa486d0902183d1ad24c6db0986..5d238adb80efd72ab81ce2f97c436ab0a3be0bef 100644
+--- a/net/minecraft/server/level/ServerPlayer.java
++++ b/net/minecraft/server/level/ServerPlayer.java
+@@ -2388,14 +2388,19 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+ 
+     public void sendSystemMessage(Component message, boolean overlay) {
+         if (this.acceptsSystemMessages(overlay)) {
++            // Octopus start - Add PlayerMessagePreSendEvent
++            org.bukkit.event.player.PlayerMessagePreSendEvent event = new org.bukkit.event.player.PlayerMessagePreSendEvent(ServerPlayer.this.getBukkitEntity(), io.papermc.paper.adventure.PaperAdventure.asAdventure(message));
++            if (!event.callEvent()) return;
++            Component compo = io.papermc.paper.adventure.PaperAdventure.asVanilla(event.getComponent());
++            // Octopus end - Add PlayerMessagePreSendEvent
+             this.connection
+                 .send(
+-                    new ClientboundSystemChatPacket(message, overlay),
++                    new ClientboundSystemChatPacket(compo, overlay), // Octopus - Add PlayerMessagePreSendEvent
+                     PacketSendListener.exceptionallySend(
+                         () -> {
+                             if (this.acceptsSystemMessages(false)) {
+                                 int i = 256;
+-                                String string = message.getString(256);
++                                String string = compo.getString(256); // Octopus - Add PlayerMessagePreSendEvent
+                                 Component component = Component.literal(string).withStyle(ChatFormatting.YELLOW);
+                                 return new ClientboundSystemChatPacket(
+                                     Component.translatable("multiplayer.message_not_delivered", component).withStyle(ChatFormatting.RED), false
