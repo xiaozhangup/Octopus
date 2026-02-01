@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.HandlerList;
@@ -16,13 +17,13 @@ public class PlayerMessagePreSendEvent extends PlayerEvent implements Cancellabl
     private Component component;
 
     public PlayerMessagePreSendEvent(@NotNull Player player, @NotNull Component component) {
-        super(player);
+        super(player, !Bukkit.isPrimaryThread());
         this.component = component;
     }
 
     @Deprecated
     public PlayerMessagePreSendEvent(@NotNull Player player, @NotNull BaseComponent[] content) {
-        super(player);
+        super(player, !Bukkit.isPrimaryThread());
         this.component = GsonComponentSerializer.gson().deserialize(ComponentSerializer.toString(content));
     }
 
