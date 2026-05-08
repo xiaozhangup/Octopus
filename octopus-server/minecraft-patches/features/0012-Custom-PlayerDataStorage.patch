@@ -162,7 +162,7 @@ index 1af585f9554278983148096c73c86e18166f5471..44105d00c402100724a91110d9440dac
 +    // Octopus end - Custom DataSource
  }
 diff --git a/net/minecraft/world/level/storage/DimensionDataStorage.java b/net/minecraft/world/level/storage/DimensionDataStorage.java
-index b932e6236975fd4a755bdbf4b7a958599383f3f8..6e8055187ad788dfa75cc536d849b5ed2f47d826 100644
+index b932e6236975fd4a755bdbf4b7a958599383f3f8..174184ea69939442aeeb323f8091cd5498ce8740 100644
 --- a/net/minecraft/world/level/storage/DimensionDataStorage.java
 +++ b/net/minecraft/world/level/storage/DimensionDataStorage.java
 @@ -77,6 +77,25 @@ public class DimensionDataStorage implements AutoCloseable {
@@ -191,7 +191,7 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..6e8055187ad788dfa75cc536d849b5ed
              Path dataFile = this.getDataFile(type.id());
              if (Files.exists(dataFile)) {
                  CompoundTag tagFromDisk = this.readTagFromDisk(type.id(), type.dataFixType(), SharedConstants.getCurrentVersion().dataVersion().version());
-@@ -176,6 +195,25 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -176,6 +195,29 @@ public class DimensionDataStorage implements AutoCloseable {
          }
      }
  
@@ -212,12 +212,16 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..6e8055187ad788dfa75cc536d849b5ed
 +            LOGGER.error("Could not save map data to custom data source: {}", mapId, exception);
 +        }
 +    }
++
++    public void clearMapDataCache(int mapId) {
++        this.cache.remove(net.minecraft.world.level.saveddata.maps.MapItemSavedData.type(new net.minecraft.world.level.saveddata.maps.MapId(mapId)));
++    }
 +    // Octopus end - Custom DataSource
 +
      private Map<SavedDataType<?>, CompoundTag> collectDirtyTagsToSave() {
          Map<SavedDataType<?>, CompoundTag> map = new Object2ObjectArrayMap<>();
          RegistryOps<Tag> registryOps = this.registries.createSerializationContext(NbtOps.INSTANCE);
-@@ -195,6 +233,19 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -195,6 +237,19 @@ public class DimensionDataStorage implements AutoCloseable {
      }
  
      private void tryWrite(SavedDataType<?> type, CompoundTag tag) {
@@ -237,7 +241,7 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..6e8055187ad788dfa75cc536d849b5ed
          Path dataFile = this.getDataFile(type.id());
  
          try {
-@@ -204,6 +255,21 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -204,6 +259,21 @@ public class DimensionDataStorage implements AutoCloseable {
          }
      }
  

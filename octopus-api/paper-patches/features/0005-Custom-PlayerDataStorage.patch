@@ -5,14 +5,15 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
-index 0ec885b97d655c03371840d739b47063494ed36f..23fec7cbb4fef9e7e53c3d2ccc01140b522a8c4d 100644
+index 0ec885b97d655c03371840d739b47063494ed36f..ed1d3e6be96c7f24c09f186691d4c6fb9632a00d 100644
 --- a/src/main/java/org/bukkit/Server.java
 +++ b/src/main/java/org/bukkit/Server.java
-@@ -2761,4 +2761,28 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+@@ -2761,4 +2761,36 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
       */
      void allowPausing(@NotNull org.bukkit.plugin.Plugin plugin, boolean value);
      // Paper end - API to check if the server is sleeping
 +
++    // Octopus start - Custom DataSource
 +    /**
 +     * Sets the profile source for the server.
 +     * @param source
@@ -36,4 +37,11 @@ index 0ec885b97d655c03371840d739b47063494ed36f..23fec7cbb4fef9e7e53c3d2ccc01140b
 +     * @param source
 +     */
 +    void setMapSource(me.xiaozhangup.octopus.MapSource source);
++
++    /**
++     * Clears the cached map data for the given map id.
++     * @param mapId the map id
++     */
++    void clearMapCache(int mapId);
++    // Octopus end - Custom DataSource
  }

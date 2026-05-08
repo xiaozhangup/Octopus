@@ -5,13 +5,14 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index b2961752b50e98d95adf3af4f658e2fdb2127d43..28be82930e55ef8a070fd6dba39935e0412f82a1 100644
+index b2961752b50e98d95adf3af4f658e2fdb2127d43..92b923604d9a589417e2982b2f0267390b545636 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -2842,6 +2842,112 @@ public final class CraftServer implements Server {
+@@ -2842,6 +2842,119 @@ public final class CraftServer implements Server {
          return this.adventure$audiences;
      }
  
++    // Octopus start - Custom DataSource
 +    @Override
 +    public void setProfileSource(@Nullable me.xiaozhangup.octopus.ProfileSource source) {
 +        if (source == null) {
@@ -117,6 +118,12 @@ index b2961752b50e98d95adf3af4f658e2fdb2127d43..28be82930e55ef8a070fd6dba39935e0
 +            }
 +        };
 +    }
++
++    @Override
++    public void clearMapCache(int mapId) {
++        MinecraftServer.getServer().overworld().getDataStorage().clearMapDataCache(mapId);
++    }
++    // Octopus end - Custom DataSource
 +
      @Override
      public void reloadPermissions() {
