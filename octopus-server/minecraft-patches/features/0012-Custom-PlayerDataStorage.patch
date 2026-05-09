@@ -5,7 +5,7 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 88127d326ae7a71cca07d034a28c3c715a1cbb7d..1754c98073cbe5812d49b85f28f31c1f662523eb 100644
+index 88127d326ae7a71cca07d034a28c3c715a1cbb7d..27500807800de514fd3278d37b5acf4810fbb1bc 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -220,6 +220,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -20,6 +20,26 @@ index 88127d326ae7a71cca07d034a28c3c715a1cbb7d..1754c98073cbe5812d49b85f28f31c1f
      private MinecraftServer.@Nullable TimeProfiler debugCommandProfiler;
      private boolean debugCommandProfilerDelayStart;
      private ServerConnectionListener connection;
+@@ -1610,6 +1615,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+                 // Paper end - avoid issues with certain tasks not processing during sleep
+                 this.server.spark.executeMainThreadTasks(); // Paper - spark
+                 this.tickConnection();
++                // Octopus start - Custom DataSource
++                this.overworld().getDataStorage().flushPendingMapDataSaves();
++                // Octopus end - Custom DataSource
+                 this.server.spark.tickEnd(((double)(System.nanoTime() - this.currentTickStart) / 1000000D)); // Paper - spark
+                 return;
+             }
+@@ -1656,6 +1664,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+         long endTime = System.nanoTime();
+         long remaining = this.nextTickTimeNanos - endTime;
+         new com.destroystokyo.paper.event.server.ServerTickEndEvent(this.tickCount, ((double)(endTime - this.currentTickStart) / 1000000D), remaining).callEvent();
++        // Octopus start - Custom DataSource
++        this.overworld().getDataStorage().flushPendingMapDataSaves();
++        // Octopus end - Custom DataSource
+         // Paper end - Server Tick Events
+         this.server.spark.tickEnd(((double)(endTime - this.currentTickStart) / 1000000D)); // Paper - spark
+         profilerFiller.push("tallying");
 diff --git a/net/minecraft/server/PlayerAdvancements.java b/net/minecraft/server/PlayerAdvancements.java
 index 98004b77b7f40d315f41be82105df6d4b9000e33..4c3c8f0e76cb15927cd7c97bf155170a7ab68e3a 100644
 --- a/net/minecraft/server/PlayerAdvancements.java
@@ -142,7 +162,7 @@ index 06025d79cc2297119b22224d777aca79f9d3d9c1..113dd47a95811f3980f0f9d6f0bd0d9e
          this.setDirty();
          return mapId;
 diff --git a/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java b/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
-index 1af585f9554278983148096c73c86e18166f5471..44105d00c402100724a91110d9440dac9e1dd7ca 100644
+index 1af585f9554278983148096c73c86e18166f5471..6c35d5dccd936b544cdfebdabce24352bf58323c 100644
 --- a/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
 +++ b/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
 @@ -739,4 +739,15 @@ public class MapItemSavedData extends SavedData {
@@ -156,16 +176,26 @@ index 1af585f9554278983148096c73c86e18166f5471..44105d00c402100724a91110d9440dac
 +        super.setDirty();
 +        net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
 +        if (server.worldMapSource != null) {
-+            server.overworld().getDataStorage().saveMapDataImmediately(this.id, this);
++            server.overworld().getDataStorage().queueMapDataSave(this.id, this);
 +        }
 +    }
 +    // Octopus end - Custom DataSource
  }
 diff --git a/net/minecraft/world/level/storage/DimensionDataStorage.java b/net/minecraft/world/level/storage/DimensionDataStorage.java
-index b932e6236975fd4a755bdbf4b7a958599383f3f8..174184ea69939442aeeb323f8091cd5498ce8740 100644
+index b932e6236975fd4a755bdbf4b7a958599383f3f8..6b00d536486cc95bfa3cc02fa9a45c1355bbadf8 100644
 --- a/net/minecraft/world/level/storage/DimensionDataStorage.java
 +++ b/net/minecraft/world/level/storage/DimensionDataStorage.java
-@@ -77,6 +77,25 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -43,6 +43,9 @@ public class DimensionDataStorage implements AutoCloseable {
+     private final HolderLookup.Provider registries;
+     private final Path dataFolder;
+     private CompletableFuture<?> pendingWriteFuture = CompletableFuture.completedFuture(null);
++    // Octopus start - Custom DataSource
++    private final it.unimi.dsi.fastutil.ints.Int2ObjectMap<net.minecraft.world.level.saveddata.maps.MapItemSavedData> pendingMapDataSaves = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>();
++    // Octopus end - Custom DataSource
+ 
+     public DimensionDataStorage(Path dataFolder, DataFixer fixerUpper, HolderLookup.Provider registries) {
+         this.fixerUpper = fixerUpper;
+@@ -77,6 +80,25 @@ public class DimensionDataStorage implements AutoCloseable {
  
      private <T extends SavedData> @Nullable T readSavedData(SavedDataType<T> type) {
          try {
@@ -191,11 +221,43 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..174184ea69939442aeeb323f8091cd54
              Path dataFile = this.getDataFile(type.id());
              if (Files.exists(dataFile)) {
                  CompoundTag tagFromDisk = this.readTagFromDisk(type.id(), type.dataFixType(), SharedConstants.getCurrentVersion().dataVersion().version());
-@@ -176,6 +195,29 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -139,6 +161,9 @@ public class DimensionDataStorage implements AutoCloseable {
+     }
+ 
+     public CompletableFuture<?> scheduleSave() {
++        // Octopus start - Custom DataSource
++        this.flushPendingMapDataSaves();
++        // Octopus end - Custom DataSource
+         Map<SavedDataType<?>, CompoundTag> map = this.collectDirtyTagsToSave();
+         if (map.isEmpty()) {
+             return CompletableFuture.completedFuture(null);
+@@ -176,6 +201,52 @@ public class DimensionDataStorage implements AutoCloseable {
          }
      }
  
 +    // Octopus start - Custom DataSource
++    public void queueMapDataSave(net.minecraft.world.level.saveddata.maps.MapId mapId, net.minecraft.world.level.saveddata.maps.MapItemSavedData mapData) {
++        this.pendingMapDataSaves.put(mapId.id(), mapData);
++    }
++
++    public void flushPendingMapDataSaves() {
++        net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
++        me.xiaozhangup.octopus.WorldMapDataSource mapSource = server.worldMapSource;
++        if (this.pendingMapDataSaves.isEmpty()) {
++            return;
++        }
++        if (mapSource == null) {
++            this.pendingMapDataSaves.clear();
++            return;
++        }
++
++        it.unimi.dsi.fastutil.ints.Int2ObjectMap<net.minecraft.world.level.saveddata.maps.MapItemSavedData> pending = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>(this.pendingMapDataSaves);
++        this.pendingMapDataSaves.clear();
++        for (it.unimi.dsi.fastutil.ints.Int2ObjectMap.Entry<net.minecraft.world.level.saveddata.maps.MapItemSavedData> entry : pending.int2ObjectEntrySet()) {
++            this.saveMapDataImmediately(new net.minecraft.world.level.saveddata.maps.MapId(entry.getIntKey()), entry.getValue());
++        }
++    }
++
 +    public void saveMapDataImmediately(net.minecraft.world.level.saveddata.maps.MapId mapId, net.minecraft.world.level.saveddata.maps.MapItemSavedData mapData) {
 +        net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
 +        me.xiaozhangup.octopus.WorldMapDataSource mapSource = server.worldMapSource;
@@ -214,6 +276,7 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..174184ea69939442aeeb323f8091cd54
 +    }
 +
 +    public void clearMapDataCache(int mapId) {
++        this.pendingMapDataSaves.remove(mapId);
 +        this.cache.remove(net.minecraft.world.level.saveddata.maps.MapItemSavedData.type(new net.minecraft.world.level.saveddata.maps.MapId(mapId)));
 +    }
 +    // Octopus end - Custom DataSource
@@ -221,7 +284,7 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..174184ea69939442aeeb323f8091cd54
      private Map<SavedDataType<?>, CompoundTag> collectDirtyTagsToSave() {
          Map<SavedDataType<?>, CompoundTag> map = new Object2ObjectArrayMap<>();
          RegistryOps<Tag> registryOps = this.registries.createSerializationContext(NbtOps.INSTANCE);
-@@ -195,6 +237,19 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -195,6 +266,19 @@ public class DimensionDataStorage implements AutoCloseable {
      }
  
      private void tryWrite(SavedDataType<?> type, CompoundTag tag) {
@@ -241,7 +304,7 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..174184ea69939442aeeb323f8091cd54
          Path dataFile = this.getDataFile(type.id());
  
          try {
-@@ -204,6 +259,21 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -204,6 +288,21 @@ public class DimensionDataStorage implements AutoCloseable {
          }
      }
  

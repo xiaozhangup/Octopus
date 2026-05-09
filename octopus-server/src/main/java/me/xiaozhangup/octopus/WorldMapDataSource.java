@@ -8,5 +8,4 @@ public interface WorldMapDataSource {
     int getNextMapId();
     Optional<CompoundTag> getMapData(int mapId);
     void saveMapData(int mapId, CompoundTag data);
-    void setDirty(int mapId);
 }
