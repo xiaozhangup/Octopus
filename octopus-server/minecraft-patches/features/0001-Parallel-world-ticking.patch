@@ -4,6 +4,49 @@ Date: Wed, 31 Dec 2025 18:53:46 +0800
 Subject: [PATCH] Parallel world ticking
 
 
+diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java b/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java
+index aa3d5a6ea59ac77665f2cfaa56a7d383016d08d0..307fc71add64dd88412eb208fdf2f9f4692c8c7b 100644
+--- a/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java
++++ b/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java
+@@ -182,6 +182,12 @@ public final class MoonriseRegionFileIO {
+         long failures = 1L; // start at 0.13ms
+ 
+         while (taskController.hasTasks()) {
++            // Octopus start - Parallel world ticking
++            if (pollWorldTasks(world)) {
++                failures = 1L;
++                continue;
++            }
++            // Octopus end - Parallel world ticking
+             Thread.yield();
+             failures = ConcurrentUtil.linearLongBackoff(failures, 125_000L, 5_000_000L); // 125us, 5ms
+         }
+@@ -195,6 +201,12 @@ public final class MoonriseRegionFileIO {
+             }
+ 
+             if (totalTasks > (long)tasksRemaining) {
++                // Octopus start - Parallel world ticking
++                if (pollWorldTasks(world)) {
++                    failures = 1L;
++                    continue;
++                }
++                // Octopus end - Parallel world ticking
+                 Thread.yield();
+                 failures = ConcurrentUtil.linearLongBackoff(failures, 125_000L, 5_000_000L); // 125us, 5ms
+             } else {
+@@ -203,6 +215,12 @@ public final class MoonriseRegionFileIO {
+         }
+     }
+ 
++    // Octopus start - Parallel world ticking
++    private static boolean pollWorldTasks(final ServerLevel world) {
++        return TickThread.isTickThread() && world.worldTaskQueueInstance.pollTasks();
++    }
++    // Octopus end - Parallel world ticking
++
+     /**
+      * Returns the priority associated with blocking I/O based on the current thread. The goal is to avoid
+      * dumb plugins from taking away priority from threads we consider crucial.
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
 index 640548d78b87653871dd1f7b0f84574c5e205fe8..135d593c89312abaa391e60971fa9fc168fd031d 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
