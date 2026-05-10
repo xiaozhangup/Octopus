@@ -76,7 +76,7 @@ index bfefb5031544caa59230f0073e8880c2b39ebf4d..b539f49e876d4c44be96a6a7dff1055a
                      List<org.bukkit.block.BlockState> states = new java.util.ArrayList<>(level.capturedBlockStates.values());
                      level.capturedBlockStates.clear();
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 4dd4cd13d8650b60332cff9c2677ec217affc60d..18bf5f9af346b2a7245f5f9b289b3a24e0b344f6 100644
+index 4dd4cd13d8650b60332cff9c2677ec217affc60d..b57002f453e4f244c4f0e1f6fef68c68e24dad01 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -1,5 +1,9 @@
@@ -192,7 +192,7 @@ index 4dd4cd13d8650b60332cff9c2677ec217affc60d..18bf5f9af346b2a7245f5f9b289b3a24
 +                try {
 +                    result = tickTask.get(2, java.util.concurrent.TimeUnit.SECONDS);
 +                } catch (java.util.concurrent.TimeoutException te) {
-+                    MinecraftServer.LOGGER.warn(tickTask.createTimeoutReport());
++                    tickTask.createTimeoutReport();
 +                    result = tickTask.get();
 +                }
 +

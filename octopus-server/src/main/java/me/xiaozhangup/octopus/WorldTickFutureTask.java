@@ -2,9 +2,12 @@ package me.xiaozhangup.octopus;
 
 import net.minecraft.server.level.ServerLevel;
 import org.apache.commons.lang3.tuple.Pair;
+import org.bukkit.Bukkit;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class WorldTickFutureTask extends FutureTask<Pair<ServerLevel, Throwable>> {
     private final ServerLevel level;
@@ -19,24 +22,27 @@ public class WorldTickFutureTask extends FutureTask<Pair<ServerLevel, Throwable>
         return level.dimension().identifier().toDebugFileName();
     }
 
-    public String createTimeoutReport() {
+    public void createTimeoutReport() {
+        Logger logger = Bukkit.getServer().getLogger();
+        logger.log(Level.WARNING,"World tick task has not completed after 2 seconds: " + this.getLevelName());
+
         final Thread runningThread = this.runningThread;
         if (runningThread == null) {
-            return "World tick task has not completed after 2 seconds: " + this.getLevelName();
+            return;
         }
 
-        final StringBuilder stack = new StringBuilder();
-        stack.append("World tick task has not completed after 2 seconds: ")
-            .append(this.getLevelName())
-            .append(System.lineSeparator())
-            .append("Thread: ")
-            .append(runningThread.getName())
-            .append(" | State: ")
-            .append(runningThread.getState());
+        logger.log(Level.WARNING, "------------------------------");
+        logger.log(Level.WARNING, "World thread dump (" + this.getLevelName() + ")");
+        logger.log(Level.WARNING, "------------------------------");
+        logger.log(Level.WARNING, "Thread: " + runningThread.getName());
+        logger.log(Level.WARNING, "\tPID: " + runningThread.threadId()
+                + " | Priority: " + runningThread.getPriority()
+                + " | State: " + runningThread.getState());
+        logger.log(Level.WARNING, "\tStack:");
         for (final StackTraceElement element : runningThread.getStackTrace()) {
-            stack.append(System.lineSeparator()).append("\tat ").append(element);
+            logger.log(Level.WARNING, "\t\tat " + element);
         }
-        return stack.toString();
+        logger.log(Level.WARNING, "------------------------------");
     }
 
     @Override
