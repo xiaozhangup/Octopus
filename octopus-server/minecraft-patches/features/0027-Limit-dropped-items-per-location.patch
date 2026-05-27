@@ -17,7 +17,7 @@ index 208cbe29963eb2963dcd43be160ab2cdcc92cbe8..2781b30759b33831d7b0a34cf32b15f1
              this.tickBlockEntities();
              profilerFiller.pop();
 diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
-index e82bb8f2d2b0e771dc371fd7e709116e1f5f204f..8638b1b6920f8eca9308d8f9b77b3f9afda22fac 100644
+index e82bb8f2d2b0e771dc371fd7e709116e1f5f204f..61037a587810ee402976305d0408d25e5661a0dc 100644
 --- a/net/minecraft/world/entity/item/ItemEntity.java
 +++ b/net/minecraft/world/entity/item/ItemEntity.java
 @@ -142,6 +142,18 @@ public class ItemEntity extends Entity implements TraceableEntity {
@@ -44,7 +44,7 @@ index e82bb8f2d2b0e771dc371fd7e709116e1f5f204f..8638b1b6920f8eca9308d8f9b77b3f9a
              }
  
 +            // Octopus start - Limit dropped items per location
-+            if (counter > 256 && this.totalEntityAge > 20 * 30 && this.getDeltaMovement().lengthSqr() < 1.0E-6) {
++            if ((counter > 864 || (counter > 256 && this.totalEntityAge > 20 * 30)) && this.getDeltaMovement().lengthSqr() < 1.0E-6) {
 +                this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN);
 +                return;
 +            }
