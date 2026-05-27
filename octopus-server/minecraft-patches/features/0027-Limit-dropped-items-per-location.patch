@@ -1,0 +1,51 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Wed, 27 May 2026 20:16:47 +0800
+Subject: [PATCH] Limit dropped items per location
+
+
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index 208cbe29963eb2963dcd43be160ab2cdcc92cbe8..2781b30759b33831d7b0a34cf32b15f1608274c9 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -888,6 +888,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+                         }
+                     }
+                 );
++            this.trackedItemEntities.clear(); // Octopus - Limit dropped items per location
+             profilerFiller.popPush("blockEntities");
+             this.tickBlockEntities();
+             profilerFiller.pop();
+diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
+index e82bb8f2d2b0e771dc371fd7e709116e1f5f204f..5048baf1e7580fa6583d6b43c4b43ebc732cc50e 100644
+--- a/net/minecraft/world/entity/item/ItemEntity.java
++++ b/net/minecraft/world/entity/item/ItemEntity.java
+@@ -142,7 +142,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
+ 
+     @Override
+     public void tick() {
+-        if (this.getItem().isEmpty()) {
++        if (this.getItem().isEmpty() || (this.getDeltaMovement().lengthSqr() < 1.0E-6 && this.level().trackedItemEntities.get(this.blockPosition().asLong()) > 32)) { // Octopus - Limit dropped items per location
+             this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
+         } else {
+             super.tick();
+@@ -221,6 +221,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
+                 // CraftBukkit end
+                 this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
+             }
++            this.level().trackedItemEntities.addTo(this.blockPosition().asLong(), 1); // Octopus - Limit dropped items per location
+         }
+     }
+ 
+diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
+index 107be743e3d1ddf8e965798027ab339849b37b9a..c89ae86be09178da04655b81635ea97c9b7aeed6 100644
+--- a/net/minecraft/world/level/Level.java
++++ b/net/minecraft/world/level/Level.java
+@@ -151,6 +151,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+     @Nullable
+     public List<net.minecraft.world.entity.item.ItemEntity> captureDrops;
+     public final it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap<SpawnCategory> ticksPerSpawnCategory = new it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap<>();
++    public final it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap trackedItemEntities = new it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap(); // Octopus - Limit dropped items per location
+     // Paper start - EAR 2
+     public int wakeupInactiveRemainingAnimals;
+     public int wakeupInactiveRemainingFlying;
