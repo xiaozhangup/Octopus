@@ -17,19 +17,42 @@ index 208cbe29963eb2963dcd43be160ab2cdcc92cbe8..2781b30759b33831d7b0a34cf32b15f1
              this.tickBlockEntities();
              profilerFiller.pop();
 diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
-index e82bb8f2d2b0e771dc371fd7e709116e1f5f204f..5048baf1e7580fa6583d6b43c4b43ebc732cc50e 100644
+index e82bb8f2d2b0e771dc371fd7e709116e1f5f204f..8638b1b6920f8eca9308d8f9b77b3f9afda22fac 100644
 --- a/net/minecraft/world/entity/item/ItemEntity.java
 +++ b/net/minecraft/world/entity/item/ItemEntity.java
-@@ -142,7 +142,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
+@@ -142,6 +142,18 @@ public class ItemEntity extends Entity implements TraceableEntity {
  
      @Override
      public void tick() {
--        if (this.getItem().isEmpty()) {
-+        if (this.getItem().isEmpty() || (this.getDeltaMovement().lengthSqr() < 1.0E-6 && this.level().trackedItemEntities.get(this.blockPosition().asLong()) > 32)) { // Octopus - Limit dropped items per location
++        // Octopus start - Limit dropped items per location
++        var counter = this.level().trackedItemEntities.get(this.blockPosition().asLong());
++        if (counter > 72 && this.getDeltaMovement().lengthSqr() < 1.0E-6) {
++            if ((this.totalEntityAge & 1) == 0) {
++                this.level().trackedItemEntities.addTo(this.blockPosition().asLong(), 1);
++                if (this.pickupDelay > 0 && this.pickupDelay != 32767) {
++                    this.pickupDelay--;
++                }
++                return;
++            }
++        }
++        // Octopus end - Limit dropped items per location
+         if (this.getItem().isEmpty()) {
              this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
          } else {
-             super.tick();
-@@ -221,6 +221,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
+@@ -192,6 +204,12 @@ public class ItemEntity extends Entity implements TraceableEntity {
+                 }
+             }
+ 
++            // Octopus start - Limit dropped items per location
++            if (counter > 256 && this.totalEntityAge > 20 * 30 && this.getDeltaMovement().lengthSqr() < 1.0E-6) {
++                this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN);
++                return;
++            }
++            // Octopus end - Limit dropped items per location
+             boolean flag = Mth.floor(this.xo) != Mth.floor(this.getX())
+                 || Mth.floor(this.yo) != Mth.floor(this.getY())
+                 || Mth.floor(this.zo) != Mth.floor(this.getZ());
+@@ -221,6 +239,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
                  // CraftBukkit end
                  this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
              }
