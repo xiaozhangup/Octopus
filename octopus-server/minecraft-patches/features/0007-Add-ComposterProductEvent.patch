@@ -5,48 +5,49 @@ Subject: [PATCH] Add ComposterProductEvent
 
 
 diff --git a/net/minecraft/world/level/block/ComposterBlock.java b/net/minecraft/world/level/block/ComposterBlock.java
-index 429e833ffe7c89d7b0ca7515dbd82ffc1ce8d60d..bcf631dafae3f4c1aecf2521f8a5ffdc332d8f5e 100644
+index 69e3969242ad52168e947af209e6fa72f36178ae..2de90dc4ecf472b31583fe01b4f979eb2077009c 100644
 --- a/net/minecraft/world/level/block/ComposterBlock.java
 +++ b/net/minecraft/world/level/block/ComposterBlock.java
-@@ -313,7 +313,11 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
+@@ -323,7 +323,11 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
          // CraftBukkit end
          if (!level.isClientSide()) {
-             Vec3 vec3 = Vec3.atLowerCornerWithOffset(pos, 0.5, 1.01, 0.5).offsetRandomXZ(level.random, 0.7F);
--            ItemEntity itemEntity = new ItemEntity(level, vec3.x(), vec3.y(), vec3.z(), new ItemStack(Items.BONE_MEAL));
+             Vec3 itemPos = Vec3.atLowerCornerWithOffset(pos, 0.5, 1.01, 0.5).offsetRandomXZ(level.getRandom(), 0.7F);
+-            ItemEntity entity = new ItemEntity(level, itemPos.x(), itemPos.y(), itemPos.z(), new ItemStack(Items.BONE_MEAL));
 +            // Octopus start - Add ComposterProductEvent
 +            org.bukkit.event.block.ComposterProductEvent event = new org.bukkit.event.block.ComposterProductEvent(level.getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ()), new ItemStack(Items.BONE_MEAL).asBukkitMirror());
 +            event.callEvent();
-+            ItemEntity itemEntity = new ItemEntity(level, vec3.x(), vec3.y(), vec3.z(), ItemStack.fromBukkitCopy(event.getItem()));
++            ItemEntity entity = new ItemEntity(level, itemPos.x(), itemPos.y(), itemPos.z(), ItemStack.fromBukkitCopy(event.getItem()));
 +            // Octopus end - Add ComposterProductEvent
-             itemEntity.setDefaultPickUpDelay();
-             level.addFreshEntity(itemEntity);
+             entity.setDefaultPickUpDelay();
+             level.addFreshEntity(entity);
          }
-@@ -404,11 +408,15 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
+@@ -419,11 +423,15 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
      @Override
-     public WorldlyContainer getContainer(BlockState state, LevelAccessor level, BlockPos pos) {
-         int levelValue = state.getValue(LEVEL);
+     public WorldlyContainer getContainer(final BlockState state, final LevelAccessor level, final BlockPos pos) {
+         int contentLevel = state.getValue(LEVEL);
 +        // Octopus start - Add ComposterProductEvent
-         if (levelValue == 8) {
+         if (contentLevel == 8) {
 -            return new ComposterBlock.OutputContainer(state, level, pos, new ItemStack(Items.BONE_MEAL));
--        } else {
--            return (WorldlyContainer)(levelValue < 7 ? new ComposterBlock.InputContainer(state, level, pos) : new ComposterBlock.EmptyContainer(level, pos)); // CraftBukkit - empty generatoraccess, blockposition
--        }
 +            org.bukkit.event.block.ComposterProductEvent event = new org.bukkit.event.block.ComposterProductEvent(level.getMinecraftWorld().getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ()), new ItemStack(Items.BONE_MEAL).asBukkitMirror());
-+                event.callEvent();
-+                return new ComposterBlock.OutputContainer(state, level, pos, ItemStack.fromBukkitCopy(event.getItem()));
-+            } else {
-+                return levelValue < 7 ? new ComposterBlock.InputContainer(state, level, pos) : new ComposterBlock.EmptyContainer(level, pos);
-+            }
++            event.callEvent();
++            return new ComposterBlock.OutputContainer(state, level, pos, ItemStack.fromBukkitCopy(event.getItem()));
+         } else {
+             return contentLevel < 7 ? new ComposterBlock.InputContainer(state, level, pos) : new ComposterBlock.EmptyContainer(level, pos); // CraftBukkit - empty levelAccessor, blockPos
+         }
 +        // Octopus end - Add ComposterProductEvent
      }
  
      public static class EmptyContainer extends SimpleContainer implements WorldlyContainer {
-@@ -515,7 +523,7 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
+@@ -528,9 +536,9 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
+             return false;
+         }
  
-         @Override
-         public boolean canTakeItemThroughFace(int index, ItemStack stack, Direction direction) {
--            return !this.changed && direction == Direction.DOWN && stack.is(Items.BONE_MEAL);
-+            return !this.changed && direction == Direction.DOWN && index == 0; // Octopus - Add ComposterProductEvent
+-        @Override
+-        public boolean canTakeItemThroughFace(final int slot, final ItemStack itemStack, final Direction direction) {
+-            return !this.changed && direction == Direction.DOWN && itemStack.is(Items.BONE_MEAL);
++    @Override
++    public boolean canTakeItemThroughFace(final int slot, final ItemStack itemStack, final Direction direction) {
++            return !this.changed && direction == Direction.DOWN && slot == 0; // Octopus - Add ComposterProductEvent
          }
  
          @Override

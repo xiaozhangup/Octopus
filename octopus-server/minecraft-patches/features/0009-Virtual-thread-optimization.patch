@@ -5,10 +5,10 @@ Subject: [PATCH] Virtual thread optimization
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 62736ac87060b9e2cef977b58a9bd85d89d579e2..88127d326ae7a71cca07d034a28c3c715a1cbb7d 100644
+index ade1704fbc3a3f094dc047facbcd6bf4fe3dccbe..63583f2f240dbcdb3a8e410b04a081462791a40d 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -2902,7 +2902,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -2956,7 +2956,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      }
  
      public final java.util.concurrent.ExecutorService chatExecutor = java.util.concurrent.Executors.newCachedThreadPool(
@@ -17,16 +17,3 @@ index 62736ac87060b9e2cef977b58a9bd85d89d579e2..88127d326ae7a71cca07d034a28c3c71
      public final ChatDecorator improvedChatDecorator = new io.papermc.paper.adventure.ImprovedChatDecorator(this); // Paper - adventure
  
      public ChatDecorator getChatDecorator() {
-diff --git a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-index 51a29ab542136e67741be10bbc5c6377715a207c..6929c66be923101d73ae57acf9ac61e2cd8e9bd2 100644
---- a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-+++ b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-@@ -55,7 +55,7 @@ import org.bukkit.event.player.PlayerPreLoginEvent;
- public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener, TickablePacketListener {
-     private static final AtomicInteger UNIQUE_THREAD_ID = new AtomicInteger(0);
-     static final Logger LOGGER = LogUtils.getLogger();
--    private static final java.util.concurrent.ExecutorService authenticatorPool = java.util.concurrent.Executors.newCachedThreadPool(new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("User Authenticator #%d").setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LOGGER)).build()); // Paper - Cache authenticator threads
-+    private static final java.util.concurrent.ExecutorService authenticatorPool = java.util.concurrent.Executors.newCachedThreadPool(new com.google.common.util.concurrent.ThreadFactoryBuilder().setNameFormat("User Authenticator #%d").setThreadFactory(Thread.ofVirtual().factory()).setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LOGGER)).build()); // Paper - Cache authenticator threads
-     private static final int MAX_TICKS_BEFORE_LOGIN = 600;
-     private final byte[] challenge;
-     final MinecraftServer server;

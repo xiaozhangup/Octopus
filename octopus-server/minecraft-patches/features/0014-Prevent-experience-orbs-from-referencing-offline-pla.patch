@@ -5,7 +5,7 @@ Subject: [PATCH] Prevent experience orbs from referencing offline players
 
 
 diff --git a/net/minecraft/world/entity/ExperienceOrb.java b/net/minecraft/world/entity/ExperienceOrb.java
-index f2ec0bd8cca3c08d558790537e17a8a2f95f1953..a23e745f8ea1f9041a959764c35f517d9ca2502a 100644
+index 73a29d7d40e092be8264679c7f30e5aa8b8fb393..5ab1015c31f8979e4fefd2f190ec642cf83bd3c2 100644
 --- a/net/minecraft/world/entity/ExperienceOrb.java
 +++ b/net/minecraft/world/entity/ExperienceOrb.java
 @@ -197,7 +197,7 @@ public class ExperienceOrb extends Entity {

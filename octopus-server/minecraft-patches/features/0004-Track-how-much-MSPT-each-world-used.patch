@@ -5,31 +5,29 @@ Subject: [PATCH] Track how much MSPT each world used
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index a616239029abf47569bf65def8e1a9e1eb8aba35..62736ac87060b9e2cef977b58a9bd85d89d579e2 100644
+index 20d04d720f325ceb594535a39695143e849f8ff9..ade1704fbc3a3f094dc047facbcd6bf4fe3dccbe 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1841,7 +1841,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1867,7 +1867,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              java.util.concurrent.Callable<Pair<ServerLevel, Throwable>> tickingFunction = () -> {
-             serverLevel.worldTaskQueueInstance.acquirePoller(); // Octopus
-             try {
-+                long i = Util.getNanos(); // SparklyPaper - track world's MSPT
-                 serverLevel.tick(hasTimeLeft);
-+                // SparklyPaper start - track world's MSPT
-+                long j = Util.getNanos() - i;
-+
-+                // These are from the "tickServer" function
-+                serverLevel.tickTimes5s.add(this.tickCount, j);
-+                serverLevel.tickTimes10s.add(this.tickCount, j);
-+                serverLevel.tickTimes60s.add(this.tickCount, j);
-+                // SparklyPaper end
-             } catch (Throwable var7) {
-                 return Pair.of(serverLevel, var7);
-             } finally {
+                 level.worldTaskQueueInstance.acquirePoller();
+                 try {
++                    long tickStart = Util.getNanos(); // SparklyPaper - track world's MSPT
+                     level.tick(haveTime);
++                    // SparklyPaper start - track world's MSPT
++                    long tickTime = Util.getNanos() - tickStart;
++                    level.tickTimes5s.add(this.tickCount, tickTime);
++                    level.tickTimes10s.add(this.tickCount, tickTime);
++                    level.tickTimes60s.add(this.tickCount, tickTime);
++                    // SparklyPaper end
+                 } catch (Throwable throwable) {
+                     return Pair.of(level, throwable);
+                 } finally {
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 6f91b00610e5d23de2dd97a975ca62056ff382fc..5c877c5c495b3ebbd2fdb19edb658693879f7a67 100644
+index 39d006af53ed8144c867d0559cdc5303314d5790..71850f29f2f4753741b629172a31b1ba60e5f57a 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -616,6 +616,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -623,6 +623,12 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
      }
      // Paper end - chunk tick iteration
  
@@ -40,5 +38,5 @@ index 6f91b00610e5d23de2dd97a975ca62056ff382fc..5c877c5c495b3ebbd2fdb19edb658693
 +    // SparklyPaper end
 +
      public ServerLevel(
-         MinecraftServer server,
-         Executor dispatcher,
+         final MinecraftServer server,
+         final Executor executor,

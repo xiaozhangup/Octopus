@@ -5,10 +5,10 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
-index 0ec885b97d655c03371840d739b47063494ed36f..ed1d3e6be96c7f24c09f186691d4c6fb9632a00d 100644
+index dd8ad5976eb413f049245a4f37bd94b3e41829de..d34504effa849979959c8d9f790ab124150977c9 100644
 --- a/src/main/java/org/bukkit/Server.java
 +++ b/src/main/java/org/bukkit/Server.java
-@@ -2761,4 +2761,36 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+@@ -2780,4 +2780,36 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
       */
      void allowPausing(@NotNull org.bukkit.plugin.Plugin plugin, boolean value);
      // Paper end - API to check if the server is sleeping
@@ -18,25 +18,25 @@ index 0ec885b97d655c03371840d739b47063494ed36f..ed1d3e6be96c7f24c09f186691d4c6fb
 +     * Sets the profile source for the server.
 +     * @param source
 +     */
-+    void setProfileSource(me.xiaozhangup.octopus.ProfileSource source);
++    void setProfileSource(@Nullable me.xiaozhangup.octopus.ProfileSource source);
 +
 +    /**
 +     * Sets the stats source for the server.
 +     * @param source
 +     */
-+    void setStatsSource(me.xiaozhangup.octopus.JsonDataSource source);
++    void setStatsSource(@Nullable me.xiaozhangup.octopus.JsonDataSource source);
 +
 +    /**
 +     * Sets the achievements source for the server.
 +     * @param source
 +     */
-+    void setAchievementsSource(me.xiaozhangup.octopus.JsonDataSource source);
++    void setAchievementsSource(@Nullable me.xiaozhangup.octopus.JsonDataSource source);
 +
 +    /**
 +     * Sets the maps source for the server.
 +     * @param source
 +     */
-+    void setMapSource(me.xiaozhangup.octopus.MapSource source);
++    void setMapSource(@Nullable me.xiaozhangup.octopus.MapSource source);
 +
 +    /**
 +     * Clears the cached map data for the given map id.

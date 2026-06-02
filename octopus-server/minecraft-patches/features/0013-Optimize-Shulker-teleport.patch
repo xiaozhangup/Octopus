@@ -5,7 +5,7 @@ Subject: [PATCH] Optimize Shulker teleport
 
 
 diff --git a/net/minecraft/world/entity/monster/Shulker.java b/net/minecraft/world/entity/monster/Shulker.java
-index 06e8d9c6233e8aea0822d83a764c11d6d6482643..7abda79138b66144a439aa411b0784e2d62e25dc 100644
+index e5ee95bcedddb33edec0f039912c02e190364ac9..faff3a4d82308cbbb74d59db2f9eb22486f5a033 100644
 --- a/net/minecraft/world/entity/monster/Shulker.java
 +++ b/net/minecraft/world/entity/monster/Shulker.java
 @@ -86,6 +86,10 @@ public class Shulker extends AbstractGolem implements Enemy {
@@ -17,7 +17,7 @@ index 06e8d9c6233e8aea0822d83a764c11d6d6482643..7abda79138b66144a439aa411b0784e2
 +    private int consecutiveTeleportFailures = 0;
 +    // Octopus end - Optimize Shulker teleport
  
-     public Shulker(EntityType<? extends Shulker> type, Level level) {
+     public Shulker(final EntityType<? extends Shulker> type, final Level level) {
          super(type, level);
 @@ -172,6 +176,11 @@ public class Shulker extends AbstractGolem implements Enemy {
      @Override
@@ -40,11 +40,11 @@ index 06e8d9c6233e8aea0822d83a764c11d6d6482643..7abda79138b66144a439aa411b0784e2
 +                return false;
 +            }
 +            // Octopus end - Optimize Shulker teleport
-             BlockPos blockPos = this.blockPosition();
+             BlockPos current = this.blockPosition();
  
-             for (int i = 0; i < 5; i++) {
+             for (int attempt = 0; attempt < 5; attempt++) {
 @@ -406,11 +420,19 @@ public class Shulker extends AbstractGolem implements Enemy {
-                         this.level().gameEvent(GameEvent.TELEPORT, blockPos, GameEvent.Context.of(this));
+                         this.level().gameEvent(GameEvent.TELEPORT, current, GameEvent.Context.of(this));
                          this.entityData.set(DATA_PEEK_ID, (byte)0);
                          this.setTarget(null);
 +                        // Octopus start - Optimize Shulker teleport

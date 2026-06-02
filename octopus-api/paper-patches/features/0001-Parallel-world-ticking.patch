@@ -5,10 +5,10 @@ Subject: [PATCH] Parallel world ticking
 
 
 diff --git a/src/main/java/org/bukkit/World.java b/src/main/java/org/bukkit/World.java
-index b202bdb84bae23f7b2b5af591879a032f6378a25..abeedb8c70497b286e5422cfda12234ba2e419b9 100644
+index ace05559319506ab1f20dee8b4050cd797ca695b..48ba9df053e6266cb651e3c7c93cc5ba771d48d1 100644
 --- a/src/main/java/org/bukkit/World.java
 +++ b/src/main/java/org/bukkit/World.java
-@@ -4560,6 +4560,34 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+@@ -4632,6 +4632,34 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
      @NotNull
      public Collection<GeneratedStructure> getStructures(int x, int z, @NotNull Structure structure);
  
@@ -17,28 +17,28 @@ index b202bdb84bae23f7b2b5af591879a032f6378a25..abeedb8c70497b286e5422cfda12234b
 +     * Usually after all other thread tasks have been executed.
 +     * @param task the task to execute
 +     */
-+    void submitCallbackTask(Runnable task);
++    void submitCallbackTask(@NotNull Runnable task);
 +
 +    /**
 +     * Submit a task to be executed on the world thread.
 +     * Usually after all this world thread tasks have been executed.
 +     * @param task the task to execute
 +     */
-+    void submitScopedTask(Runnable task);
++    void submitScopedTask(@NotNull Runnable task);
 +
 +    /**
 +     * Submit a task to be executed on the world thread every tick.
 +     * @param id
 +     * @param task
 +     */
-+    void submitCyclicalTask(String id, Runnable task);
++    void submitCyclicalTask(@NotNull String id, @NotNull Runnable task);
 +
 +    /**
 +     * Removes a cyclical task
 +     * @param id
 +     * @return
 +     */
-+    Runnable removeCyclicalTask(String id);
++    @Nullable Runnable removeCyclicalTask(@NotNull String id);
 +
      /**
       * Represents various map environment types that a world may be

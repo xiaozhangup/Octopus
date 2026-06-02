@@ -1,9 +1,10 @@
 package me.xiaozhangup.octopus;
 
 import java.util.Optional;
+import org.jetbrains.annotations.NotNull;
 
 public interface MapSource {
     int getNextMapId();
-    Optional<byte[]> getMapData(int mapId);
-    void saveMapData(int mapId, byte[] data);
+    @NotNull Optional<byte[]> getMapData(int mapId);
+    void saveMapData(int mapId, byte @NotNull [] data);
 }

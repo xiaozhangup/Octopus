@@ -5,12 +5,12 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 88127d326ae7a71cca07d034a28c3c715a1cbb7d..27500807800de514fd3278d37b5acf4810fbb1bc 100644
+index 63583f2f240dbcdb3a8e410b04a081462791a40d..45ebe580dd8a0825c9a5a23f3b252ce027f5ef27 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -220,6 +220,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -230,6 +230,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      private Consumer<ProfileResults> onMetricsRecordingStopped = results -> this.stopRecordingMetrics();
-     private Consumer<Path> onMetricsRecordingFinished = path -> {};
+     private Consumer<Path> onMetricsRecordingFinished = ignored -> {};
      private boolean willStartRecordingMetrics;
 +    // Octopus start - Custom DataSource
 +    public me.xiaozhangup.octopus.@Nullable PlayerJsonDataSource achievementsSource = null;
@@ -20,7 +20,7 @@ index 88127d326ae7a71cca07d034a28c3c715a1cbb7d..27500807800de514fd3278d37b5acf48
      private MinecraftServer.@Nullable TimeProfiler debugCommandProfiler;
      private boolean debugCommandProfilerDelayStart;
      private ServerConnectionListener connection;
-@@ -1610,6 +1615,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1642,6 +1647,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                  // Paper end - avoid issues with certain tasks not processing during sleep
                  this.server.spark.executeMainThreadTasks(); // Paper - spark
                  this.tickConnection();
@@ -30,7 +30,7 @@ index 88127d326ae7a71cca07d034a28c3c715a1cbb7d..27500807800de514fd3278d37b5acf48
                  this.server.spark.tickEnd(((double)(System.nanoTime() - this.currentTickStart) / 1000000D)); // Paper - spark
                  return;
              }
-@@ -1656,6 +1664,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1690,6 +1698,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          long endTime = System.nanoTime();
          long remaining = this.nextTickTimeNanos - endTime;
          new com.destroystokyo.paper.event.server.ServerTickEndEvent(this.tickCount, ((double)(endTime - this.currentTickStart) / 1000000D), remaining).callEvent();
@@ -39,15 +39,16 @@ index 88127d326ae7a71cca07d034a28c3c715a1cbb7d..27500807800de514fd3278d37b5acf48
 +        // Octopus end - Custom DataSource
          // Paper end - Server Tick Events
          this.server.spark.tickEnd(((double)(endTime - this.currentTickStart) / 1000000D)); // Paper - spark
-         profilerFiller.push("tallying");
+         profiler.push("tallying");
 diff --git a/net/minecraft/server/PlayerAdvancements.java b/net/minecraft/server/PlayerAdvancements.java
-index 98004b77b7f40d315f41be82105df6d4b9000e33..4c3c8f0e76cb15927cd7c97bf155170a7ab68e3a 100644
+index f8c3b8b1f153157074452b3d13b94efa568d048e..f92822841c2fe906ff4f0d6a97fb51cba7eb5846 100644
 --- a/net/minecraft/server/PlayerAdvancements.java
 +++ b/net/minecraft/server/PlayerAdvancements.java
-@@ -110,6 +110,15 @@ public class PlayerAdvancements {
+@@ -112,6 +112,17 @@ public class PlayerAdvancements {
      }
  
-     private void load(ServerAdvancementManager manager) {
+     private void load(final ServerAdvancementManager manager) {
++        // Octopus start - Custom DataSource
 +        if (playerList.getServer().achievementsSource != null) {
 +            String jsonData = playerList.getServer().achievementsSource.load(player.getUUID().toString());
 +            if (jsonData != null) {
@@ -57,83 +58,72 @@ index 98004b77b7f40d315f41be82105df6d4b9000e33..4c3c8f0e76cb15927cd7c97bf155170a
 +            }
 +            return;
 +        }
++        // Octopus end - Custom DataSource
          if (Files.isRegularFile(this.playerSavePath)) {
-             try (Reader bufferedReader = Files.newBufferedReader(this.playerSavePath, StandardCharsets.UTF_8)) {
-                 JsonElement jsonElement = StrictJsonParser.parse(bufferedReader);
-@@ -131,6 +140,10 @@ public class PlayerAdvancements {
-         JsonElement jsonElement = this.codec.encodeStart(JsonOps.INSTANCE, this.asData()).getOrThrow();
+             try (Reader reader = Files.newBufferedReader(this.playerSavePath, StandardCharsets.UTF_8)) {
+                 JsonElement json = StrictJsonParser.parse(reader);
+@@ -133,6 +144,10 @@ public class PlayerAdvancements {
+         JsonElement json = this.codec.encodeStart(JsonOps.INSTANCE, this.asData()).getOrThrow();
  
          try {
 +            if (playerList.getServer().achievementsSource != null) {
-+                playerList.getServer().achievementsSource.save(GSON.toJson(jsonElement), player.getUUID().toString());
++                playerList.getServer().achievementsSource.save(GSON.toJson(json), player.getUUID().toString());
 +                return;
 +            }
              FileUtil.createDirectoriesSafe(this.playerSavePath.getParent());
  
-             try (Writer bufferedWriter = Files.newBufferedWriter(this.playerSavePath, StandardCharsets.UTF_8)) {
-diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 352c6ee9c9e887feccc92b9dcb089bc74dcaf56c..852ca81dfd36611e6815f21940f99864db7f0838 100644
---- a/net/minecraft/server/level/ServerLevel.java
-+++ b/net/minecraft/server/level/ServerLevel.java
-@@ -2268,7 +2268,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
- 
-         final Optional<net.minecraft.world.level.saveddata.SavedData> cacheEntry = storage.cache.get(MapItemSavedData.type(mapId));
-         if (cacheEntry == null) { // Cache did not contain, try to load and may init
--            final MapItemSavedData mapData = storage.get(MapItemSavedData.type(mapId)); // get populates the cache
-+            final MapItemSavedData mapData = storage.get(MapItemSavedData.type(mapId)); // get populates the cache // Octopus - Custom DataSource
-             if (mapData != null) { // map was read, init it and return
-                 mapData.id = mapId;
-                 new org.bukkit.event.server.MapInitializeEvent(mapData.mapView).callEvent();
+             try (Writer outputWriter = Files.newBufferedWriter(this.playerSavePath, StandardCharsets.UTF_8)) {
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 4e5d30a7bc159fb2ab620333142afc10a7de1cc1..ad620c0c9ea7a27912792d005dc8fa1395570695 100644
+index 029d84e2500425ea1eb52510599d1a43b4272ded..e3928b94f32fa1d35e2c90cc223ac28644639e14 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -1169,7 +1169,7 @@ public abstract class PlayerList {
+@@ -1171,7 +1171,7 @@ public abstract class PlayerList {
      }
-     public ServerStatsCounter getPlayerStats(GameProfile gameProfile) {
-             Path path = this.locateStatsFile(gameProfile);
--            return new ServerStatsCounter(this.server, path);
-+            return new ServerStatsCounter(this.server, path, gameProfile.id().toString());
+     public ServerStatsCounter getPlayerStats(final GameProfile gameProfile) {
+             Path targetFile = this.locateStatsFile(gameProfile);
+-            return new ServerStatsCounter(this.server, targetFile);
++            return new ServerStatsCounter(this.server, targetFile, gameProfile.id().toString()); // Octopus - Custom DataSource
      }
      // CraftBukkit end
  
 diff --git a/net/minecraft/stats/ServerStatsCounter.java b/net/minecraft/stats/ServerStatsCounter.java
-index 6b254d2d91c19e81edac13a00ad646092f958382..a40bd392021c0c910bd12d117ee8bab48d7db4c3 100644
+index f5beb001b938072e78c0ead7e0ad0499784ed1cf..f38c2cbdd94874d5d366d57ba26e1e70126b1f3a 100644
 --- a/net/minecraft/stats/ServerStatsCounter.java
 +++ b/net/minecraft/stats/ServerStatsCounter.java
 @@ -49,8 +49,10 @@ public class ServerStatsCounter extends StatsCounter {
-             map.forEach((statType, map2) -> map1.putAll((Map<? extends Stat<?>, ? extends Integer>)map2));
-             return map1;
+             groupedStats.forEach((type, values) -> stats.putAll((Map<? extends Stat<?>, ? extends Integer>)values));
+             return stats;
          }, map -> map.entrySet().stream().collect(Collectors.groupingBy(entry -> entry.getKey().getType(), Util.toMap())));
 +    private final MinecraftServer server;
      private final Path file;
      private final Set<Stat<?>> dirty = Sets.newHashSet();
 +    private final String uuid;
  
-     private static <T> Codec<Map<Stat<?>, Integer>> createTypedStatsCodec(StatType<T> type) {
-         Codec<T> codec = type.getRegistry().byNameCodec();
-@@ -63,9 +65,18 @@ public class ServerStatsCounter extends StatsCounter {
-         return Codec.unboundedMap(codec1, Codec.INT);
+     private static <T> Codec<Map<Stat<?>, Integer>> createTypedStatsCodec(final StatType<T> type) {
+         Codec<T> valueCodec = type.getRegistry().byNameCodec();
+@@ -63,9 +65,19 @@ public class ServerStatsCounter extends StatsCounter {
+         return Codec.unboundedMap(statCodec, Codec.INT);
      }
  
--    public ServerStatsCounter(MinecraftServer server, Path file) {
-+    public ServerStatsCounter(MinecraftServer server, Path file, String uuid) {
+-    public ServerStatsCounter(final MinecraftServer server, final Path file) {
++    public ServerStatsCounter(final MinecraftServer server, final Path file, final String uuid) {
          this.file = file;
 -        if (Files.isRegularFile(file)) {
 +        this.server = server;
 +        this.uuid = uuid;
++        // Octopus start - Custom DataSource
 +        if (server.statsSource != null) {
 +            String json = server.statsSource.load(uuid);
 +            if (json != null) {
-+                JsonElement jsonElement = StrictJsonParser.parse(json);
-+                this.parse(server.getFixerUpper(), jsonElement);
++                JsonElement element = StrictJsonParser.parse(json);
++                this.parse(server.getFixerUpper(), element);
 +            }
-+        }
-+        else if (Files.isRegularFile(file)) {
-             try (Reader bufferedReader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-                 JsonElement jsonElement = StrictJsonParser.parse(bufferedReader);
-                 this.parse(server.getFixerUpper(), jsonElement);
-@@ -91,6 +102,10 @@ public class ServerStatsCounter extends StatsCounter {
++        } else if (Files.isRegularFile(file)) {
++        // Octopus end - Custom DataSource
+             try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+                 JsonElement element = StrictJsonParser.parse(reader);
+                 this.parse(server.getFixerUpper(), element);
+@@ -91,6 +103,10 @@ public class ServerStatsCounter extends StatsCounter {
      public void save() {
          if (org.spigotmc.SpigotConfig.disableStatSaving) return; // Spigot
          try {
@@ -143,12 +133,12 @@ index 6b254d2d91c19e81edac13a00ad646092f958382..a40bd392021c0c910bd12d117ee8bab4
 +            }
              FileUtil.createDirectoriesSafe(this.file.getParent());
  
-             try (Writer bufferedWriter = Files.newBufferedWriter(this.file, StandardCharsets.UTF_8)) {
+             try (Writer writer = Files.newBufferedWriter(this.file, StandardCharsets.UTF_8)) {
 diff --git a/net/minecraft/world/level/saveddata/maps/MapIndex.java b/net/minecraft/world/level/saveddata/maps/MapIndex.java
-index 06025d79cc2297119b22224d777aca79f9d3d9c1..113dd47a95811f3980f0f9d6f0bd0d9e0dad65d5 100644
+index 6b3ce2ded53a7ea46cf7f0cb49043a022f6d9ee7..eacc782661ce549fb7bf7c4de7a20fb04c5aff43 100644
 --- a/net/minecraft/world/level/saveddata/maps/MapIndex.java
 +++ b/net/minecraft/world/level/saveddata/maps/MapIndex.java
-@@ -23,6 +23,12 @@ public class MapIndex extends SavedData {
+@@ -26,6 +26,12 @@ public class MapIndex extends SavedData {
      }
  
      public MapId getNextMapId() {
@@ -158,14 +148,14 @@ index 06025d79cc2297119b22224d777aca79f9d3d9c1..113dd47a95811f3980f0f9d6f0bd0d9e
 +            return new MapId(mapSource.getNextMapId());
 +        }
 +        // Octopus end - Custom DataSource
-         MapId mapId = new MapId(++this.lastMapId);
+         MapId id = new MapId(++this.lastMapId);
          this.setDirty();
-         return mapId;
+         return id;
 diff --git a/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java b/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
-index 1af585f9554278983148096c73c86e18166f5471..6c35d5dccd936b544cdfebdabce24352bf58323c 100644
+index aab932de7b8eea03d27d3de1f4541add0552f0b1..b110142578b58c312fa786cb35b5061bfdfa3cdf 100644
 --- a/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
 +++ b/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
-@@ -739,4 +739,15 @@ public class MapItemSavedData extends SavedData {
+@@ -762,4 +762,15 @@ public class MapItemSavedData extends SavedData {
          };
      }
      // Paper end - store target world by uuid in addition to dimension
@@ -181,23 +171,78 @@ index 1af585f9554278983148096c73c86e18166f5471..6c35d5dccd936b544cdfebdabce24352
 +    }
 +    // Octopus end - Custom DataSource
  }
-diff --git a/net/minecraft/world/level/storage/DimensionDataStorage.java b/net/minecraft/world/level/storage/DimensionDataStorage.java
-index b932e6236975fd4a755bdbf4b7a958599383f3f8..6b00d536486cc95bfa3cc02fa9a45c1355bbadf8 100644
---- a/net/minecraft/world/level/storage/DimensionDataStorage.java
-+++ b/net/minecraft/world/level/storage/DimensionDataStorage.java
-@@ -43,6 +43,9 @@ public class DimensionDataStorage implements AutoCloseable {
-     private final HolderLookup.Provider registries;
+diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
+index eddb6ebe3fa50a818e54079b73ba117be0abd195..9a648fdc6c8febaf54e82d024e18270fdc3220a7 100644
+--- a/net/minecraft/world/level/storage/PlayerDataStorage.java
++++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
+@@ -24,6 +24,14 @@ public class PlayerDataStorage {
+     private final File playerDir;
+     protected final DataFixer fixerUpper;
+ 
++    // Octopus start - PlayerDataSource
++    private @org.jetbrains.annotations.Nullable me.xiaozhangup.octopus.PlayerDataSource dataSource = null;
++
++    public void setDataSource(@org.jetbrains.annotations.Nullable me.xiaozhangup.octopus.PlayerDataSource dataSource) {
++        this.dataSource = dataSource;
++    }
++    // Octopus end - PlayerDataSource
++
+     public PlayerDataStorage(final LevelStorageSource.LevelStorageAccess levelAccess, final DataFixer fixerUpper) {
+         this.fixerUpper = fixerUpper;
+         this.playerDir = levelAccess.getLevelPath(LevelResource.PLAYER_DATA_DIR).toFile();
+@@ -38,6 +46,12 @@ public class PlayerDataStorage {
+             Path playerDirPath = this.playerDir.toPath();
+             Path tmpFile = Files.createTempFile(playerDirPath, player.getStringUUID() + "-", ".dat");
+             CompoundTag dataToStore = output.buildResult();
++            // Octopus start - PlayerDataSource
++            if (this.dataSource != null) {
++                this.dataSource.save(player, dataToStore);
++                return;
++            }
++            // Octopus end - PlayerDataSource
+             NbtIo.writeCompressed(dataToStore, tmpFile);
+             Path realFile = playerDirPath.resolve(player.getStringUUID() + ".dat");
+             Path oldFile = playerDirPath.resolve(player.getStringUUID() + ".dat_old");
+@@ -91,6 +105,22 @@ public class PlayerDataStorage {
+     }
+ 
+     public Optional<CompoundTag> load(final NameAndId nameAndId) {
++        // Octopus start - PlayerDataSource
++        if (this.dataSource != null) {
++            try {
++                Optional<CompoundTag> data = this.dataSource.load(nameAndId.name(), nameAndId.id().toString());
++                if (data.isPresent()) {
++                    return data.map(compoundTag -> {
++                        int dataVersion = NbtUtils.getDataVersion(compoundTag);
++                        return ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry.PLAYER, compoundTag, dataVersion, ca.spottedleaf.dataconverter.minecraft.util.Version.getCurrentVersion());
++                    });
++                }
++            } catch (Exception e) {
++                LOGGER.warn("Failed to load player data for {}", nameAndId.name(), e);
++            }
++            return Optional.empty();
++        }
++        // Octopus end - PlayerDataSource
+         Optional<CompoundTag> optTag = this.load(nameAndId, ".dat");
+         if (optTag.isEmpty()) {
+             this.backup(nameAndId, ".dat");
+diff --git a/net/minecraft/world/level/storage/SavedDataStorage.java b/net/minecraft/world/level/storage/SavedDataStorage.java
+index f359e53024019f35aaa5cd8477da708bda2fc57a..624d4554fa6a69a6aae4e55c523a64b310f092d0 100644
+--- a/net/minecraft/world/level/storage/SavedDataStorage.java
++++ b/net/minecraft/world/level/storage/SavedDataStorage.java
+@@ -46,6 +46,9 @@ public class SavedDataStorage implements AutoCloseable {
      private final Path dataFolder;
      private CompletableFuture<?> pendingWriteFuture = CompletableFuture.completedFuture(null);
+     private boolean closed;
 +    // Octopus start - Custom DataSource
 +    private final it.unimi.dsi.fastutil.ints.Int2ObjectMap<net.minecraft.world.level.saveddata.maps.MapItemSavedData> pendingMapDataSaves = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>();
 +    // Octopus end - Custom DataSource
  
-     public DimensionDataStorage(Path dataFolder, DataFixer fixerUpper, HolderLookup.Provider registries) {
+     public SavedDataStorage(final Path dataFolder, final DataFixer fixerUpper, final HolderLookup.Provider registries) {
          this.fixerUpper = fixerUpper;
-@@ -77,6 +80,25 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -85,6 +88,25 @@ public class SavedDataStorage implements AutoCloseable {
  
-     private <T extends SavedData> @Nullable T readSavedData(SavedDataType<T> type) {
+     private <T extends SavedData> @Nullable T readSavedData(final SavedDataType<T> type) {
          try {
 +            // Octopus start - Custom DataSource
 +            net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
@@ -210,33 +255,53 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..6b00d536486cc95bfa3cc02fa9a45c13
 +                }
 +
 +                int dataVersion = NbtUtils.getDataVersion(sourceData.get(), 1343);
-+                CompoundTag tagFixed = type.dataFixType().update(this.fixerUpper, sourceData.get(), dataVersion, SharedConstants.getCurrentVersion().dataVersion().version());
-+                RegistryOps<Tag> registryOps = this.registries.createSerializationContext(NbtOps.INSTANCE);
++                CompoundTag fixedTag = type.dataFixType().update(this.fixerUpper, sourceData.get(), dataVersion, SharedConstants.getCurrentVersion().dataVersion().version());
++                RegistryOps<Tag> ops = this.registries.createSerializationContext(NbtOps.INSTANCE);
 +                return type.codec()
-+                    .parse(registryOps, tagFixed.get("data"))
-+                    .resultOrPartial(string -> LOGGER.error("Failed to parse saved data for '{}': {}", type, string))
++                    .parse(ops, fixedTag.get("data"))
++                    .resultOrPartial(error -> LOGGER.error("Failed to parse saved data for '{}': {}", type, error))
 +                    .orElse(null);
 +            }
 +            // Octopus end - Custom DataSource
-             Path dataFile = this.getDataFile(type.id());
-             if (Files.exists(dataFile)) {
-                 CompoundTag tagFromDisk = this.readTagFromDisk(type.id(), type.dataFixType(), SharedConstants.getCurrentVersion().dataVersion().version());
-@@ -139,6 +161,9 @@ public class DimensionDataStorage implements AutoCloseable {
-     }
+             Path file = this.getDataFile(type.id());
+             if (Files.exists(file)) {
+                 CompoundTag tag = this.readTagFromDisk(file, type.dataFixType(), SharedConstants.getCurrentVersion().dataVersion().version());
+@@ -148,6 +170,9 @@ public class SavedDataStorage implements AutoCloseable {
+             throw new IllegalStateException("Trying to schedule save when SavedDataStorage is already closed");
+         }
  
-     public CompletableFuture<?> scheduleSave() {
 +        // Octopus start - Custom DataSource
 +        this.flushPendingMapDataSaves();
 +        // Octopus end - Custom DataSource
-         Map<SavedDataType<?>, CompoundTag> map = this.collectDirtyTagsToSave();
-         if (map.isEmpty()) {
+         Map<SavedDataType<?>, CompoundTag> tagsToSave = this.collectDirtyTagsToSave();
+         if (tagsToSave.isEmpty()) {
              return CompletableFuture.completedFuture(null);
-@@ -176,6 +201,52 @@ public class DimensionDataStorage implements AutoCloseable {
+@@ -204,6 +229,19 @@ public class SavedDataStorage implements AutoCloseable {
+     }
+ 
+     private void tryWrite(final SavedDataType<?> type, final CompoundTag tag) {
++        // Octopus start - Custom DataSource
++        net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
++        me.xiaozhangup.octopus.WorldMapDataSource mapSource = server.worldMapSource;
++        Integer mapId = this.getMapId(type);
++        if (mapSource != null && mapId != null) {
++            try {
++                mapSource.saveMapData(mapId, tag);
++            } catch (Exception e) {
++                LOGGER.error("Could not save map data to custom data source: {}", type, e);
++            }
++            return;
++        }
++        // Octopus end - Custom DataSource
+         Path path = this.getDataFile(type.id());
+ 
+         try {
+@@ -214,6 +252,65 @@ public class SavedDataStorage implements AutoCloseable {
          }
      }
  
 +    // Octopus start - Custom DataSource
-+    public void queueMapDataSave(net.minecraft.world.level.saveddata.maps.MapId mapId, net.minecraft.world.level.saveddata.maps.MapItemSavedData mapData) {
++    public void queueMapDataSave(final net.minecraft.world.level.saveddata.maps.MapId mapId, final net.minecraft.world.level.saveddata.maps.MapItemSavedData mapData) {
 +        this.pendingMapDataSaves.put(mapId.id(), mapData);
 +    }
 +
@@ -258,66 +323,37 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..6b00d536486cc95bfa3cc02fa9a45c13
 +        }
 +    }
 +
-+    public void saveMapDataImmediately(net.minecraft.world.level.saveddata.maps.MapId mapId, net.minecraft.world.level.saveddata.maps.MapItemSavedData mapData) {
++    public void saveMapDataImmediately(final net.minecraft.world.level.saveddata.maps.MapId mapId, final net.minecraft.world.level.saveddata.maps.MapItemSavedData mapData) {
 +        net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
 +        me.xiaozhangup.octopus.WorldMapDataSource mapSource = server.worldMapSource;
 +        if (mapSource == null) {
 +            return;
 +        }
 +
-+        RegistryOps<Tag> registryOps = this.registries.createSerializationContext(NbtOps.INSTANCE);
-+        CompoundTag tag = this.encodeUnchecked(net.minecraft.world.level.saveddata.maps.MapItemSavedData.type(mapId), mapData, registryOps);
++        RegistryOps<Tag> ops = this.registries.createSerializationContext(NbtOps.INSTANCE);
++        CompoundTag tag = this.encodeUnchecked(net.minecraft.world.level.saveddata.maps.MapItemSavedData.type(mapId), mapData, ops);
 +        mapData.setDirty(false);
 +        try {
 +            mapSource.saveMapData(mapId.id(), tag);
-+        } catch (Exception exception) {
-+            LOGGER.error("Could not save map data to custom data source: {}", mapId, exception);
++        } catch (Exception e) {
++            LOGGER.error("Could not save map data to custom data source: {}", mapId, e);
 +        }
 +    }
 +
-+    public void clearMapDataCache(int mapId) {
++    public void clearMapDataCache(final int mapId) {
 +        this.pendingMapDataSaves.remove(mapId);
 +        this.cache.remove(net.minecraft.world.level.saveddata.maps.MapItemSavedData.type(new net.minecraft.world.level.saveddata.maps.MapId(mapId)));
 +    }
-+    // Octopus end - Custom DataSource
 +
-     private Map<SavedDataType<?>, CompoundTag> collectDirtyTagsToSave() {
-         Map<SavedDataType<?>, CompoundTag> map = new Object2ObjectArrayMap<>();
-         RegistryOps<Tag> registryOps = this.registries.createSerializationContext(NbtOps.INSTANCE);
-@@ -195,6 +266,19 @@ public class DimensionDataStorage implements AutoCloseable {
-     }
- 
-     private void tryWrite(SavedDataType<?> type, CompoundTag tag) {
-+        // Octopus start - Custom DataSource
-+        net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
-+        me.xiaozhangup.octopus.WorldMapDataSource mapSource = server.worldMapSource;
-+        Integer mapId = this.getMapId(type);
-+        if (mapSource != null && mapId != null) {
-+            try {
-+                mapSource.saveMapData(mapId, tag);
-+            } catch (Exception exception) {
-+                LOGGER.error("Could not save map data to custom data source: {}", type, exception);
-+            }
-+            return;
-+        }
-+        // Octopus end - Custom DataSource
-         Path dataFile = this.getDataFile(type.id());
- 
-         try {
-@@ -204,6 +288,21 @@ public class DimensionDataStorage implements AutoCloseable {
-         }
-     }
- 
-+    // Octopus start - Custom DataSource
-+    private @Nullable Integer getMapId(SavedDataType<?> type) {
-+        String id = type.id();
-+        if (!id.startsWith("map_")) {
++    private @Nullable Integer getMapId(final SavedDataType<?> type) {
++        String path = type.id().getPath();
++        if (!path.startsWith("maps/") || path.equals("maps/last_id")) {
 +            return null;
 +        }
 +
 +        try {
-+            return Integer.parseInt(id.substring("map_".length()));
-+        } catch (NumberFormatException exception) {
++            return Integer.parseInt(path.substring("maps/".length()));
++        } catch (NumberFormatException e) {
 +            return null;
 +        }
 +    }
@@ -326,63 +362,3 @@ index b932e6236975fd4a755bdbf4b7a958599383f3f8..6b00d536486cc95bfa3cc02fa9a45c13
      public void saveAndJoin() {
          this.scheduleSave().join();
      }
-diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
-index b8ef50bc3d07890c9da2c98d5f009a3adc52f4b0..53daad79525449e181787b63a8db0f8767ebf433 100644
---- a/net/minecraft/world/level/storage/PlayerDataStorage.java
-+++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
-@@ -24,6 +24,14 @@ public class PlayerDataStorage {
-     private final File playerDir;
-     protected final DataFixer fixerUpper;
- 
-+    // Octopus start - PlayerDataSource
-+    private @org.jetbrains.annotations.Nullable me.xiaozhangup.octopus.PlayerDataSource dataSource = null; // Octopus
-+
-+    public void setDataSource(@org.jetbrains.annotations.Nullable me.xiaozhangup.octopus.PlayerDataSource dataSource) {
-+        this.dataSource = dataSource;
-+    }
-+    // Octopus end - PlayerDataSource
-+
-     public PlayerDataStorage(LevelStorageSource.LevelStorageAccess levelStorageAccess, DataFixer fixerUpper) {
-         this.fixerUpper = fixerUpper;
-         this.playerDir = levelStorageAccess.getLevelPath(LevelResource.PLAYER_DATA_DIR).toFile();
-@@ -35,9 +43,15 @@ public class PlayerDataStorage {
-         try (ProblemReporter.ScopedCollector scopedCollector = new ProblemReporter.ScopedCollector(player.problemPath(), LOGGER)) {
-             TagValueOutput tagValueOutput = TagValueOutput.createWithContext(scopedCollector, player.registryAccess());
-             player.saveWithoutId(tagValueOutput);
-+            CompoundTag compoundTag = tagValueOutput.buildResult();
-+            // Octopus start - PlayerDataSource
-+            if (dataSource != null) {
-+                dataSource.save(player, compoundTag);
-+                return;
-+            }
-+            // Octopus end - PlayerDataSource
-             Path path = this.playerDir.toPath();
-             Path path1 = Files.createTempFile(path, player.getStringUUID() + "-", ".dat");
--            CompoundTag compoundTag = tagValueOutput.buildResult();
-             NbtIo.writeCompressed(compoundTag, path1);
-             Path path2 = path.resolve(player.getStringUUID() + ".dat");
-             Path path3 = path.resolve(player.getStringUUID() + ".dat_old");
-@@ -91,6 +105,23 @@ public class PlayerDataStorage {
-     }
- 
-     public Optional<CompoundTag> load(NameAndId nameAndId) {
-+        // Octopus start - PlayerDataSource
-+        if (dataSource != null) {
-+            try {
-+                Optional<CompoundTag> data = dataSource.load(nameAndId.name(), nameAndId.id().toString());
-+                if (data.isPresent()) {
-+                    return data.map(compoundTag -> {
-+                        int dataVersion = NbtUtils.getDataVersion(compoundTag);
-+                        return ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry.PLAYER, compoundTag, dataVersion, ca.spottedleaf.dataconverter.minecraft.util.Version.getCurrentVersion());
-+                    });
-+                }
-+            } catch (Exception e) {
-+                LOGGER.warn("Failed to load player data for {}", nameAndId.name(), e); // Paper - Print exception
-+            }
-+            return Optional.empty();
-+        }
-+        // Octopus end - PlayerDataSource
-+
-         Optional<CompoundTag> optional = this.load(nameAndId, ".dat");
-         if (optional.isEmpty()) {
-             this.backup(nameAndId, ".dat");

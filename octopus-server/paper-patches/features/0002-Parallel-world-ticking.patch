@@ -5,10 +5,10 @@ Subject: [PATCH] Parallel world ticking
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-index ba5e18ad2755798b702498d185ec312c5218a127..5a3bc806f73462ad60036743dcc8de5497667e1e 100644
+index f77cb6d85c8947a96d41b96b31814c551dfd5258..22446be6c149c3ed6b22ba27724b948d9df0fdf3 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-@@ -2054,4 +2054,24 @@ public class CraftWorld extends CraftRegionAccessor implements World {
+@@ -2060,4 +2060,24 @@ public class CraftWorld extends CraftRegionAccessor implements World {
          return POINTERS_SUPPLIER.view(this);
      }
      // Paper end
@@ -34,10 +34,10 @@ index ba5e18ad2755798b702498d185ec312c5218a127..5a3bc806f73462ad60036743dcc8de54
 +    }
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
-index 31e665388bc6222210bb1a1184084a1f6786ce6b..10d222915cfa600e3dd63b5a3ddf2e66e5f1f734 100644
+index 5d6116c55072c028e1e9409628de47932d06a4cf..181df01ac1391f4a607257dac923f13284890846 100644
 --- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
 +++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
-@@ -559,8 +559,8 @@ public class CraftBlock implements Block {
+@@ -531,8 +531,8 @@ public class CraftBlock implements Block {
          world.captureTreeGeneration = false;
  
          if (!world.capturedBlockStates.isEmpty()) {
@@ -45,6 +45,6 @@ index 31e665388bc6222210bb1a1184084a1f6786ce6b..10d222915cfa600e3dd63b5a3ddf2e66
 -            SaplingBlock.treeType = null;
 +            TreeType treeType = SaplingBlock.treeTypeRT.get();
 +            SaplingBlock.treeTypeRT.set(null);
-             List<BlockState> states = new ArrayList<>(world.capturedBlockStates.values());
+             List<org.bukkit.block.BlockState> states = new ArrayList<>(world.capturedBlockStates.values());
              world.capturedBlockStates.clear();
              StructureGrowEvent structureEvent = null;

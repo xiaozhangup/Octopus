@@ -5,25 +5,25 @@ Subject: [PATCH] Disable structure blocks place
 
 
 diff --git a/net/minecraft/world/level/levelgen/structure/StructureStart.java b/net/minecraft/world/level/levelgen/structure/StructureStart.java
-index 063d79ec9975dd30602024c4096579ca5b2f1135..7160578129f9db81373efb20cb77f3fdd25a8127 100644
+index ff9a61db79f8488612f77ceb92226d83cf3ba75e..425b3da69a2f2660f01b499eaaede7cbeee5a4ca 100644
 --- a/net/minecraft/world/level/levelgen/structure/StructureStart.java
 +++ b/net/minecraft/world/level/levelgen/structure/StructureStart.java
-@@ -102,14 +102,14 @@ public final class StructureStart {
-                 org.bukkit.craftbukkit.util.TransformerGeneratorAccess transformerAccess = new org.bukkit.craftbukkit.util.TransformerGeneratorAccess();
-                 transformerAccess.setDelegate(level);
-                 transformerAccess.setStructureTransformer(new org.bukkit.craftbukkit.util.CraftStructureTransformer(this.generationEventCause, level, structureManager, this.structure, box, chunkPos));
--                for (StructurePiece piece : pieces) {
--                    piece.postProcess(transformerAccess, structureManager, generator, random, box, chunkPos, blockPos);
+@@ -107,14 +107,14 @@ public final class StructureStart {
+                 org.bukkit.craftbukkit.util.TransformerLevelAccessor transformerAccessor = new org.bukkit.craftbukkit.util.TransformerLevelAccessor();
+                 transformerAccessor.setDelegate(level);
+                 transformerAccessor.setStructureTransformer(new org.bukkit.craftbukkit.util.CraftStructureTransformer(this.generationEventCause, level, structureManager, this.structure, chunkBB, chunkPos));
+-                for (StructurePiece piece : intersectingPieces) {
+-                    piece.postProcess(transformerAccessor, structureManager, generator, random, chunkBB, chunkPos, referencePos);
 -                }
-+//                for (StructurePiece piece : pieces) {
-+//                    piece.postProcess(transformerAccess, structureManager, generator, random, box, chunkPos, blockPos);
++//                for (StructurePiece piece : intersectingPieces) {
++//                    piece.postProcess(transformerAccessor, structureManager, generator, random, chunkBB, chunkPos, referencePos);
 +//                }
-                 transformerAccess.getStructureTransformer().discard();
+                 transformerAccessor.getStructureTransformer().discard();
              }
              // CraftBukkit end
  
--            this.structure.afterPlace(level, structureManager, generator, random, box, chunkPos, this.pieceContainer);
-+//            this.structure.afterPlace(level, structureManager, generator, random, box, chunkPos, this.pieceContainer);
+-            this.structure.afterPlace(level, structureManager, generator, random, chunkBB, chunkPos, this.pieceContainer);
++//            this.structure.afterPlace(level, structureManager, generator, random, chunkBB, chunkPos, this.pieceContainer);
          }
      }
  

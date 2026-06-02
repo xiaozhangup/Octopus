@@ -5,10 +5,10 @@ Subject: [PATCH] Add PlayerMessagePreSendEvent
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index fbbbc2b7b427f79ad149de8f32c8fa6c7d8785cb..909fc3b8fb0d14ff8e0496d0f0db4cbaf886731c 100644
+index ecd086611803e8e71f44d2233870806a593dc14d..b7afe7a92a5f47fbea916b55ef1db3df6d0fffa9 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -2841,7 +2841,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -2836,7 +2836,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
      public void sendMessage(final net.kyori.adventure.identity.Identity identity, final net.kyori.adventure.text.Component message, final net.kyori.adventure.audience.MessageType type) {
          if (getHandle().connection == null) return;
          final net.minecraft.core.Registry<net.minecraft.network.chat.ChatType> chatTypeRegistry = this.getHandle().level().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.CHAT_TYPE);
@@ -22,7 +22,7 @@ index fbbbc2b7b427f79ad149de8f32c8fa6c7d8785cb..909fc3b8fb0d14ff8e0496d0f0db4cba
      }
  
      @Override
-@@ -3102,8 +3107,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -3097,8 +3102,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
          @Override
          public void sendMessage(net.md_5.bungee.api.ChatMessageType position, UUID sender, BaseComponent... components) {
              if (CraftPlayer.this.getHandle().connection == null) return;

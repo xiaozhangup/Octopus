@@ -11,7 +11,7 @@ public class EntityPortalPreparedEvent extends EntityEvent implements Cancellabl
     private final PortalType portalType;
     private boolean cancel = false;
 
-    public EntityPortalPreparedEvent(final Entity entity, final PortalType portalType) {
+    public EntityPortalPreparedEvent(final @NotNull Entity entity, final @NotNull PortalType portalType) {
         super(entity);
         this.portalType = portalType;
     }

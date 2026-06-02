@@ -5,12 +5,12 @@ Subject: [PATCH] Add clientConnected API
 
 
 diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
-index 3eef8d533c2aa65d66fbd58f2260b4764a964ebe..2d1b6a0ad365c565944bbeb6af2f62552df2ac3c 100644
+index fe3f4b7552e1230d518a8554a3f0fd4009523a73..61c1f6dc2613817f5510bbfd78d48a00b4679e62 100644
 --- a/src/main/java/org/bukkit/entity/Player.java
 +++ b/src/main/java/org/bukkit/entity/Player.java
-@@ -3557,6 +3557,14 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+@@ -3568,6 +3568,14 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+         builder.hat(this.getClientOption(ClientOption.SKIN_PARTS).hasHatsEnabled());
      }
-     // Paper end
  
 +    // Octopus start
 +    /**

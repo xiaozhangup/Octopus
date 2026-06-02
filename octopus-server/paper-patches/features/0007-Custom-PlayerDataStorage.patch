@@ -5,10 +5,10 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index b2961752b50e98d95adf3af4f658e2fdb2127d43..d0e6bb49fb608cb53f34156c7e4292002ef5f887 100644
+index ab2224ecebc5ea185472b418f0bde6eddfa4f287..faa8bec87cbe50213f2b87b10bfb9fb847dae9fa 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -2842,6 +2842,114 @@ public final class CraftServer implements Server {
+@@ -2838,6 +2838,114 @@ public final class CraftServer implements Server {
          return this.adventure$audiences;
      }
  
