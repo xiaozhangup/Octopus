@@ -5,44 +5,13 @@ Subject: [PATCH] Parallel world ticking
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java b/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java
-index 3bb9b58ee97464687e348e23b99159226415c267..dd5a6829bc1466c6741f7b66db2fef9824306eb5 100644
+index 3bb9b58ee97464687e348e23b99159226415c267..a3708bcd64689de78a996f9393a6afa29e4d8144 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java
-@@ -181,6 +181,12 @@ public final class MoonriseRegionFileIO {
-         long failures = 1L; // start at 0.13ms
- 
-         while (taskController.hasTasks()) {
-+            // Octopus start - Parallel world ticking
-+            if (pollWorldTasks(world)) {
-+                failures = 1L;
-+                continue;
-+            }
-+            // Octopus end - Parallel world ticking
-             Thread.yield();
-             failures = ConcurrentUtil.linearLongBackoff(failures, 125_000L, 5_000_000L); // 125us, 5ms
-         }
-@@ -194,6 +200,12 @@ public final class MoonriseRegionFileIO {
-             }
- 
-             if (totalTasks > (long)tasksRemaining) {
-+                // Octopus start - Parallel world ticking
-+                if (pollWorldTasks(world)) {
-+                    failures = 1L;
-+                    continue;
-+                }
-+                // Octopus end - Parallel world ticking
-                 Thread.yield();
-                 failures = ConcurrentUtil.linearLongBackoff(failures, 125_000L, 5_000_000L); // 125us, 5ms
-             } else {
-@@ -202,6 +214,12 @@ public final class MoonriseRegionFileIO {
+@@ -202,6 +202,7 @@ public final class MoonriseRegionFileIO {
          }
      }
  
-+    // Octopus start - Parallel world ticking
-+    private static boolean pollWorldTasks(final ServerLevel world) {
-+        return TickThread.isTickThread() && world.worldTaskQueueInstance.pollTasks();
-+    }
-+    // Octopus end - Parallel world ticking
 +
      /**
       * Returns the priority associated with blocking I/O based on the current thread. The goal is to avoid
