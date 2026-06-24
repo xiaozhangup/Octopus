@@ -24,6 +24,7 @@ Powered by ```HAPPYLAND AssiahLand```
 - 优化了 getEntities (Leaf)
 - 优化了 RecipeManager (DivineMC)
 - 优化了 Brain, AttributeMap, GameRule FluidHeight 的集合 (Leaf)
+- 优化了 SetClosestHomeAsWalkTarget's poi finding (Leaf)
 - 防止 NaturalSpawner 过多次尝试 (Leaf & Paper-PR)
 - 更快的物品或实体的序列化 (Paper-PR)
 - 新增获取每个世界 MSPT 的 API (SparklyPaper)

@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Wed, 24 Jun 2026 12:16:19 +0800
+Subject: [PATCH] Re-route SetClosestHomeAsWalkTarget's poi finding to paper's
+ faster logic
+
+
+diff --git a/net/minecraft/world/entity/ai/behavior/SetClosestHomeAsWalkTarget.java b/net/minecraft/world/entity/ai/behavior/SetClosestHomeAsWalkTarget.java
+index 5bd7473b0db1a87f905c01c19ddf99e3a447bcfa..b9bb5dc8fc35ec41693311b056139eaf317f1b97 100644
+--- a/net/minecraft/world/entity/ai/behavior/SetClosestHomeAsWalkTarget.java
++++ b/net/minecraft/world/entity/ai/behavior/SetClosestHomeAsWalkTarget.java
+@@ -58,11 +58,11 @@ public class SetClosestHomeAsWalkTarget {
+                                 batchCache.put(key, lastUpdate.longValue() + CACHE_TIMEOUT);
+                                 return true;
+                             };
+-                            Set<Pair<Holder<PoiType>, BlockPos>> pois = poiManager.findAllWithType(
+-                                    p -> p.is(PoiTypes.HOME), cacheTest, body.blockPosition(), AcquirePoi.SCAN_RANGE, PoiManager.Occupancy.ANY
+-                                )
+-                                .collect(Collectors.toSet());
+-                            Path path = AcquirePoi.findPathToPois(body, pois);
++                            // Leaf start - Re-route SetClosestHomeAsWalkTarget's poi finding to paper's faster logic
++                            java.util.List<Pair<Holder<PoiType>, BlockPos>> pois = new java.util.ArrayList<>();
++                            ca.spottedleaf.moonrise.patches.poi_lookup.PoiAccess.findAnyPoiPositions(poiManager, p -> p.is(PoiTypes.HOME), cacheTest, body.blockPosition(), AcquirePoi.SCAN_RANGE, PoiManager.Occupancy.ANY, false, Integer.MAX_VALUE, pois);
++                            Path path = AcquirePoi.findPathToPois(body, new java.util.HashSet<>(pois));
++                            // Leaf end - Re-route SetClosestHomeAsWalkTarget's poi finding to paper's faster logic
+                             if (path != null && path.canReach()) {
+                                 BlockPos targetPos = path.getTarget();
+                                 Optional<Holder<PoiType>> type = poiManager.getType(targetPos);
