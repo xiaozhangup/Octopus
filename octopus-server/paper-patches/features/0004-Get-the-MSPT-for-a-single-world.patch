@@ -5,10 +5,10 @@ Subject: [PATCH] Get the MSPT for a single world
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-index 22446be6c149c3ed6b22ba27724b948d9df0fdf3..91c366d7c5b4da93b9ead8594c1d4f5bc82ec4ae 100644
+index 97f13d9b1d690b3ed8e0c6c65c728492374d96e0..617cfdc280dac0c8f80c01d971372e597c8570fa 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-@@ -223,6 +223,13 @@ public class CraftWorld extends CraftRegionAccessor implements World {
+@@ -215,6 +215,13 @@ public class CraftWorld extends CraftRegionAccessor implements World {
      }
      // Paper end - void damage configuration
  

@@ -5,10 +5,10 @@ Subject: [PATCH] Throttle failed spawn attempts
 
 
 diff --git a/net/minecraft/world/level/NaturalSpawner.java b/net/minecraft/world/level/NaturalSpawner.java
-index 9764163a32b0389afa50ba093d0647de04d5119e..752626b0d452d4ffb31e7b7a365a22c8fce162f3 100644
+index e193cbed115663e9ca7a611837d5b8540dda03db..2eae8910bcb3616b80f6aac90f437d884c934082 100644
 --- a/net/minecraft/world/level/NaturalSpawner.java
 +++ b/net/minecraft/world/level/NaturalSpawner.java
-@@ -173,10 +173,21 @@ public final class NaturalSpawner {
+@@ -170,10 +170,21 @@ public final class NaturalSpawner {
                  // Copied from getFilteredSpawningCategories
                  int limit = mobCategory.getMaxInstancesPerChunk();
                  org.bukkit.entity.SpawnCategory spawnCategory = org.bukkit.craftbukkit.util.CraftSpawnCategory.toBukkit(mobCategory);
@@ -30,7 +30,7 @@ index 9764163a32b0389afa50ba093d0647de04d5119e..752626b0d452d4ffb31e7b7a365a22c8
                  // Apply per-player limit
                  int minDiff = Integer.MAX_VALUE;
                  final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerPlayer> inRange =
-@@ -190,12 +201,20 @@ public final class NaturalSpawner {
+@@ -187,12 +198,20 @@ public final class NaturalSpawner {
  
                  maxSpawns = (minDiff == Integer.MAX_VALUE) ? 0 : minDiff;
                  canSpawn = maxSpawns > 0;
@@ -53,7 +53,7 @@ index 9764163a32b0389afa50ba093d0647de04d5119e..752626b0d452d4ffb31e7b7a365a22c8
                  // Paper end - Optional per player mob spawns
              }
          }
-@@ -231,12 +250,26 @@ public final class NaturalSpawner {
+@@ -228,12 +247,26 @@ public final class NaturalSpawner {
          final NaturalSpawner.AfterSpawnCallback spawnCallback,
          final int maxSpawns,
          final Consumer<Entity> trackEntity
@@ -81,7 +81,7 @@ index 9764163a32b0389afa50ba093d0647de04d5119e..752626b0d452d4ffb31e7b7a365a22c8
      }
  
      @VisibleForDebug
-@@ -264,15 +297,28 @@ public final class NaturalSpawner {
+@@ -261,15 +294,28 @@ public final class NaturalSpawner {
          final NaturalSpawner.AfterSpawnCallback spawnCallback,
          final int maxSpawns,
          final @Nullable Consumer<Entity> trackEntity
@@ -111,7 +111,7 @@ index 9764163a32b0389afa50ba093d0647de04d5119e..752626b0d452d4ffb31e7b7a365a22c8
  
              for (int groupCount = 0; groupCount < 3; groupCount++) {
                  int x = start.getX();
-@@ -313,14 +359,14 @@ public final class NaturalSpawner {
+@@ -310,14 +356,14 @@ public final class NaturalSpawner {
                              }
                              // Paper end - per player mob count backoff
                              if (doSpawning == PreSpawnStatus.ABORT) {
@@ -128,7 +128,7 @@ index 9764163a32b0389afa50ba093d0647de04d5119e..752626b0d452d4ffb31e7b7a365a22c8
                                  }
  
                                  mob.snapTo(xx, yStart, zz, level.random.nextFloat() * 360.0F, 0.0F);
-@@ -343,7 +389,7 @@ public final class NaturalSpawner {
+@@ -340,7 +386,7 @@ public final class NaturalSpawner {
                                      }
                                      // CraftBukkit end
                                      if (clusterSize >= maxSpawns || clusterSize >= mob.getMaxSpawnClusterSize()) { // Paper - Optional per player mob spawns
@@ -137,7 +137,7 @@ index 9764163a32b0389afa50ba093d0647de04d5119e..752626b0d452d4ffb31e7b7a365a22c8
                                      }
  
                                      if (mob.isMaxGroupSizeReached(groupSize)) {
-@@ -356,6 +402,8 @@ public final class NaturalSpawner {
+@@ -353,6 +399,8 @@ public final class NaturalSpawner {
                  }
              }
          }
@@ -147,7 +147,7 @@ index 9764163a32b0389afa50ba093d0647de04d5119e..752626b0d452d4ffb31e7b7a365a22c8
  
      private static boolean isRightDistanceToPlayerAndSpawnPoint(
 diff --git a/net/minecraft/world/level/chunk/ChunkAccess.java b/net/minecraft/world/level/chunk/ChunkAccess.java
-index c73b9871faa87493e081cb54e1bf1dce487359c6..cd89379c39084488c8e7796354b2b2c66e0cfe22 100644
+index 28f703204afd834cd50335346ef065670d6b37ad..53e59e8a22732f44a2f324f123eef59707adcf20 100644
 --- a/net/minecraft/world/level/chunk/ChunkAccess.java
 +++ b/net/minecraft/world/level/chunk/ChunkAccess.java
 @@ -84,6 +84,8 @@ public abstract class ChunkAccess implements LightChunk, StructureAccess, BiomeM

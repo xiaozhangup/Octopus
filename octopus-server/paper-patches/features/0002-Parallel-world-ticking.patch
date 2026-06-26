@@ -5,10 +5,10 @@ Subject: [PATCH] Parallel world ticking
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-index f77cb6d85c8947a96d41b96b31814c551dfd5258..22446be6c149c3ed6b22ba27724b948d9df0fdf3 100644
+index faa57d7a4dc75a4c8d5c3feba7ae0b1b1fc72547..97f13d9b1d690b3ed8e0c6c65c728492374d96e0 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-@@ -2060,4 +2060,24 @@ public class CraftWorld extends CraftRegionAccessor implements World {
+@@ -2044,4 +2044,24 @@ public class CraftWorld extends CraftRegionAccessor implements World {
          return POINTERS_SUPPLIER.view(this);
      }
      // Paper end
@@ -34,17 +34,17 @@ index f77cb6d85c8947a96d41b96b31814c551dfd5258..22446be6c149c3ed6b22ba27724b948d
 +    }
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
-index 5d6116c55072c028e1e9409628de47932d06a4cf..181df01ac1391f4a607257dac923f13284890846 100644
+index bf98fc87b0a2146455f7c56dca6584bb6ae6fb76..8bbbb6429ab482f892bfab3fb27483909afde22f 100644
 --- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
 +++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
-@@ -531,8 +531,8 @@ public class CraftBlock implements Block {
-         world.captureTreeGeneration = false;
- 
-         if (!world.capturedBlockStates.isEmpty()) {
--            TreeType treeType = SaplingBlock.treeType;
--            SaplingBlock.treeType = null;
-+            TreeType treeType = SaplingBlock.treeTypeRT.get();
-+            SaplingBlock.treeTypeRT.set(null);
-             List<org.bukkit.block.BlockState> states = new ArrayList<>(world.capturedBlockStates.values());
+@@ -518,8 +518,8 @@ public class CraftBlock implements Block {
+             capturedBlockStates = new ArrayList<>(world.capturedBlockStates.values());
              world.capturedBlockStates.clear();
-             StructureGrowEvent structureEvent = null;
+ 
+-            treeType = SaplingBlock.treeType;
+-            SaplingBlock.treeType = null;
++            treeType = SaplingBlock.treeTypeRT.get();
++            SaplingBlock.treeTypeRT.set(null);
+         }
+ 
+         if (!capturedBlockStates.isEmpty()) {

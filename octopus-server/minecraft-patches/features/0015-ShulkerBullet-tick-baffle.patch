@@ -5,10 +5,10 @@ Subject: [PATCH] ShulkerBullet tick baffle
 
 
 diff --git a/net/minecraft/world/entity/projectile/ShulkerBullet.java b/net/minecraft/world/entity/projectile/ShulkerBullet.java
-index 27c143bcc0b64b951027be0a6cac0bba9f641cda..2b014bd5a8c582ac9e5ad6be33bd1cefbe3b3577 100644
+index d5506bfc84912ec50cd5391225b9b5291435d3aa..297307e84515e9710251f01e45788c16b3c62973 100644
 --- a/net/minecraft/world/entity/projectile/ShulkerBullet.java
 +++ b/net/minecraft/world/entity/projectile/ShulkerBullet.java
-@@ -35,6 +35,10 @@ import org.jspecify.annotations.Nullable;
+@@ -36,6 +36,10 @@ import org.jspecify.annotations.Nullable;
  
  public class ShulkerBullet extends Projectile {
      private static final double SPEED = 0.15;
@@ -19,7 +19,7 @@ index 27c143bcc0b64b951027be0a6cac0bba9f641cda..2b014bd5a8c582ac9e5ad6be33bd1cef
      private @Nullable EntityReference<Entity> finalTarget;
      public @Nullable Direction currentMoveDirection;
      public int flightSteps;
-@@ -220,9 +224,13 @@ public class ShulkerBullet extends Projectile {
+@@ -221,9 +225,13 @@ public class ShulkerBullet extends Projectile {
                      movement.add((this.targetDeltaX - movement.x) * 0.2, (this.targetDeltaY - movement.y) * 0.2, (this.targetDeltaZ - movement.z) * 0.2)
                  );
              }
@@ -33,7 +33,7 @@ index 27c143bcc0b64b951027be0a6cac0bba9f641cda..2b014bd5a8c582ac9e5ad6be33bd1cef
  
          Vec3 movement = this.getDeltaMovement();
          this.setPos(this.position().add(movement));
-@@ -261,6 +269,8 @@ public class ShulkerBullet extends Projectile {
+@@ -262,6 +270,8 @@ public class ShulkerBullet extends Projectile {
                  }
              }
          }

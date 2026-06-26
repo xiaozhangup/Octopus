@@ -5,10 +5,10 @@ Subject: [PATCH] Track how much MSPT each world used
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 20d04d720f325ceb594535a39695143e849f8ff9..ade1704fbc3a3f094dc047facbcd6bf4fe3dccbe 100644
+index d812240f7b93c0f591596bcd0067a8c43ee5222c..a4ef68b9f00a939ee4ce202a93a1890f35348c6a 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1867,7 +1867,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1841,7 +1841,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              java.util.concurrent.Callable<Pair<ServerLevel, Throwable>> tickingFunction = () -> {
                  level.worldTaskQueueInstance.acquirePoller();
                  try {
@@ -24,10 +24,10 @@ index 20d04d720f325ceb594535a39695143e849f8ff9..ade1704fbc3a3f094dc047facbcd6bf4
                      return Pair.of(level, throwable);
                  } finally {
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 39d006af53ed8144c867d0559cdc5303314d5790..71850f29f2f4753741b629172a31b1ba60e5f57a 100644
+index 662665b9e9646dfc2bd01dc6aa9659a11f8a7dd9..df20d5c9d7dcaf64588fc21a2bf2630da430179e 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -623,6 +623,12 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -626,6 +626,12 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
      }
      // Paper end - chunk tick iteration
  

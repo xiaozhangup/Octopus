@@ -5,10 +5,10 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 63583f2f240dbcdb3a8e410b04a081462791a40d..45ebe580dd8a0825c9a5a23f3b252ce027f5ef27 100644
+index 059e999e6326a3feb368b478c28510440e5859b9..1462686e0abab847931aac2393559ce1bbc46b02 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -230,6 +230,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -229,6 +229,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      private Consumer<ProfileResults> onMetricsRecordingStopped = results -> this.stopRecordingMetrics();
      private Consumer<Path> onMetricsRecordingFinished = ignored -> {};
      private boolean willStartRecordingMetrics;
@@ -20,7 +20,7 @@ index 63583f2f240dbcdb3a8e410b04a081462791a40d..45ebe580dd8a0825c9a5a23f3b252ce0
      private MinecraftServer.@Nullable TimeProfiler debugCommandProfiler;
      private boolean debugCommandProfilerDelayStart;
      private ServerConnectionListener connection;
-@@ -1642,6 +1647,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1616,6 +1621,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                  // Paper end - avoid issues with certain tasks not processing during sleep
                  this.server.spark.executeMainThreadTasks(); // Paper - spark
                  this.tickConnection();
@@ -30,7 +30,7 @@ index 63583f2f240dbcdb3a8e410b04a081462791a40d..45ebe580dd8a0825c9a5a23f3b252ce0
                  this.server.spark.tickEnd(((double)(System.nanoTime() - this.currentTickStart) / 1000000D)); // Paper - spark
                  return;
              }
-@@ -1690,6 +1698,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1664,6 +1672,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          long endTime = System.nanoTime();
          long remaining = this.nextTickTimeNanos - endTime;
          new com.destroystokyo.paper.event.server.ServerTickEndEvent(this.tickCount, ((double)(endTime - this.currentTickStart) / 1000000D), remaining).callEvent();
@@ -41,10 +41,10 @@ index 63583f2f240dbcdb3a8e410b04a081462791a40d..45ebe580dd8a0825c9a5a23f3b252ce0
          this.server.spark.tickEnd(((double)(endTime - this.currentTickStart) / 1000000D)); // Paper - spark
          profiler.push("tallying");
 diff --git a/net/minecraft/server/PlayerAdvancements.java b/net/minecraft/server/PlayerAdvancements.java
-index f8c3b8b1f153157074452b3d13b94efa568d048e..f92822841c2fe906ff4f0d6a97fb51cba7eb5846 100644
+index d447b444abd9b62ab241419301a96d19ae77a7eb..a00fbdfa9ce372a956b9dbd9126b531a8eea6496 100644
 --- a/net/minecraft/server/PlayerAdvancements.java
 +++ b/net/minecraft/server/PlayerAdvancements.java
-@@ -112,6 +112,17 @@ public class PlayerAdvancements {
+@@ -110,6 +110,17 @@ public class PlayerAdvancements {
      }
  
      private void load(final ServerAdvancementManager manager) {
@@ -62,7 +62,7 @@ index f8c3b8b1f153157074452b3d13b94efa568d048e..f92822841c2fe906ff4f0d6a97fb51cb
          if (Files.isRegularFile(this.playerSavePath)) {
              try (Reader reader = Files.newBufferedReader(this.playerSavePath, StandardCharsets.UTF_8)) {
                  JsonElement json = StrictJsonParser.parse(reader);
-@@ -133,6 +144,10 @@ public class PlayerAdvancements {
+@@ -131,6 +142,10 @@ public class PlayerAdvancements {
          JsonElement json = this.codec.encodeStart(JsonOps.INSTANCE, this.asData()).getOrThrow();
  
          try {
@@ -74,10 +74,10 @@ index f8c3b8b1f153157074452b3d13b94efa568d048e..f92822841c2fe906ff4f0d6a97fb51cb
  
              try (Writer outputWriter = Files.newBufferedWriter(this.playerSavePath, StandardCharsets.UTF_8)) {
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 029d84e2500425ea1eb52510599d1a43b4272ded..e3928b94f32fa1d35e2c90cc223ac28644639e14 100644
+index bc192197941658321c3d98b830f35e0bc78a56fb..db7a7e22d4fa3f06b4674fc3fba8d0387dd278d8 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -1171,7 +1171,7 @@ public abstract class PlayerList {
+@@ -1174,7 +1174,7 @@ public abstract class PlayerList {
      }
      public ServerStatsCounter getPlayerStats(final GameProfile gameProfile) {
              Path targetFile = this.locateStatsFile(gameProfile);
@@ -152,10 +152,10 @@ index 6b3ce2ded53a7ea46cf7f0cb49043a022f6d9ee7..eacc782661ce549fb7bf7c4de7a20fb0
          this.setDirty();
          return id;
 diff --git a/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java b/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
-index aab932de7b8eea03d27d3de1f4541add0552f0b1..b110142578b58c312fa786cb35b5061bfdfa3cdf 100644
+index f05ab5fdab4cb587974e2864e859e49375f8165e..9a2447c20c7280f2da320ef3dd27af636bda1a03 100644
 --- a/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
 +++ b/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
-@@ -762,4 +762,15 @@ public class MapItemSavedData extends SavedData {
+@@ -760,4 +760,15 @@ public class MapItemSavedData extends SavedData {
          };
      }
      // Paper end - store target world by uuid in addition to dimension
@@ -172,7 +172,7 @@ index aab932de7b8eea03d27d3de1f4541add0552f0b1..b110142578b58c312fa786cb35b5061b
 +    // Octopus end - Custom DataSource
  }
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
-index eddb6ebe3fa50a818e54079b73ba117be0abd195..9a648fdc6c8febaf54e82d024e18270fdc3220a7 100644
+index 8eda63e1f07f7998875713447c5f39eea3f85ca4..ba3e1de64f1df28a95871a3363e126710ae97943 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
 +++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
 @@ -24,6 +24,14 @@ public class PlayerDataStorage {

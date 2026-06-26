@@ -5,13 +5,13 @@ Subject: [PATCH] Add PlayerMessagePreSendEvent
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index ecd086611803e8e71f44d2233870806a593dc14d..b7afe7a92a5f47fbea916b55ef1db3df6d0fffa9 100644
+index fd29024e6a1063db58b2ace7460039eaeff036ba..50d53640b76508fcc0d72ac6fa00c148b13c4148 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -2836,7 +2836,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
-     public void sendMessage(final net.kyori.adventure.identity.Identity identity, final net.kyori.adventure.text.Component message, final net.kyori.adventure.audience.MessageType type) {
+@@ -2834,7 +2834,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+     @Override
+     public void sendMessage(final net.kyori.adventure.text.Component message) {
          if (getHandle().connection == null) return;
-         final net.minecraft.core.Registry<net.minecraft.network.chat.ChatType> chatTypeRegistry = this.getHandle().level().registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.CHAT_TYPE);
 -        this.getHandle().connection.send(new net.minecraft.network.protocol.game.ClientboundSystemChatPacket(message, false));
 +        // Octopus start - Add PlayerMessagePreSendEvent
 +        org.bukkit.event.player.PlayerMessagePreSendEvent event = new org.bukkit.event.player.PlayerMessagePreSendEvent(this, message);
@@ -22,7 +22,7 @@ index ecd086611803e8e71f44d2233870806a593dc14d..b7afe7a92a5f47fbea916b55ef1db3df
      }
  
      @Override
-@@ -3097,8 +3102,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -3095,8 +3100,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
          @Override
          public void sendMessage(net.md_5.bungee.api.ChatMessageType position, UUID sender, BaseComponent... components) {
              if (CraftPlayer.this.getHandle().connection == null) return;

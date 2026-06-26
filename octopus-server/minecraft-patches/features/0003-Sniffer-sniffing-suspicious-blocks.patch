@@ -5,23 +5,23 @@ Subject: [PATCH] Sniffer sniffing suspicious blocks
 
 
 diff --git a/net/minecraft/data/tags/VanillaBlockTagsProvider.java b/net/minecraft/data/tags/VanillaBlockTagsProvider.java
-index 404ea18bd1910f5a19a85c7908b030e7a8240eee..43d3ab11b94defc993c6fd5d2cd441ce14b53835 100644
+index 14a011b2c5fd1c2cf25acb2549553144ff8a69e8..45e42cad470862fbf2ac78765a84d212069d4151 100644
 --- a/net/minecraft/data/tags/VanillaBlockTagsProvider.java
 +++ b/net/minecraft/data/tags/VanillaBlockTagsProvider.java
-@@ -1276,7 +1276,7 @@ public class VanillaBlockTagsProvider extends IntrinsicHolderTagsProvider<Block>
+@@ -1181,7 +1181,7 @@ public class VanillaBlockTagsProvider extends TagsProvider<Block> {
              .addTag(BlockTags.DIRT)
              .addTag(BlockTags.MUD)
              .addTag(BlockTags.MOSS_BLOCKS)
--            .add(Blocks.GRASS_BLOCK, Blocks.PODZOL);
-+            .add(Blocks.GRASS_BLOCK, Blocks.PODZOL, Blocks.SAND, Blocks.GRAVEL); // Octopus - Sniffer sniffing suspicious blocks
-         this.tag(BlockTags.SNIFFER_EGG_HATCH_BOOST).add(Blocks.MOSS_BLOCK);
+-            .add(BlockItemIds.GRASS_BLOCK, BlockItemIds.PODZOL);
++            .add(BlockItemIds.GRASS_BLOCK, BlockItemIds.PODZOL, BlockItemIds.SAND, BlockItemIds.GRAVEL); // Octopus - Sniffer sniffing suspicious blocks
+         this.tag(BlockTags.SNIFFER_EGG_HATCH_BOOST).add(new BlockItemId[]{BlockItemIds.MOSS_BLOCK});
          this.tag(BlockTags.REPLACEABLE)
-             .addAll(registries.lookupOrThrow(Registries.BLOCK).listElements().map(Holder.Reference::value).filter(b -> b.defaultBlockState().canBeReplaced()));
+             .addAll(
 diff --git a/net/minecraft/world/entity/animal/sniffer/Sniffer.java b/net/minecraft/world/entity/animal/sniffer/Sniffer.java
-index 42c6100b82b82e3cebd6d808f644f4fc666037e3..14ebbccd41c4ae60d452f8d85d8319ecf4611052 100644
+index d5394ae7ce56555ad21aeafb2d78c291c62e2988..c06bbb9054b26181d4f3827ccbb94e1b7bd03bc2 100644
 --- a/net/minecraft/world/entity/animal/sniffer/Sniffer.java
 +++ b/net/minecraft/world/entity/animal/sniffer/Sniffer.java
-@@ -285,6 +285,20 @@ public class Sniffer extends Animal {
+@@ -286,6 +286,20 @@ public class Sniffer extends Animal {
      private void dropSeed() {
          if (this.level() instanceof ServerLevel level && this.entityData.get(DATA_DROP_SEED_AT_TICK) == this.tickCount) {
              BlockPos head = this.getHeadBlock();

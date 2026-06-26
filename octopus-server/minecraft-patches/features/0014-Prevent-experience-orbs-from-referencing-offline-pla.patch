@@ -5,10 +5,10 @@ Subject: [PATCH] Prevent experience orbs from referencing offline players
 
 
 diff --git a/net/minecraft/world/entity/ExperienceOrb.java b/net/minecraft/world/entity/ExperienceOrb.java
-index 73a29d7d40e092be8264679c7f30e5aa8b8fb393..5ab1015c31f8979e4fefd2f190ec642cf83bd3c2 100644
+index 700c9c0d40dee1df6c97f7c63ad731f16bc5f3e7..6db0f1f35fb0c78b738899a4806ee3c17d3fdd1c 100644
 --- a/net/minecraft/world/entity/ExperienceOrb.java
 +++ b/net/minecraft/world/entity/ExperienceOrb.java
-@@ -197,7 +197,7 @@ public class ExperienceOrb extends Entity {
+@@ -202,7 +202,7 @@ public class ExperienceOrb extends Entity {
  
      private void followNearbyPlayer() {
          Player prevTarget = this.followingPlayer; // CraftBukkit - store old target

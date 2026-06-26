@@ -5,10 +5,10 @@ Subject: [PATCH] KioCG Chunk API
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftChunk.java b/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
-index c8d179d936d57e8222d87b7fd943dbddfa8446a0..e0ecc487098d78447d0959ac27a1c1e8efaec199 100644
+index f020f310c4bca49a23de91bea72ccd9941c0b03c..10b351d8bd6b0e117ecbe961ae2f101686a38fe4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftChunk.java
-@@ -408,4 +408,12 @@ public class CraftChunk implements Chunk {
+@@ -406,4 +406,12 @@ public class CraftChunk implements Chunk {
      static {
          Arrays.fill(FULL_LIGHT, (byte) 0xFF);
      }
@@ -22,10 +22,10 @@ index c8d179d936d57e8222d87b7fd943dbddfa8446a0..e0ecc487098d78447d0959ac27a1c1e8
 +    // KioCG end
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index ae09e8b5ae513ea30daea9b35191d5100fbf7d8e..ecd086611803e8e71f44d2233870806a593dc14d 100644
+index 5574f13ccfe36651223ebcb3831eda0b605e395d..fd29024e6a1063db58b2ace7460039eaeff036ba 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -3298,6 +3298,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -3296,6 +3296,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
          return this.getHandle().connection.playerGameConnection;
      }
  
