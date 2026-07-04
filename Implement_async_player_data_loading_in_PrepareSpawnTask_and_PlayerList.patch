@@ -1,0 +1,697 @@
+Subject: [PATCH] Implement async player data loading in PrepareSpawnTask and PlayerList
+---
+Index: octopus-server/src/minecraft/java/net/minecraft/server/PlayerAdvancements.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/octopus-server/src/minecraft/java/net/minecraft/server/PlayerAdvancements.java b/octopus-server/src/minecraft/java/net/minecraft/server/PlayerAdvancements.java
+--- a/octopus-server/src/minecraft/java/net/minecraft/server/PlayerAdvancements.java	(revision a0fee59e1eb6dfcfe3313ffbfee86f4d68418b18)
++++ b/octopus-server/src/minecraft/java/net/minecraft/server/PlayerAdvancements.java	(date 1782782454227)
+@@ -64,13 +64,23 @@
+     public PlayerAdvancements(
+         final DataFixer dataFixer, final PlayerList playerList, final ServerAdvancementManager manager, final Path playerSavePath, final ServerPlayer player
+     ) {
++        this(dataFixer, playerList, manager, playerSavePath, player, null);
++    }
++
++    public PlayerAdvancements(
++        final DataFixer dataFixer, final PlayerList playerList, final ServerAdvancementManager manager, final Path playerSavePath, final ServerPlayer player, final PlayerAdvancements.LoadedData loadedData
++    ) {
+         this.playerList = playerList;
+         this.playerSavePath = playerSavePath;
+         this.player = player;
+         this.tree = manager.tree();
+         int defaultVersion = 1343;
+         this.codec = DataFixTypes.ADVANCEMENTS.wrapCodec(PlayerAdvancements.Data.CODEC, dataFixer, 1343);
+-        this.load(manager);
++        if (loadedData == null) {
++            this.load(manager);
++        } else {
++            this.load(manager, loadedData);
++        }
+     }
+ 
+     public void setPlayer(final ServerPlayer player) {
+@@ -112,12 +122,7 @@
+     private void load(final ServerAdvancementManager manager) {
+         // Octopus start - Custom DataSource
+         if (playerList.getServer().achievementsSource != null) {
+-            String jsonData = playerList.getServer().achievementsSource.load(player.getUUID().toString());
+-            if (jsonData != null) {
+-                JsonElement jsonElement = com.google.gson.JsonParser.parseString(jsonData);
+-                PlayerAdvancements.Data data = this.codec.parse(JsonOps.INSTANCE, jsonElement).getOrThrow(JsonParseException::new);
+-                this.applyFrom(manager, data);
+-            }
++            this.load(manager, loadData(this.codec, this.playerList, this.playerSavePath, this.player.getUUID().toString()));
+             return;
+         }
+         // Octopus end - Custom DataSource
+@@ -136,6 +141,47 @@
+         this.checkForAutomaticTriggers(manager);
+         this.registerListeners(manager);
+     }
++
++    // Octopus start - Async player data loading
++    private void load(final ServerAdvancementManager manager, final PlayerAdvancements.LoadedData loadedData) {
++        if (loadedData.progress() != null) {
++            this.applyFrom(manager, new PlayerAdvancements.Data(loadedData.progress()));
++        }
++        if (!loadedData.customSource()) {
++            this.checkForAutomaticTriggers(manager);
++            this.registerListeners(manager);
++        }
++    }
++
++    public static PlayerAdvancements.LoadedData loadData(final DataFixer dataFixer, final PlayerList playerList, final Path playerSavePath, final String uuid) {
++        Codec<PlayerAdvancements.Data> codec = DataFixTypes.ADVANCEMENTS.wrapCodec(PlayerAdvancements.Data.CODEC, dataFixer, 1343);
++        return loadData(codec, playerList, playerSavePath, uuid);
++    }
++
++    private static PlayerAdvancements.LoadedData loadData(final Codec<PlayerAdvancements.Data> codec, final PlayerList playerList, final Path playerSavePath, final String uuid) {
++        if (playerList.getServer().achievementsSource != null) {
++            String jsonData = playerList.getServer().achievementsSource.load(uuid);
++            if (jsonData != null) {
++                JsonElement jsonElement = com.google.gson.JsonParser.parseString(jsonData);
++                return new PlayerAdvancements.LoadedData(codec.parse(JsonOps.INSTANCE, jsonElement).getOrThrow(JsonParseException::new).map(), true);
++            }
++            return new PlayerAdvancements.LoadedData(null, true);
++        }
++
++        if (Files.isRegularFile(playerSavePath)) {
++            try (Reader reader = Files.newBufferedReader(playerSavePath, StandardCharsets.UTF_8)) {
++                JsonElement json = StrictJsonParser.parse(reader);
++                return new PlayerAdvancements.LoadedData(codec.parse(JsonOps.INSTANCE, json).getOrThrow(JsonParseException::new).map(), false);
++            } catch (IOException | JsonIOException e) {
++                LOGGER.error("Couldn't access player advancements in {}", playerSavePath, e);
++            } catch (JsonParseException e) {
++                LOGGER.error("Couldn't parse player advancements in {}", playerSavePath, e);
++            }
++        }
++
++        return new PlayerAdvancements.LoadedData(null, false);
++    }
++    // Octopus end - Async player data loading
+ 
+     public void save() {
+         if (org.spigotmc.SpigotConfig.disableAdvancementSaving) return; // Spigot
+@@ -371,6 +417,11 @@
+         }
+     }
+ 
++    // Octopus start - Async player data loading
++    public record LoadedData(@Nullable Map<Identifier, AdvancementProgress> progress, boolean customSource) {
++    }
++    // Octopus end - Async player data loading
++
+     public record TriggerInstanceKey(AdvancementHolder advancement, String criterion) {
+     }
+ }
+Index: octopus-server/src/minecraft/java/net/minecraft/server/players/PlayerList.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/octopus-server/src/minecraft/java/net/minecraft/server/players/PlayerList.java b/octopus-server/src/minecraft/java/net/minecraft/server/players/PlayerList.java
+--- a/octopus-server/src/minecraft/java/net/minecraft/server/players/PlayerList.java	(revision a0fee59e1eb6dfcfe3313ffbfee86f4d68418b18)
++++ b/octopus-server/src/minecraft/java/net/minecraft/server/players/PlayerList.java	(date 1782782329351)
+@@ -123,6 +123,7 @@
+     // private final Map<UUID, ServerStatsCounter> stats = Maps.newHashMap();
+     // private final Map<UUID, PlayerAdvancements> advancements = Maps.newHashMap();
+     // CraftBukkit end
++    private final Map<UUID, PlayerList.LoadedPlayerData> preloadedPlayerData = new java.util.concurrent.ConcurrentHashMap<>(); // Octopus - Async player data loading
+     public final PlayerDataStorage playerIo;
+     private final LayeredRegistryAccess<RegistryLayer> registries;
+     private int viewDistance;
+@@ -412,6 +413,34 @@
+         }
+     }
+ 
++    // Octopus start - Async player data loading
++    public java.util.concurrent.CompletableFuture<PlayerList.LoadedPlayerData> loadPlayerDataAsync(final NameAndId nameAndId) {
++        return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
++            UUID uuid = nameAndId.id();
++            GameProfile gameProfile = nameAndId.toUncompletedGameProfile();
++            Path statsFile = this.locateStatsFile(gameProfile);
++            Path advancementsFile = this.server.getWorldPath(LevelResource.PLAYER_ADVANCEMENTS_DIR).resolve(uuid + ".json");
++            return new PlayerList.LoadedPlayerData(
++                this.loadPlayerData(nameAndId),
++                statsFile,
++                ServerStatsCounter.loadStats(this.server, statsFile, uuid.toString()),
++                PlayerAdvancements.loadData(this.server.getFixerUpper(), this, advancementsFile, uuid.toString())
++            );
++        }, net.minecraft.util.Util.ioPool());
++    }
++
++    public void putPreloadedPlayerData(final UUID uuid, final PlayerList.LoadedPlayerData loadedData) {
++        this.preloadedPlayerData.put(uuid, loadedData);
++    }
++
++    public void clearPreloadedPlayerData(final UUID uuid) {
++        this.preloadedPlayerData.remove(uuid);
++    }
++
++    public record LoadedPlayerData(Optional<CompoundTag> playerData, Path statsFile, Map<net.minecraft.stats.Stat<?>, Integer> stats, PlayerAdvancements.LoadedData advancements) {
++    }
++    // Octopus end - Async player data loading
++
+     protected void save(final ServerPlayer player) {
+         if (!player.getBukkitEntity().isPersistent()) return; // CraftBukkit
+         player.lastSave = MinecraftServer.currentTick; // Paper - Incremental chunk and player saving
+@@ -1173,8 +1202,11 @@
+         }
+     }
+     public ServerStatsCounter getPlayerStats(final GameProfile gameProfile) {
+-            Path targetFile = this.locateStatsFile(gameProfile);
+-            return new ServerStatsCounter(this.server, targetFile, gameProfile.id().toString()); // Octopus - Custom DataSource
++            PlayerList.LoadedPlayerData loadedData = this.preloadedPlayerData.get(gameProfile.id()); // Octopus - Async player data loading
++            Path targetFile = loadedData == null ? this.locateStatsFile(gameProfile) : loadedData.statsFile(); // Octopus - Async player data loading
++            return loadedData == null
++                ? new ServerStatsCounter(this.server, targetFile, gameProfile.id().toString()) // Octopus - Custom DataSource
++                : new ServerStatsCounter(this.server, targetFile, gameProfile.id().toString(), loadedData.stats()); // Octopus - Async player data loading
+     }
+     // CraftBukkit end
+ 
+@@ -1206,7 +1238,10 @@
+         PlayerAdvancements result = player.getAdvancements(); // CraftBukkit
+         if (result == null) {
+             Path uuidStatsFile = this.server.getWorldPath(LevelResource.PLAYER_ADVANCEMENTS_DIR).resolve(uuid + ".json");
+-            result = new PlayerAdvancements(this.server.getFixerUpper(), this, this.server.getAdvancements(), uuidStatsFile, player);
++            PlayerList.LoadedPlayerData loadedData = this.preloadedPlayerData.get(uuid); // Octopus - Async player data loading
++            result = loadedData == null
++                ? new PlayerAdvancements(this.server.getFixerUpper(), this, this.server.getAdvancements(), uuidStatsFile, player)
++                : new PlayerAdvancements(this.server.getFixerUpper(), this, this.server.getAdvancements(), uuidStatsFile, player, loadedData.advancements()); // Octopus - Async player data loading
+             // this.advancements.put(uuid, result); // CraftBukkit
+         }
+ 
+Index: octopus-server/src/minecraft/java/net/minecraft/stats/ServerStatsCounter.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/octopus-server/src/minecraft/java/net/minecraft/stats/ServerStatsCounter.java b/octopus-server/src/minecraft/java/net/minecraft/stats/ServerStatsCounter.java
+--- a/octopus-server/src/minecraft/java/net/minecraft/stats/ServerStatsCounter.java	(revision a0fee59e1eb6dfcfe3313ffbfee86f4d68418b18)
++++ b/octopus-server/src/minecraft/java/net/minecraft/stats/ServerStatsCounter.java	(date 1782782348187)
+@@ -66,16 +66,18 @@
+     }
+ 
+     public ServerStatsCounter(final MinecraftServer server, final Path file, final String uuid) {
++        this(server, file, uuid, null);
++    }
++
++    public ServerStatsCounter(final MinecraftServer server, final Path file, final String uuid, final @org.jspecify.annotations.Nullable Map<Stat<?>, Integer> loadedStats) {
+         this.file = file;
+         this.server = server;
+         this.uuid = uuid;
++        if (loadedStats != null) {
++            this.stats.putAll(loadedStats);
+         // Octopus start - Custom DataSource
+-        if (server.statsSource != null) {
+-            String json = server.statsSource.load(uuid);
+-            if (json != null) {
+-                JsonElement element = StrictJsonParser.parse(json);
+-                this.parse(server.getFixerUpper(), element);
+-            }
++        } else if (server.statsSource != null) {
++            this.stats.putAll(loadStats(server, file, uuid));
+         } else if (Files.isRegularFile(file)) {
+         // Octopus end - Custom DataSource
+             try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+@@ -100,6 +102,27 @@
+         // Paper end - Moved after stat fetching for player state file
+     }
+ 
++    // Octopus start - Async player data loading
++    public static Map<Stat<?>, Integer> loadStats(final MinecraftServer server, final Path file, final String uuid) {
++        if (server.statsSource != null) {
++            String json = server.statsSource.load(uuid);
++            if (json != null) {
++                return parseStats(server.getFixerUpper(), StrictJsonParser.parse(json), file);
++            }
++        } else if (Files.isRegularFile(file)) {
++            try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
++                return parseStats(server.getFixerUpper(), StrictJsonParser.parse(reader), file);
++            } catch (IOException e) {
++                LOGGER.error("Couldn't read statistics file {}", file, e);
++            } catch (JsonParseException e) {
++                LOGGER.error("Couldn't parse statistics file {}", file, e);
++            }
++        }
++
++        return Map.of();
++    }
++    // Octopus end - Async player data loading
++
+     public void save() {
+         if (org.spigotmc.SpigotConfig.disableStatSaving) return; // Spigot
+         try {
+@@ -132,15 +155,18 @@
+     }
+ 
+     public void parse(final DataFixer fixerUpper, final JsonElement element) {
++        this.stats.putAll(parseStats(fixerUpper, element, this.file));
++    }
++
++    // Octopus start - Async player data loading
++    private static Map<Stat<?>, Integer> parseStats(final DataFixer fixerUpper, final JsonElement element, final Path file) {
+         Dynamic<JsonElement> data = new Dynamic<>(JsonOps.INSTANCE, element);
+         data = DataFixTypes.STATS.updateToCurrentVersion(fixerUpper, data, NbtUtils.getDataVersion(data, 1343));
+-        this.stats
+-            .putAll(
+-                STATS_CODEC.parse(data.get("stats").orElseEmptyMap())
+-                    .resultOrPartial(error -> LOGGER.error("Failed to parse statistics for {}: {}", this.file, error))
+-                    .orElse(Map.of())
+-            );
++        return STATS_CODEC.parse(data.get("stats").orElseEmptyMap())
++            .resultOrPartial(error -> LOGGER.error("Failed to parse statistics for {}: {}", file, error))
++            .orElse(Map.of());
+     }
++    // Octopus end - Async player data loading
+ 
+     protected JsonElement toJson() {
+         JsonObject result = new JsonObject();
+Index: octopus-server/src/minecraft/java/net/minecraft/world/level/storage/PlayerDataStorage.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/octopus-server/src/minecraft/java/net/minecraft/world/level/storage/PlayerDataStorage.java b/octopus-server/src/minecraft/java/net/minecraft/world/level/storage/PlayerDataStorage.java
+--- a/octopus-server/src/minecraft/java/net/minecraft/world/level/storage/PlayerDataStorage.java	(revision a0fee59e1eb6dfcfe3313ffbfee86f4d68418b18)
++++ b/octopus-server/src/minecraft/java/net/minecraft/world/level/storage/PlayerDataStorage.java	(date 1782403559984)
+@@ -112,7 +112,7 @@
+                 if (data.isPresent()) {
+                     return data.map(compoundTag -> {
+                         int dataVersion = NbtUtils.getDataVersion(compoundTag);
+-                        return ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry.PLAYER, compoundTag, dataVersion, ca.spottedleaf.dataconverter.minecraft.util.Version.getCurrentVersion());
++                        return DataFixTypes.PLAYER.updateToCurrentVersion(this.fixerUpper, compoundTag, dataVersion);
+                     });
+                 }
+             } catch (Exception e) {
+Index: octopus-server/src/minecraft/java/net/minecraft/server/network/config/PrepareSpawnTask.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/octopus-server/src/minecraft/java/net/minecraft/server/network/config/PrepareSpawnTask.java b/octopus-server/src/minecraft/java/net/minecraft/server/network/config/PrepareSpawnTask.java
+--- a/octopus-server/src/minecraft/java/net/minecraft/server/network/config/PrepareSpawnTask.java	(revision a0fee59e1eb6dfcfe3313ffbfee86f4d68418b18)
++++ b/octopus-server/src/minecraft/java/net/minecraft/server/network/config/PrepareSpawnTask.java	(date 1782782543627)
+@@ -52,132 +52,144 @@
+ 
+     @Override
+     public void start(final Consumer<Packet<?>> connection) {
+-        try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(LOGGER)) {
+-            Optional<ValueInput> loadedData = this.server
+-                .getPlayerList()
+-                .loadPlayerData(this.nameAndId)
+-                .map(tag -> TagValueInput.create(reporter, this.server.registryAccess(), tag));
+-            // Paper start - move logic in Entity to here, to use bukkit supplied world UUID & reset to main world spawn if no valid world is found
+-            this.newPlayer = loadedData.isEmpty(); // New players don't have saved data!
+-            net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> resourceKey = null; // Paper
+-            boolean[] invalidPlayerWorld = {false};
+-            bukkitData: if (loadedData.isPresent()) {
+-                // The main way for bukkit worlds to store the world is the world UUID despite mojang adding custom worlds
+-                final org.bukkit.World bWorld;
+-                final ValueInput playerData = loadedData.get();
+-                // TODO maybe convert this to a codec and use compoundTag#read, we need silent variants of that method first.
+-                final Optional<Long> worldUUIDMost = playerData.getLong("WorldUUIDMost");
+-                final Optional<Long> worldUUIDLeast = playerData.getLong("WorldUUIDLeast");
+-                final java.util.Optional<String> worldName = playerData.getString("world");
+-                if (worldUUIDMost.isPresent() && worldUUIDLeast.isPresent()) {
+-                    bWorld = org.bukkit.Bukkit.getServer().getWorld(new java.util.UUID(worldUUIDMost.get(), worldUUIDLeast.get()));
+-                } else if (worldName.isPresent()) { // Paper - legacy bukkit world name
+-                    bWorld = org.bukkit.Bukkit.getServer().getWorld(worldName.get());
+-                } else {
+-                    break bukkitData; // if neither of the bukkit data points exist, proceed to the vanilla migration section
+-                }
+-                if (bWorld != null) {
+-                    resourceKey = ((org.bukkit.craftbukkit.CraftWorld) bWorld).getHandle().dimension();
+-                } else {
+-                    resourceKey = net.minecraft.world.level.Level.OVERWORLD;
+-                    invalidPlayerWorld[0] = true;
+-                }
+-            }
+-            ServerPlayer.SavedPosition loadedPosition = loadedData.<ServerPlayer.SavedPosition>flatMap(tag -> tag.read(ServerPlayer.SavedPosition.MAP_CODEC))
+-                .orElse(ServerPlayer.SavedPosition.EMPTY);
+-            LevelData.RespawnData respawnData = this.server.getWorldData().overworldData().getRespawnData();
+-            if (resourceKey == null) { // only run the vanilla logic if we haven't found a world from the bukkit data
+-                // Below is the vanilla way of getting the dimension, this is for migration from vanilla servers
+-                resourceKey = loadedPosition.dimension().orElse(null);
+-            }
+-            ServerLevel spawnDataLevel = this.server.getLevel(respawnData.dimension());
+-            if (spawnDataLevel == null) {
+-                spawnDataLevel = this.server.overworld();
+-            }
+-            ServerLevel spawnLevel;
+-            if (resourceKey == null) {
+-                spawnLevel = spawnDataLevel;
+-            } else {
+-                spawnLevel = this.server.getLevel(resourceKey);
+-                if (spawnLevel == null) {
+-                    LOGGER.warn("Unknown respawn dimension {}, defaulting to overworld", resourceKey);
+-                    spawnLevel = spawnDataLevel;
+-                }
+-            }
+-            final ServerLevel finalSpawnLevel = spawnLevel;
+-            CompletableFuture<Vec3> spawnPosition = loadedPosition.position()
+-                .map(CompletableFuture::completedFuture)
+-                .orElseGet(() -> PlayerSpawnFinder.findSpawn(finalSpawnLevel, respawnData.pos()));
+-            // Paper end - move logic in Entity to here, to use bukkit supplied world UUID & reset to main world spawn if no valid world is found
+-            Vec2 spawnAngle = loadedPosition.rotation().orElse(new Vec2(respawnData.yaw(), respawnData.pitch()));
+-            this.state = new PrepareSpawnTask.Preparing(spawnLevel, spawnPosition, spawnAngle);
+-        }
+-    }
+-
+-    @Override
+-    public boolean tick() {
+-        return switch (this.state) {
+-            case null -> false;
+-            case PrepareSpawnTask.Preparing preparing -> {
+-                PrepareSpawnTask.Ready ready = preparing.tick();
+-                if (ready != null) {
+-                    this.state = ready;
+-                    yield true;
+-                } else {
+-                    yield false;
+-                }
+-            }
+-            case PrepareSpawnTask.Ready ignored -> true;
+-            default -> throw new MatchException(null, null);
+-        };
+-    }
+-
+-    public ServerPlayer spawnPlayer(final Connection connection, final CommonListenerCookie cookie) {
+-        if (this.state instanceof PrepareSpawnTask.Ready ready) {
+-            return ready.spawn(connection, cookie);
+-        } else {
+-            throw new IllegalStateException("Player spawn was not ready");
+-        }
+-    }
+-
+-    public void keepAlive() {
+-        if (this.state instanceof PrepareSpawnTask.Ready ready) {
+-            ready.keepAlive();
+-        }
+-    }
+-
+-    public void close() {
+-        if (this.state instanceof PrepareSpawnTask.Preparing preparing) {
+-            preparing.cancel();
+-        }
+-
+-        this.state = null;
+-    }
+-
+-    @Override
+-    public ConfigurationTask.Type type() {
+-        return TYPE;
+-    }
+-
+-    private final class Preparing implements PrepareSpawnTask.State {
+-        private ServerLevel spawnLevel; // Paper - remove final
+-        private CompletableFuture<Vec3> spawnPosition; // Paper - remove final
+-        private Vec2 spawnAngle; // Paper - remove final
+-        private @Nullable CompletableFuture<?> chunkLoadFuture;
+-        private @Nullable CompletableFuture<org.bukkit.Location> eventFuture; // Paper
+-        private final ChunkLoadCounter chunkLoadCounter = new ca.spottedleaf.moonrise.patches.chunk_system.MoonriseChunkLoadCounter(); // Paper - rewrite chunk system
+-
+-        private Preparing(final ServerLevel spawnLevel, final CompletableFuture<Vec3> spawnPosition, final Vec2 spawnAngle) {
+-            this.spawnLevel = spawnLevel;
+-            this.spawnPosition = spawnPosition;
+-            this.spawnAngle = spawnAngle;
+-        }
+-
+-        public void cancel() {
+-            this.spawnPosition.cancel(false);
+-        }
++        this.state = new PrepareSpawnTask.Preparing(this.server.getPlayerList().loadPlayerDataAsync(this.nameAndId)); // Octopus - Async player data loading
++    }
++
++    @Override
++    public boolean tick() {
++        return switch (this.state) {
++            case null -> false;
++            case PrepareSpawnTask.Preparing preparing -> {
++                PrepareSpawnTask.Ready ready = preparing.tick();
++                if (ready != null) {
++                    this.state = ready;
++                    yield true;
++                } else {
++                    yield false;
++                }
++            }
++            case PrepareSpawnTask.Ready ignored -> true;
++            default -> throw new MatchException(null, null);
++        };
++    }
++
++    public ServerPlayer spawnPlayer(final Connection connection, final CommonListenerCookie cookie) {
++        if (this.state instanceof PrepareSpawnTask.Ready ready) {
++            return ready.spawn(connection, cookie);
++        } else {
++            throw new IllegalStateException("Player spawn was not ready");
++        }
++    }
++
++    public void keepAlive() {
++        if (this.state instanceof PrepareSpawnTask.Ready ready) {
++            ready.keepAlive();
++        }
++    }
++
++    public void close() {
++        if (this.state instanceof PrepareSpawnTask.Preparing preparing) {
++            preparing.cancel();
++        }
++
++        this.server.getPlayerList().clearPreloadedPlayerData(this.nameAndId.id()); // Octopus - Async player data loading
++        this.state = null;
++    }
++
++    @Override
++    public ConfigurationTask.Type type() {
++        return TYPE;
++    }
++
++    private final class Preparing implements PrepareSpawnTask.State {
++        private @Nullable ServerLevel spawnLevel; // Paper - remove final
++        private @Nullable CompletableFuture<Vec3> spawnPosition; // Paper - remove final
++        private @Nullable Vec2 spawnAngle; // Paper - remove final
++        private final CompletableFuture<net.minecraft.server.players.PlayerList.LoadedPlayerData> loadedDataFuture; // Octopus - Async player data loading
++        private net.minecraft.server.players.PlayerList.LoadedPlayerData loadedData; // Octopus - Async player data loading
++        private @Nullable CompletableFuture<?> chunkLoadFuture;
++        private @Nullable CompletableFuture<org.bukkit.Location> eventFuture; // Paper
++        private final ChunkLoadCounter chunkLoadCounter = new ca.spottedleaf.moonrise.patches.chunk_system.MoonriseChunkLoadCounter(); // Paper - rewrite chunk system
++
++        private Preparing(final CompletableFuture<net.minecraft.server.players.PlayerList.LoadedPlayerData> loadedDataFuture) {
++            this.loadedDataFuture = loadedDataFuture;
++        }
++
++        public void cancel() {
++            this.loadedDataFuture.cancel(false);
++            if (this.spawnPosition != null) {
++                this.spawnPosition.cancel(false);
++            }
++        }
++
++        public PrepareSpawnTask.@Nullable Ready tick() {
++            if (this.loadedData == null) {
++                if (!this.loadedDataFuture.isDone()) {
++                    return null;
++                }
++
++                this.loadedData = this.loadedDataFuture.join();
++                PrepareSpawnTask.this.server.getPlayerList().putPreloadedPlayerData(PrepareSpawnTask.this.nameAndId.id(), this.loadedData);
++                try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(LOGGER)) {
++                    Optional<ValueInput> loadedData = this.loadedData.playerData()
++                        .map(tag -> TagValueInput.create(reporter, PrepareSpawnTask.this.server.registryAccess(), tag));
++                    // Paper start - move logic in Entity to here, to use bukkit supplied world UUID & reset to main world spawn if no valid world is found
++                    PrepareSpawnTask.this.newPlayer = loadedData.isEmpty(); // New players don't have saved data!
++                    net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> resourceKey = null; // Paper
++                    boolean[] invalidPlayerWorld = {false};
++                    bukkitData: if (loadedData.isPresent()) {
++                        // The main way for bukkit worlds to store the world is the world UUID despite mojang adding custom worlds
++                        final org.bukkit.World bWorld;
++                        final ValueInput playerData = loadedData.get();
++                        // TODO maybe convert this to a codec and use compoundTag#read, we need silent variants of that method first.
++                        final Optional<Long> worldUUIDMost = playerData.getLong("WorldUUIDMost");
++                        final Optional<Long> worldUUIDLeast = playerData.getLong("WorldUUIDLeast");
++                        final java.util.Optional<String> worldName = playerData.getString("world");
++                        if (worldUUIDMost.isPresent() && worldUUIDLeast.isPresent()) {
++                            bWorld = org.bukkit.Bukkit.getServer().getWorld(new java.util.UUID(worldUUIDMost.get(), worldUUIDLeast.get()));
++                        } else if (worldName.isPresent()) { // Paper - legacy bukkit world name
++                            bWorld = org.bukkit.Bukkit.getServer().getWorld(worldName.get());
++                        } else {
++                            break bukkitData; // if neither of the bukkit data points exist, proceed to the vanilla migration section
++                        }
++                        if (bWorld != null) {
++                            resourceKey = ((org.bukkit.craftbukkit.CraftWorld)bWorld).getHandle().dimension();
++                        } else {
++                            resourceKey = net.minecraft.world.level.Level.OVERWORLD;
++                            invalidPlayerWorld[0] = true;
++                        }
++                    }
++                    ServerPlayer.SavedPosition loadedPosition = loadedData.<ServerPlayer.SavedPosition>flatMap(tag -> tag.read(ServerPlayer.SavedPosition.MAP_CODEC))
++                        .orElse(ServerPlayer.SavedPosition.EMPTY);
++                    LevelData.RespawnData respawnData = PrepareSpawnTask.this.server.getWorldData().overworldData().getRespawnData();
++                    if (resourceKey == null) { // only run the vanilla logic if we haven't found a world from the bukkit data
++                        // Below is the vanilla way of getting the dimension, this is for migration from vanilla servers
++                        resourceKey = loadedPosition.dimension().orElse(null);
++                    }
++                    ServerLevel spawnDataLevel = PrepareSpawnTask.this.server.getLevel(respawnData.dimension());
++                    if (spawnDataLevel == null) {
++                        spawnDataLevel = PrepareSpawnTask.this.server.overworld();
++                    }
++                    ServerLevel spawnLevel;
++                    if (resourceKey == null) {
++                        spawnLevel = spawnDataLevel;
++                    } else {
++                        spawnLevel = PrepareSpawnTask.this.server.getLevel(resourceKey);
++                        if (spawnLevel == null) {
++                            LOGGER.warn("Unknown respawn dimension {}, defaulting to overworld", resourceKey);
++                            spawnLevel = spawnDataLevel;
++                        }
++                    }
++                    final ServerLevel finalSpawnLevel = spawnLevel;
++                    this.spawnPosition = loadedPosition.position()
++                        .map(CompletableFuture::completedFuture)
++                        .orElseGet(() -> PlayerSpawnFinder.findSpawn(finalSpawnLevel, respawnData.pos()));
++                    // Paper end - move logic in Entity to here, to use bukkit supplied world UUID & reset to main world spawn if no valid world is found
++                    this.spawnLevel = spawnLevel;
++                    this.spawnAngle = loadedPosition.rotation().orElse(new Vec2(respawnData.yaw(), respawnData.pitch()));
++                }
++            }
+ 
+-        public PrepareSpawnTask.@Nullable Ready tick() {
+             if (!this.spawnPosition.isDone()) {
+                 return null;
+             }
+@@ -245,7 +257,7 @@
+             }
+ 
+             PrepareSpawnTask.this.loadListener.finish(LevelLoadListener.Stage.LOAD_PLAYER_CHUNKS);
+-            return PrepareSpawnTask.this.new Ready(this.spawnLevel, spawnPosition, this.spawnAngle);
++            return PrepareSpawnTask.this.new Ready(this.spawnLevel, spawnPosition, this.spawnAngle, this.loadedData);
+         }
+     }
+ 
+@@ -253,11 +265,13 @@
+         private final ServerLevel spawnLevel;
+         private final Vec3 spawnPosition;
+         private final Vec2 spawnAngle;
++        private final net.minecraft.server.players.PlayerList.LoadedPlayerData loadedData; // Octopus - Async player data loading
+ 
+-        private Ready(final ServerLevel spawnLevel, final Vec3 spawnPosition, final Vec2 spawnAngle) {
++        private Ready(final ServerLevel spawnLevel, final Vec3 spawnPosition, final Vec2 spawnAngle, final net.minecraft.server.players.PlayerList.LoadedPlayerData loadedData) {
+             this.spawnLevel = spawnLevel;
+             this.spawnPosition = spawnPosition;
+             this.spawnAngle = spawnAngle;
++            this.loadedData = loadedData;
+         }
+ 
+         public void keepAlive() {
+@@ -267,54 +281,58 @@
+         public ServerPlayer spawn(final Connection connection, final CommonListenerCookie cookie) {
+             ChunkPos spawnChunk = ChunkPos.containing(BlockPos.containing(this.spawnPosition));
+             this.spawnLevel.waitForEntities(spawnChunk, 3);
+-            // Paper start - configuration api - possibly use legacy saved server player instance
+-            ServerPlayer player;
+-            if (connection.savedPlayerForLegacyEvents != null) {
+-                player = connection.savedPlayerForLegacyEvents;
+-                connection.savedPlayerForLegacyEvents = null;
+-                // Update the existing instance
+-                player.gameProfile = cookie.gameProfile();
+-                player.updateOptionsNoEvents(cookie.clientInformation());
+-                player.setServerLevel(this.spawnLevel);
+-            } else {
+-                player = new ServerPlayer(PrepareSpawnTask.this.server, this.spawnLevel, cookie.gameProfile(), cookie.clientInformation());
+-            }
+-            // Paper end - configuration api - possibly use legacy saved server player instance
++            net.minecraft.server.players.PlayerList playerList = PrepareSpawnTask.this.server.getPlayerList(); // Octopus - Async player data loading
++            playerList.putPreloadedPlayerData(PrepareSpawnTask.this.nameAndId.id(), this.loadedData); // Octopus - Async player data loading
++            try {
++                // Paper start - configuration api - possibly use legacy saved server player instance
++                ServerPlayer player;
++                if (connection.savedPlayerForLegacyEvents != null) {
++                    player = connection.savedPlayerForLegacyEvents;
++                    connection.savedPlayerForLegacyEvents = null;
++                    // Update the existing instance
++                    player.gameProfile = cookie.gameProfile();
++                    player.updateOptionsNoEvents(cookie.clientInformation());
++                    player.setServerLevel(this.spawnLevel);
++                } else {
++                    player = new ServerPlayer(PrepareSpawnTask.this.server, this.spawnLevel, cookie.gameProfile(), cookie.clientInformation());
++                }
++                // Paper end - configuration api - possibly use legacy saved server player instance
+ 
+-            try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(player.problemPath(), PrepareSpawnTask.LOGGER)) {
+-                Optional<ValueInput> input = PrepareSpawnTask.this.server
+-                    .getPlayerList()
+-                    .loadPlayerData(PrepareSpawnTask.this.nameAndId)
+-                    // CraftBukkit start
+-                    .map(tag -> {
+-                        org.bukkit.craftbukkit.entity.CraftPlayer craftPlayer = player.getBukkitEntity();
+-                        // Only update first played if it is older than the one we have
+-                        long modified = new java.io.File(PrepareSpawnTask.this.server.getPlayerList().playerIo.getPlayerDir(), player.getStringUUID() + ".dat").lastModified();
+-                        if (modified < craftPlayer.getFirstPlayed()) {
+-                            craftPlayer.setFirstPlayed(modified);
+-                        }
+-                        return tag;
+-                    })
+-                    // CraftBukkit end
+-                    .map(tag -> TagValueInput.create(reporter, PrepareSpawnTask.this.server.registryAccess(), tag));
+-                input.ifPresent(player::load);
+-                // CraftBukkit start - Better rename detection
+-                if (input.isPresent()) {
+-                    player.lastKnownName = input.flatMap(t -> t.child("bukkit")).flatMap(t -> t.getString("lastKnownName")).orElse(null);
+-                }
+-                // CraftBukkit end - Better rename detection
+-                // Paper start - Entity#getEntitySpawnReason
+-                if (input.isEmpty()) {
+-                    player.spawnReason = org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.DEFAULT; // set Player SpawnReason to DEFAULT on first login
+-                }
+-                // Paper end - Entity#getEntitySpawnReason
+-                player.snapTo(this.spawnPosition, this.spawnAngle.x, this.spawnAngle.y);
+-                PrepareSpawnTask.this.server.getPlayerList().placeNewPlayer(connection, player, cookie);
+-                input.ifPresent(tag -> {
+-                    player.loadAndSpawnEnderPearls(tag);
+-                    player.loadAndSpawnParentVehicle(tag);
+-                });
+-                return player;
++                try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(player.problemPath(), PrepareSpawnTask.LOGGER)) {
++                    Optional<ValueInput> input = this.loadedData.playerData()
++                        // CraftBukkit start
++                        .map(tag -> {
++                            org.bukkit.craftbukkit.entity.CraftPlayer craftPlayer = player.getBukkitEntity();
++                            // Only update first played if it is older than the one we have
++                            long modified = new java.io.File(PrepareSpawnTask.this.server.getPlayerList().playerIo.getPlayerDir(), player.getStringUUID() + ".dat").lastModified();
++                            if (modified < craftPlayer.getFirstPlayed()) {
++                                craftPlayer.setFirstPlayed(modified);
++                            }
++                            return tag;
++                        })
++                        // CraftBukkit end
++                        .map(tag -> TagValueInput.create(reporter, PrepareSpawnTask.this.server.registryAccess(), tag));
++                    input.ifPresent(player::load);
++                    // CraftBukkit start - Better rename detection
++                    if (input.isPresent()) {
++                        player.lastKnownName = input.flatMap(t -> t.child("bukkit")).flatMap(t -> t.getString("lastKnownName")).orElse(null);
++                    }
++                    // CraftBukkit end - Better rename detection
++                    // Paper start - Entity#getEntitySpawnReason
++                    if (input.isEmpty()) {
++                        player.spawnReason = org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.DEFAULT; // set Player SpawnReason to DEFAULT on first login
++                    }
++                    // Paper end - Entity#getEntitySpawnReason
++                    player.snapTo(this.spawnPosition, this.spawnAngle.x, this.spawnAngle.y);
++                    PrepareSpawnTask.this.server.getPlayerList().placeNewPlayer(connection, player, cookie);
++                    input.ifPresent(tag -> {
++                        player.loadAndSpawnEnderPearls(tag);
++                        player.loadAndSpawnParentVehicle(tag);
++                    });
++                    return player;
++                }
++            } finally {
++                playerList.clearPreloadedPlayerData(PrepareSpawnTask.this.nameAndId.id()); // Octopus - Async player data loading
+             }
+         }
+     }

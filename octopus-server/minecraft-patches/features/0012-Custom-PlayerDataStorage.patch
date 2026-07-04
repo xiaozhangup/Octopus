@@ -172,7 +172,7 @@ index f05ab5fdab4cb587974e2864e859e49375f8165e..9a2447c20c7280f2da320ef3dd27af63
 +    // Octopus end - Custom DataSource
  }
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
-index 8eda63e1f07f7998875713447c5f39eea3f85ca4..ba3e1de64f1df28a95871a3363e126710ae97943 100644
+index 8eda63e1f07f7998875713447c5f39eea3f85ca4..b1599c0d312f2161c5c7c04010d33882dd2f463f 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
 +++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
 @@ -24,6 +24,14 @@ public class PlayerDataStorage {
@@ -214,7 +214,7 @@ index 8eda63e1f07f7998875713447c5f39eea3f85ca4..ba3e1de64f1df28a95871a3363e12671
 +                if (data.isPresent()) {
 +                    return data.map(compoundTag -> {
 +                        int dataVersion = NbtUtils.getDataVersion(compoundTag);
-+                        return ca.spottedleaf.dataconverter.minecraft.MCDataConverter.convertTag(ca.spottedleaf.dataconverter.minecraft.datatypes.MCTypeRegistry.PLAYER, compoundTag, dataVersion, ca.spottedleaf.dataconverter.minecraft.util.Version.getCurrentVersion());
++                        return DataFixTypes.PLAYER.updateToCurrentVersion(this.fixerUpper, compoundTag, dataVersion);
 +                    });
 +                }
 +            } catch (Exception e) {
