@@ -227,7 +227,7 @@ index 8eda63e1f07f7998875713447c5f39eea3f85ca4..b1599c0d312f2161c5c7c04010d33882
          if (optTag.isEmpty()) {
              this.backup(nameAndId, ".dat");
 diff --git a/net/minecraft/world/level/storage/SavedDataStorage.java b/net/minecraft/world/level/storage/SavedDataStorage.java
-index f359e53024019f35aaa5cd8477da708bda2fc57a..da1e04dd3beb19a9fa656f98187efda55f9c8fdf 100644
+index f359e53024019f35aaa5cd8477da708bda2fc57a..2a9574d5d1254cb24b76bac8132838e09655ffb6 100644
 --- a/net/minecraft/world/level/storage/SavedDataStorage.java
 +++ b/net/minecraft/world/level/storage/SavedDataStorage.java
 @@ -46,6 +46,9 @@ public class SavedDataStorage implements AutoCloseable {
@@ -240,33 +240,35 @@ index f359e53024019f35aaa5cd8477da708bda2fc57a..da1e04dd3beb19a9fa656f98187efda5
  
      public SavedDataStorage(final Path dataFolder, final DataFixer fixerUpper, final HolderLookup.Provider registries) {
          this.fixerUpper = fixerUpper;
-@@ -85,6 +88,25 @@ public class SavedDataStorage implements AutoCloseable {
+@@ -85,6 +88,27 @@ public class SavedDataStorage implements AutoCloseable {
  
      private <T extends SavedData> @Nullable T readSavedData(final SavedDataType<T> type) {
          try {
 +            // Octopus start - Custom DataSource
 +            net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
-+            me.xiaozhangup.octopus.WorldMapDataSource mapSource = server.worldMapSource;
-+            Integer mapId = this.getMapId(type);
-+            if (mapSource != null && mapId != null) {
-+                Optional<CompoundTag> sourceData = mapSource.getMapData(mapId);
-+                if (sourceData.isEmpty()) {
-+                    return null;
-+                }
++            if (server != null) {
++                me.xiaozhangup.octopus.WorldMapDataSource mapSource = server.worldMapSource;
++                Integer mapId = this.getMapId(type);
++                if (mapSource != null && mapId != null) {
++                    Optional<CompoundTag> sourceData = mapSource.getMapData(mapId);
++                    if (sourceData.isEmpty()) {
++                        return null;
++                    }
 +
-+                int dataVersion = NbtUtils.getDataVersion(sourceData.get(), 1343);
-+                CompoundTag fixedTag = type.dataFixType().update(this.fixerUpper, sourceData.get(), dataVersion, SharedConstants.getCurrentVersion().dataVersion().version());
-+                RegistryOps<Tag> ops = this.registries.createSerializationContext(NbtOps.INSTANCE);
-+                return type.codec()
-+                    .parse(ops, fixedTag.get("data"))
-+                    .resultOrPartial(error -> LOGGER.error("Failed to parse saved data for '{}': {}", type, error))
-+                    .orElse(null);
++                    int dataVersion = NbtUtils.getDataVersion(sourceData.get(), 1343);
++                    CompoundTag fixedTag = type.dataFixType().update(this.fixerUpper, sourceData.get(), dataVersion, SharedConstants.getCurrentVersion().dataVersion().version());
++                    RegistryOps<Tag> ops = this.registries.createSerializationContext(NbtOps.INSTANCE);
++                    return type.codec()
++                            .parse(ops, fixedTag.get("data"))
++                            .resultOrPartial(error -> LOGGER.error("Failed to parse saved data for '{}': {}", type, error))
++                            .orElse(null);
++                }
 +            }
 +            // Octopus end - Custom DataSource
              Path file = this.getDataFile(type.id());
              if (Files.exists(file)) {
                  CompoundTag tag = this.readTagFromDisk(file, type.dataFixType(), SharedConstants.getCurrentVersion().dataVersion().version());
-@@ -148,6 +170,9 @@ public class SavedDataStorage implements AutoCloseable {
+@@ -148,6 +172,9 @@ public class SavedDataStorage implements AutoCloseable {
              throw new IllegalStateException("Trying to schedule save when SavedDataStorage is already closed");
          }
  
@@ -276,27 +278,29 @@ index f359e53024019f35aaa5cd8477da708bda2fc57a..da1e04dd3beb19a9fa656f98187efda5
          Map<SavedDataType<?>, CompoundTag> tagsToSave = this.collectDirtyTagsToSave();
          if (tagsToSave.isEmpty()) {
              return CompletableFuture.completedFuture(null);
-@@ -204,6 +229,19 @@ public class SavedDataStorage implements AutoCloseable {
+@@ -204,6 +231,21 @@ public class SavedDataStorage implements AutoCloseable {
      }
  
      private void tryWrite(final SavedDataType<?> type, final CompoundTag tag) {
 +        // Octopus start - Custom DataSource
-+        net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
-+        me.xiaozhangup.octopus.WorldMapDataSource mapSource = server.worldMapSource;
 +        Integer mapId = this.getMapId(type);
-+        if (mapSource != null && mapId != null) {
-+            try {
-+                mapSource.saveMapData(mapId, tag);
-+            } catch (Exception e) {
-+                LOGGER.error("Could not save map data to custom data source: {}", type, e);
++        net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
++        if (server != null){
++            me.xiaozhangup.octopus.WorldMapDataSource mapSource = server.worldMapSource;
++            if (mapSource != null && mapId != null) {
++                try {
++                    mapSource.saveMapData(mapId, tag);
++                } catch (Exception e) {
++                    LOGGER.error("Could not save map data to custom data source: {}", type, e);
++                }
++                return;
 +            }
-+            return;
 +        }
 +        // Octopus end - Custom DataSource
          Path path = this.getDataFile(type.id());
  
          try {
-@@ -214,6 +252,67 @@ public class SavedDataStorage implements AutoCloseable {
+@@ -214,6 +256,70 @@ public class SavedDataStorage implements AutoCloseable {
          }
      }
  
@@ -327,6 +331,9 @@ index f359e53024019f35aaa5cd8477da708bda2fc57a..da1e04dd3beb19a9fa656f98187efda5
 +
 +    public void saveMapDataImmediately(final net.minecraft.world.level.saveddata.maps.MapId mapId, final net.minecraft.world.level.saveddata.maps.MapItemSavedData mapData) {
 +        net.minecraft.server.MinecraftServer server = net.minecraft.server.MinecraftServer.getServer();
++        if (server != null) {
++            return;
++        }
 +        me.xiaozhangup.octopus.WorldMapDataSource mapSource = server.worldMapSource;
 +        if (mapSource == null) {
 +            return;
