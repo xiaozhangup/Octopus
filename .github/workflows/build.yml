@@ -8,13 +8,13 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: 21
+          java-version: 25
       - name: Configure Git
         run: git config --global user.email "action@github.com" && git config --global user.name "Github Action"
       - name: Apply patches
         run: ./gradlew applyAllPatches --stacktrace
       - name: Build
-        run: ./gradlew createMojmapPaperclipJar --stacktrace
+        run: ./gradlew createPaperclipJar --stacktrace
       - name: Upload Server Build Artifact
         uses: actions/upload-artifact@v4
         with:
