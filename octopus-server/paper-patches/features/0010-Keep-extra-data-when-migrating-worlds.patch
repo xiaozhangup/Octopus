@@ -1,0 +1,66 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Sun, 5 Jul 2026 22:14:57 +0800
+Subject: [PATCH] Keep extra data when migrating worlds
+
+
+diff --git a/src/main/java/io/papermc/paper/world/migration/LegacyCraftBukkitWorldMigration.java b/src/main/java/io/papermc/paper/world/migration/LegacyCraftBukkitWorldMigration.java
+index ba24fda2395f07cdb3d1c0c66811dfd4a5b81533..4de45907b7c8cbadf50641c3ae3e8bfc6a61100f 100644
+--- a/src/main/java/io/papermc/paper/world/migration/LegacyCraftBukkitWorldMigration.java
++++ b/src/main/java/io/papermc/paper/world/migration/LegacyCraftBukkitWorldMigration.java
+@@ -95,6 +95,7 @@ final class LegacyCraftBukkitWorldMigration {
+             this.migrateSharedSavedData();
+             this.migrateLegacyCraftBukkitPaperData(tempStorage, levelDataResult.dataTag());
+             tempStorage.saveAndJoin();
++            copyRemainingFiles(this.sourceRoot, this.targetDimensionPath);
+         }
+         deleteMigratedSeparateRoot(this.sourceRoot);
+         LOGGER.info("Completed legacy CraftBukkit import for world '{}' ({})", this.context.worldName(), this.context.dimensionKey().identifier());
+@@ -199,6 +200,47 @@ final class LegacyCraftBukkitWorldMigration {
+         }
+     }
+ 
++    private static void copyRemainingFiles(final Path sourceRoot, final Path targetRoot) throws IOException {
++        if (sourceRoot.equals(targetRoot) || !Files.isDirectory(sourceRoot)) {
++            return;
++        }
++
++        try (final var entries = Files.list(sourceRoot)) {
++            for (final Path child : entries.toList()) {
++                if (isLegacyRootMetadata(child.getFileName().toString())) {
++                    continue;
++                }
++                copyRemainingFile(child, targetRoot.resolve(child.getFileName().toString()));
++            }
++        }
++    }
++
++    private static boolean isLegacyRootMetadata(final String fileName) {
++        return fileName.equals(LevelResource.LEVEL_DATA_FILE.id())
++            || fileName.equals(LevelResource.OLD_LEVEL_DATA_FILE.id())
++            || fileName.equals("session.lock")
++            || fileName.equals(WorldMigrationSupport.LEGACY_UID_FILE_NAME);
++    }
++
++    private static void copyRemainingFile(final Path source, final Path target) throws IOException {
++        if (Files.isDirectory(source)) {
++            Files.createDirectories(target);
++            try (final var entries = Files.list(source)) {
++                for (final Path child : entries.toList()) {
++                    copyRemainingFile(child, target.resolve(child.getFileName().toString()));
++                }
++            }
++            return;
++        }
++
++        if (Files.exists(target)) {
++            return;
++        }
++
++        Files.createDirectories(target.getParent());
++        Files.copy(source, target, java.nio.file.StandardCopyOption.COPY_ATTRIBUTES);
++    }
++
+     private @Nullable Path findExplicitFile(
+         final List<Path> dataRoots,
+         final String... relativeCandidates
