@@ -172,7 +172,7 @@ index f05ab5fdab4cb587974e2864e859e49375f8165e..9a2447c20c7280f2da320ef3dd27af63
 +    // Octopus end - Custom DataSource
  }
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
-index eddb6ebe3fa50a818e54079b73ba117be0abd195..43a7777b53aa84ac074f4927dcc0e7139fe637c1 100644
+index eddb6ebe3fa50a818e54079b73ba117be0abd195..63a2155cf326ea8d243040b58288b41b5037a5f1 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
 +++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
 @@ -24,6 +24,14 @@ public class PlayerDataStorage {
@@ -190,16 +190,20 @@ index eddb6ebe3fa50a818e54079b73ba117be0abd195..43a7777b53aa84ac074f4927dcc0e713
      public PlayerDataStorage(final LevelStorageSource.LevelStorageAccess levelAccess, final DataFixer fixerUpper) {
          this.fixerUpper = fixerUpper;
          this.playerDir = levelAccess.getLevelPath(LevelResource.PLAYER_DATA_DIR).toFile();
-@@ -38,6 +46,12 @@ public class PlayerDataStorage {
-             Path playerDirPath = this.playerDir.toPath();
-             Path tmpFile = Files.createTempFile(playerDirPath, player.getStringUUID() + "-", ".dat");
-             CompoundTag dataToStore = output.buildResult();
+@@ -35,9 +43,15 @@ public class PlayerDataStorage {
+         try (ProblemReporter.ScopedCollector reporter = new ProblemReporter.ScopedCollector(player.problemPath(), LOGGER)) {
+             TagValueOutput output = TagValueOutput.createWithContext(reporter, player.registryAccess());
+             player.saveWithoutId(output);
++            CompoundTag dataToStore = output.buildResult();
 +            // Octopus start - PlayerDataSource
 +            if (this.dataSource != null) {
 +                this.dataSource.save(player, dataToStore);
 +                return;
 +            }
 +            // Octopus end - PlayerDataSource
+             Path playerDirPath = this.playerDir.toPath();
+             Path tmpFile = Files.createTempFile(playerDirPath, player.getStringUUID() + "-", ".dat");
+-            CompoundTag dataToStore = output.buildResult();
              NbtIo.writeCompressed(dataToStore, tmpFile);
              Path realFile = playerDirPath.resolve(player.getStringUUID() + ".dat");
              Path oldFile = playerDirPath.resolve(player.getStringUUID() + ".dat_old");
