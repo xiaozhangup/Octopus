@@ -76,7 +76,7 @@ index 162d7890f204315b0476467e757de5c9dd84aeca..161ad24648c7e0ea7f9e608bf498361c
                  // Paper end
                  // CraftBukkit start
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 1049f78b1300a584f87579ee5af83145f46dac18..d812240f7b93c0f591596bcd0067a8c43ee5222c 100644
+index 68151ce05e7009f28dda0470c744920cbd5f4a27..c32579019af386f4c6a8ea61a51300831788c6eb 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -1,5 +1,9 @@
@@ -89,7 +89,7 @@ index 1049f78b1300a584f87579ee5af83145f46dac18..d812240f7b93c0f591596bcd0067a8c4
  import com.google.common.base.Splitter;
  import com.google.common.collect.ImmutableList;
  import com.google.common.collect.Lists;
-@@ -448,10 +452,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -449,10 +453,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              if (currTime - ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)world).moonrise$getLastMidTickFailure() <= TASK_EXECUTION_FAILURE_BACKOFF) {
                  continue;
              }
@@ -105,7 +105,7 @@ index 1049f78b1300a584f87579ee5af83145f46dac18..d812240f7b93c0f591596bcd0067a8c4
                  executed = true;
              }
          }
-@@ -1010,6 +1018,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1011,6 +1019,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              if (this.hasStopped) return;
              this.hasStopped = true;
          }
@@ -113,7 +113,7 @@ index 1049f78b1300a584f87579ee5af83145f46dac18..d812240f7b93c0f591596bcd0067a8c4
          if (!this.hasLoggedStop && this.isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread("Server stopped"); // Paper - Debugging
          this.shutdownThread = Thread.currentThread(); // Paper - Improved watchdog support
          org.spigotmc.WatchdogThread.doStop(); // Paper - Improved watchdog support
-@@ -1518,7 +1527,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1520,7 +1529,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          boolean ret = false; // Paper - force execution of all worlds, do not just bias the first
          if (this.tickRateManager.isSprinting() || this.shouldRunAllTasks() || this.haveTime()) {
              for (ServerLevel level : this.getAllLevels()) {
@@ -122,7 +122,7 @@ index 1049f78b1300a584f87579ee5af83145f46dac18..d812240f7b93c0f591596bcd0067a8c4
                      ret = true; // Paper - force execution of all worlds, do not just bias the first
                  }
              }
-@@ -1760,6 +1769,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1762,6 +1771,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
  
      public final io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList entitySchedulerTickList = new io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList(); // Paper - optimise Folia entity scheduler
  
@@ -139,7 +139,7 @@ index 1049f78b1300a584f87579ee5af83145f46dac18..d812240f7b93c0f591596bcd0067a8c4
      protected void tickChildren(final BooleanSupplier haveTime) {
          ProfilerFiller profiler = Profiler.get();
          this.getPlayerList().getPlayers().forEach(playerx -> playerx.connection.suspendFlushing());
-@@ -1810,26 +1829,62 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1812,26 +1831,62 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          this.updateEffectiveRespawnData();
  
          this.isIteratingOverLevels = true; // Paper - Throw exception on world create while being ticked
@@ -386,7 +386,7 @@ index 09cc0f75c0dea7d9ef9caf9b1f14f46e4da84375..1845baef1c7da6f3b211f4dbdbe0c670
                              });
                          return true;
 diff --git a/net/minecraft/world/item/ItemStack.java b/net/minecraft/world/item/ItemStack.java
-index f1e6e876460e62cee24c4ca4adcf047fb96b1909..204e824c57b6deccb5ef6ee05cccb3c47fb660fe 100644
+index 44a7590558fa73fb570f76ba7a4e7db1415d08f7..59a670689419975f3b58dd8a235ed4bbff2036a7 100644
 --- a/net/minecraft/world/item/ItemStack.java
 +++ b/net/minecraft/world/item/ItemStack.java
 @@ -403,8 +403,8 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {

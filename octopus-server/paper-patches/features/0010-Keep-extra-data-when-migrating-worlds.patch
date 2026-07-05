@@ -5,7 +5,7 @@ Subject: [PATCH] Keep extra data when migrating worlds
 
 
 diff --git a/src/main/java/io/papermc/paper/world/migration/LegacyCraftBukkitWorldMigration.java b/src/main/java/io/papermc/paper/world/migration/LegacyCraftBukkitWorldMigration.java
-index ba24fda2395f07cdb3d1c0c66811dfd4a5b81533..4de45907b7c8cbadf50641c3ae3e8bfc6a61100f 100644
+index ba24fda2395f07cdb3d1c0c66811dfd4a5b81533..c1e4a7b0f2d00125fd785ad73a74cd76eb13d14c 100644
 --- a/src/main/java/io/papermc/paper/world/migration/LegacyCraftBukkitWorldMigration.java
 +++ b/src/main/java/io/papermc/paper/world/migration/LegacyCraftBukkitWorldMigration.java
 @@ -95,6 +95,7 @@ final class LegacyCraftBukkitWorldMigration {
@@ -16,7 +16,7 @@ index ba24fda2395f07cdb3d1c0c66811dfd4a5b81533..4de45907b7c8cbadf50641c3ae3e8bfc
          }
          deleteMigratedSeparateRoot(this.sourceRoot);
          LOGGER.info("Completed legacy CraftBukkit import for world '{}' ({})", this.context.worldName(), this.context.dimensionKey().identifier());
-@@ -199,6 +200,47 @@ final class LegacyCraftBukkitWorldMigration {
+@@ -199,6 +200,48 @@ final class LegacyCraftBukkitWorldMigration {
          }
      }
  
@@ -39,7 +39,8 @@ index ba24fda2395f07cdb3d1c0c66811dfd4a5b81533..4de45907b7c8cbadf50641c3ae3e8bfc
 +        return fileName.equals(LevelResource.LEVEL_DATA_FILE.id())
 +            || fileName.equals(LevelResource.OLD_LEVEL_DATA_FILE.id())
 +            || fileName.equals("session.lock")
-+            || fileName.equals(WorldMigrationSupport.LEGACY_UID_FILE_NAME);
++            || fileName.equals(WorldMigrationSupport.LEGACY_UID_FILE_NAME)
++            || fileName.equals("dimensions");
 +    }
 +
 +    private static void copyRemainingFile(final Path source, final Path target) throws IOException {

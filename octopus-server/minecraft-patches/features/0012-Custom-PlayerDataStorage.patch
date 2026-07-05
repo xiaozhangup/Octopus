@@ -5,7 +5,7 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 059e999e6326a3feb368b478c28510440e5859b9..1462686e0abab847931aac2393559ce1bbc46b02 100644
+index bf654b0a6349c2dcbcb8c37102ac4a294201b954..5435ff6a8668fff246028b63f7167057cd1ff3e3 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -229,6 +229,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -20,7 +20,7 @@ index 059e999e6326a3feb368b478c28510440e5859b9..1462686e0abab847931aac2393559ce1
      private MinecraftServer.@Nullable TimeProfiler debugCommandProfiler;
      private boolean debugCommandProfilerDelayStart;
      private ServerConnectionListener connection;
-@@ -1616,6 +1621,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1618,6 +1623,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                  // Paper end - avoid issues with certain tasks not processing during sleep
                  this.server.spark.executeMainThreadTasks(); // Paper - spark
                  this.tickConnection();
@@ -30,7 +30,7 @@ index 059e999e6326a3feb368b478c28510440e5859b9..1462686e0abab847931aac2393559ce1
                  this.server.spark.tickEnd(((double)(System.nanoTime() - this.currentTickStart) / 1000000D)); // Paper - spark
                  return;
              }
-@@ -1664,6 +1672,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1666,6 +1674,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          long endTime = System.nanoTime();
          long remaining = this.nextTickTimeNanos - endTime;
          new com.destroystokyo.paper.event.server.ServerTickEndEvent(this.tickCount, ((double)(endTime - this.currentTickStart) / 1000000D), remaining).callEvent();
@@ -172,7 +172,7 @@ index f05ab5fdab4cb587974e2864e859e49375f8165e..9a2447c20c7280f2da320ef3dd27af63
 +    // Octopus end - Custom DataSource
  }
 diff --git a/net/minecraft/world/level/storage/PlayerDataStorage.java b/net/minecraft/world/level/storage/PlayerDataStorage.java
-index 8eda63e1f07f7998875713447c5f39eea3f85ca4..b1599c0d312f2161c5c7c04010d33882dd2f463f 100644
+index eddb6ebe3fa50a818e54079b73ba117be0abd195..43a7777b53aa84ac074f4927dcc0e7139fe637c1 100644
 --- a/net/minecraft/world/level/storage/PlayerDataStorage.java
 +++ b/net/minecraft/world/level/storage/PlayerDataStorage.java
 @@ -24,6 +24,14 @@ public class PlayerDataStorage {
