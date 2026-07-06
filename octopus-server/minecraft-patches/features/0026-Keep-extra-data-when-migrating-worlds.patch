@@ -5,10 +5,10 @@ Subject: [PATCH] Keep extra data when migrating worlds
 
 
 diff --git a/net/minecraft/server/Main.java b/net/minecraft/server/Main.java
-index a4d608d64b7d3477c9144d93547fd3b4f39a1b02..9c9dbf99dbc672d11e98ef1d80f4d6da289aa255 100644
+index a4d608d64b7d3477c9144d93547fd3b4f39a1b02..225c5295a43e1f7ceea6c46c5162e162aa5a3121 100644
 --- a/net/minecraft/server/Main.java
 +++ b/net/minecraft/server/Main.java
-@@ -107,6 +107,18 @@ public class Main {
+@@ -107,6 +107,19 @@ public class Main {
                  JvmProfiler.INSTANCE.start(Environment.SERVER);
              }
  
@@ -16,6 +16,7 @@ index a4d608d64b7d3477c9144d93547fd3b4f39a1b02..9c9dbf99dbc672d11e98ef1d80f4d6da
 +            if (options.has("convertWorldsOnly")) {
 +                Bootstrap.bootStrap();
 +                Bootstrap.validate();
++                io.papermc.paper.world.migration.WorldFolderMigration.didInitialLoad = true;
 +                io.papermc.paper.world.migration.WorldFolderMigration.convertWorldContainerInPlace(
 +                    ((File) options.valueOf("convertWorldsOnly")).toPath(),
 +                    RegistryAccess.fromRegistryOfRegistries(net.minecraft.core.registries.BuiltInRegistries.REGISTRY)
