@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Mon, 6 Jul 2026 08:38:38 +0800
+Subject: [PATCH] Keep extra data when migrating worlds
+
+
+diff --git a/net/minecraft/server/Main.java b/net/minecraft/server/Main.java
+index a4d608d64b7d3477c9144d93547fd3b4f39a1b02..9c9dbf99dbc672d11e98ef1d80f4d6da289aa255 100644
+--- a/net/minecraft/server/Main.java
++++ b/net/minecraft/server/Main.java
+@@ -107,6 +107,18 @@ public class Main {
+                 JvmProfiler.INSTANCE.start(Environment.SERVER);
+             }
+ 
++            // Octopus start - Keep extra data when migrating worlds
++            if (options.has("convertWorldsOnly")) {
++                Bootstrap.bootStrap();
++                Bootstrap.validate();
++                io.papermc.paper.world.migration.WorldFolderMigration.convertWorldContainerInPlace(
++                    ((File) options.valueOf("convertWorldsOnly")).toPath(),
++                    RegistryAccess.fromRegistryOfRegistries(net.minecraft.core.registries.BuiltInRegistries.REGISTRY)
++                );
++                return;
++            }
++            // Octopus end - Keep extra data when migrating worlds
++
+             io.papermc.paper.plugin.PluginInitializerManager.load(options); // Paper
+             Bootstrap.bootStrap();
+             Bootstrap.validate();
