@@ -5,10 +5,10 @@ Subject: [PATCH] Track how much MSPT each world used
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index d812240f7b93c0f591596bcd0067a8c43ee5222c..a4ef68b9f00a939ee4ce202a93a1890f35348c6a 100644
+index c32579019af386f4c6a8ea61a51300831788c6eb..b5e4e957030ea3d23a4f04716858955a32b6cfd0 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1841,7 +1841,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1843,7 +1843,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              java.util.concurrent.Callable<Pair<ServerLevel, Throwable>> tickingFunction = () -> {
                  level.worldTaskQueueInstance.acquirePoller();
                  try {

@@ -19,6 +19,7 @@ Powered by ```HAPPYLAND AssiahLand```
 - 降低了 ShulkerBullet 的计算频次 (Octopus)
 - 禁用了结构生成方块 (Octopus)
 - 加载世界时允许指定 UUID (Octopus)
+- 迁移世界时保留额外的数据 (Octopus)
 - 为聊天和验证使用虚拟线程 (Leaf)
 - 优化了一些实体移动的数据包相关 (Leaf)
 - 优化了 NearestLivingEntitySensor (Leaf)

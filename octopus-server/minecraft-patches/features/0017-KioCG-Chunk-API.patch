@@ -17,7 +17,7 @@ index 4baf46256e90a87d684e57ff623076a8e9395f31..c9c3a42ac456288d966d280f6091bd77
      }
  
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 1462686e0abab847931aac2393559ce1bbc46b02..7f9ce2b4fa5b34b742d7af582af77d3820e40b50 100644
+index 5435ff6a8668fff246028b63f7167057cd1ff3e3..6da14ab788ffa9e7a0f25d8ac183235d9f3a3763 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -25,17 +25,7 @@ import java.nio.file.FileStore;
@@ -39,7 +39,7 @@ index 1462686e0abab847931aac2393559ce1bbc46b02..7f9ce2b4fa5b34b742d7af582af77d38
  import java.util.Map.Entry;
  import java.util.concurrent.CompletableFuture;
  import java.util.concurrent.Executor;
-@@ -1633,7 +1623,39 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1635,7 +1625,39 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          new com.destroystokyo.paper.event.server.ServerTickStartEvent(this.tickCount+1).callEvent(); // Paper - Server Tick Events
          this.tickCount++;
          this.tickRateManager.tick();
@@ -198,10 +198,10 @@ index 5b19fee8a4861e5dbfb545bbe4dabda7787c430a..0afca6f5f5b02609fd55e9ea4d72b886
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/entity/Mob.java b/net/minecraft/world/entity/Mob.java
-index a521068fe97243adbf1e7e9b14fe7f0b19f1e65c..e6bc66956198049e6f0d141f7f1626228a7a82ec 100644
+index c2dd2da4bfb7d65ad2730ba1ce771e2b488beda4..2f4e5ae7068586320b8f7664cd5312858350584d 100644
 --- a/net/minecraft/world/entity/Mob.java
 +++ b/net/minecraft/world/entity/Mob.java
-@@ -1722,4 +1722,11 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
+@@ -1704,4 +1704,11 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
      public float chargeSpeedModifier() {
          return 1.0F;
      }

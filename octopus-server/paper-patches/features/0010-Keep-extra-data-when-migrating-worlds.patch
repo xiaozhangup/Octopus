@@ -1,0 +1,229 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Sun, 5 Jul 2026 22:14:57 +0800
+Subject: [PATCH] Keep extra data when migrating worlds
+
+
+diff --git a/src/main/java/io/papermc/paper/world/migration/LegacyCraftBukkitWorldMigration.java b/src/main/java/io/papermc/paper/world/migration/LegacyCraftBukkitWorldMigration.java
+index ba24fda2395f07cdb3d1c0c66811dfd4a5b81533..9f20802590f81a7b74ec83b47a1e7a36cc983b78 100644
+--- a/src/main/java/io/papermc/paper/world/migration/LegacyCraftBukkitWorldMigration.java
++++ b/src/main/java/io/papermc/paper/world/migration/LegacyCraftBukkitWorldMigration.java
+@@ -95,6 +95,9 @@ final class LegacyCraftBukkitWorldMigration {
+             this.migrateSharedSavedData();
+             this.migrateLegacyCraftBukkitPaperData(tempStorage, levelDataResult.dataTag());
+             tempStorage.saveAndJoin();
++            // Octopus start - Keep extra data when migrating worlds
++            copyRemainingFiles(this.sourceRoot, this.targetDimensionPath);
++            // Octopus end - Keep extra data when migrating worlds
+         }
+         deleteMigratedSeparateRoot(this.sourceRoot);
+         LOGGER.info("Completed legacy CraftBukkit import for world '{}' ({})", this.context.worldName(), this.context.dimensionKey().identifier());
+@@ -199,6 +202,50 @@ final class LegacyCraftBukkitWorldMigration {
+         }
+     }
+ 
++    // Octopus start - Keep extra data when migrating worlds
++    private static void copyRemainingFiles(final Path sourceRoot, final Path targetRoot) throws IOException {
++        if (sourceRoot.equals(targetRoot) || !Files.isDirectory(sourceRoot)) {
++            return;
++        }
++
++        try (final var entries = Files.list(sourceRoot)) {
++            for (final Path child : entries.toList()) {
++                if (isLegacyRootMetadata(child.getFileName().toString())) {
++                    continue;
++                }
++                copyRemainingFile(child, targetRoot.resolve(child.getFileName().toString()));
++            }
++        }
++    }
++
++    private static boolean isLegacyRootMetadata(final String fileName) {
++        return fileName.equals(LevelResource.LEVEL_DATA_FILE.id())
++            || fileName.equals(LevelResource.OLD_LEVEL_DATA_FILE.id())
++            || fileName.equals("session.lock")
++            || fileName.equals(WorldMigrationSupport.LEGACY_UID_FILE_NAME)
++            || fileName.equals("dimensions");
++    }
++
++    private static void copyRemainingFile(final Path source, final Path target) throws IOException {
++        if (Files.isDirectory(source)) {
++            Files.createDirectories(target);
++            try (final var entries = Files.list(source)) {
++                for (final Path child : entries.toList()) {
++                    copyRemainingFile(child, target.resolve(child.getFileName().toString()));
++                }
++            }
++            return;
++        }
++
++        if (Files.exists(target)) {
++            return;
++        }
++
++        Files.createDirectories(target.getParent());
++        Files.copy(source, target, java.nio.file.StandardCopyOption.COPY_ATTRIBUTES);
++    }
++    // Octopus end - Keep extra data when migrating worlds
++
+     private @Nullable Path findExplicitFile(
+         final List<Path> dataRoots,
+         final String... relativeCandidates
+diff --git a/src/main/java/io/papermc/paper/world/migration/WorldFolderMigration.java b/src/main/java/io/papermc/paper/world/migration/WorldFolderMigration.java
+index 77fb09a15bcefaeb5016fcda53cd6a0c9e604ef8..00cc7ec0fa6f39b426ab2d465c812995b2938e9e 100644
+--- a/src/main/java/io/papermc/paper/world/migration/WorldFolderMigration.java
++++ b/src/main/java/io/papermc/paper/world/migration/WorldFolderMigration.java
+@@ -6,6 +6,10 @@ import io.papermc.paper.world.saveddata.PaperWorldMetadata;
+ import java.io.IOException;
+ import java.nio.file.Files;
+ import java.nio.file.Path;
++// Octopus start - Keep extra data when migrating worlds
++import java.util.ArrayList;
++// Octopus end - Keep extra data when migrating worlds
++import java.util.Comparator;
+ import net.minecraft.core.HolderLookup;
+ import net.minecraft.resources.ResourceKey;
+ import net.minecraft.world.level.Level;
+@@ -61,6 +65,78 @@ public final class WorldFolderMigration {
+         LegacyCraftBukkitWorldMigration.migrateApiWorld(new WorldMigrationContext(rootAccess, registryAccess, worldName, stemKey, dimensionKey));
+     }
+ 
++    // Octopus start - Keep extra data when migrating worlds
++    public static void convertWorldContainerInPlace(final Path worldContainer, final HolderLookup.Provider registryAccess) throws IOException {
++        if (!Files.isDirectory(worldContainer)) {
++            throw new IOException("World container does not exist or is not a directory: " + worldContainer);
++        }
++
++        final Path convertRoot = worldContainer.resolve(".convert");
++        Files.createDirectory(convertRoot);
++        boolean complete = false;
++        try {
++            final LevelStorageSource storageSource = LevelStorageSource.createDefault(worldContainer);
++            try (final LevelStorageSource.LevelStorageAccess rootAccess = storageSource.createAccess(".convert")) {
++                try (final var entries = Files.list(worldContainer)) {
++                    for (final Path world : entries.filter(Files::isDirectory).toList()) {
++                        final String worldName = world.getFileName().toString();
++                        if (worldName.equals(".convert")
++                            || !Files.isRegularFile(world.resolve(LevelResource.LEVEL_DATA_FILE.id()))
++                                && !Files.isRegularFile(world.resolve(LevelResource.OLD_LEVEL_DATA_FILE.id()))) {
++                            continue;
++                        }
++
++                        final ArrayList<ResourceKey<Level>> detectedDimensionKeys = detectDimensionKeys(world);
++                        if (detectedDimensionKeys.size() > 1) {
++                            LOGGER.warn("Skipping world storage conversion for {} because multiple dimension directories were found: {}", worldName, detectedDimensionKeys.stream().map(key -> key.identifier().toString()).toList());
++                            continue;
++                        }
++
++                        final ResourceKey<Level> dimensionKey = detectedDimensionKeys.isEmpty() ? Level.OVERWORLD : detectedDimensionKeys.getFirst();
++                        final ResourceKey<LevelStem> stemKey = dimensionKey == Level.NETHER ? LevelStem.NETHER : dimensionKey == Level.END ? LevelStem.END : LevelStem.OVERWORLD;
++                        LOGGER.info("Converting world storage for {}", worldName);
++                        final Path targetRoot = convertRoot.resolve(worldName);
++                        LegacyCraftBukkitWorldMigration.migrate(new WorldMigrationContext(rootAccess, registryAccess, worldName, stemKey, dimensionKey, targetRoot));
++                        Files.move(targetRoot, world);
++                    }
++                }
++            }
++            complete = true;
++        } finally {
++            if (complete) {
++                try (final var paths = Files.walk(convertRoot)) {
++                    for (final Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
++                        Files.deleteIfExists(path);
++                    }
++                }
++            }
++        }
++    }
++
++    private static ArrayList<ResourceKey<Level>> detectDimensionKeys(final Path sourceRoot) {
++        final ArrayList<ResourceKey<Level>> dimensionKeys = new ArrayList<>();
++        if (hasDimensionContent(sourceRoot)) {
++            dimensionKeys.add(Level.OVERWORLD);
++        }
++        if (hasDimensionContent(sourceRoot.resolve("DIM-1"))) {
++            dimensionKeys.add(Level.NETHER);
++        }
++        if (hasDimensionContent(sourceRoot.resolve("DIM1"))) {
++            dimensionKeys.add(Level.END);
++        }
++        return dimensionKeys;
++    }
++
++    private static boolean hasDimensionContent(final Path root) {
++        for (final String directory : WorldMigrationSupport.DIMENSION_DIRECTORIES) {
++            if (Files.isDirectory(root.resolve(directory))) {
++                return true;
++            }
++        }
++        return false;
++    }
++    // Octopus end - Keep extra data when migrating worlds
++
+     public static synchronized void warnAndDelayStartupMigration() {
+         if (startupMigrationWarningShown) {
+             return;
+diff --git a/src/main/java/io/papermc/paper/world/migration/WorldMigrationContext.java b/src/main/java/io/papermc/paper/world/migration/WorldMigrationContext.java
+index f2bc81da188526de7682841be8135b97f073eda2..f1e800a17504da0687281f6f2d38cb99f05840e1 100644
+--- a/src/main/java/io/papermc/paper/world/migration/WorldMigrationContext.java
++++ b/src/main/java/io/papermc/paper/world/migration/WorldMigrationContext.java
+@@ -8,6 +8,7 @@ import net.minecraft.world.level.dimension.LevelStem;
+ import net.minecraft.world.level.storage.LevelResource;
+ import net.minecraft.world.level.storage.LevelStorageSource;
+ import org.jspecify.annotations.NullMarked;
++import org.jspecify.annotations.Nullable;
+ 
+ @NullMarked
+ record WorldMigrationContext(
+@@ -15,13 +16,33 @@ record WorldMigrationContext(
+     HolderLookup.Provider registryAccess,
+     String worldName,
+     ResourceKey<LevelStem> stemKey,
+-    ResourceKey<Level> dimensionKey
++    // Octopus start - Keep extra data when migrating worlds
++    ResourceKey<Level> dimensionKey,
++    @Nullable Path targetDimensionPathOverride
++    // Octopus end - Keep extra data when migrating worlds
+ ) {
++    // Octopus start - Keep extra data when migrating worlds
++    WorldMigrationContext(
++        final LevelStorageSource.LevelStorageAccess rootAccess,
++        final HolderLookup.Provider registryAccess,
++        final String worldName,
++        final ResourceKey<LevelStem> stemKey,
++        final ResourceKey<Level> dimensionKey
++    ) {
++        this(rootAccess, registryAccess, worldName, stemKey, dimensionKey, null);
++    }
++    // Octopus end - Keep extra data when migrating worlds
++
+     Path baseRoot() {
+         return this.rootAccess.getLevelDirectory().path();
+     }
+ 
+     Path targetDimensionPath() {
++        // Octopus start - Keep extra data when migrating worlds
++        if (this.targetDimensionPathOverride != null) {
++            return this.targetDimensionPathOverride;
++        }
++        // Octopus end - Keep extra data when migrating worlds
+         return this.rootAccess.getDimensionPath(this.dimensionKey);
+     }
+ 
+diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
+index 8ce8de8eedfe8557848b0508857744a5b9641239..1a6a9d31b276c23d7de5e8c004f15cf6f1d86443 100644
+--- a/src/main/java/org/bukkit/craftbukkit/Main.java
++++ b/src/main/java/org/bukkit/craftbukkit/Main.java
+@@ -94,6 +94,12 @@ public class Main {
+                 this.accepts("forceUpgrade", "Whether to force a world upgrade");
+                 this.accepts("eraseCache", "Whether to force cache erase during world upgrade");
+                 this.accepts("recreateRegionFiles", "Whether to recreate region files during world upgrade");
++                // Octopus start - Keep extra data when migrating worlds
++                this.acceptsAll(asList("convertWorldsOnly", "convert-worlds-only"), "Only convert worlds in the supplied world container, then exit")
++                        .withRequiredArg()
++                        .ofType(File.class)
++                        .describedAs("World container");
++                // Octopus end - Keep extra data when migrating worlds
+                 this.accepts("safeMode", "Loads level with vanilla datapack only"); // Paper
+                 this.accepts("nogui", "Disables the graphical console");
+ 
