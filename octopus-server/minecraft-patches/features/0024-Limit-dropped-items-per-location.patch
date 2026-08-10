@@ -5,10 +5,10 @@ Subject: [PATCH] Limit dropped items per location
 
 
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 33a48682de549accc250ac78219a3eb2a5540c0b..080644c1a031d02a3d70269704b693db01c48a7c 100644
+index e86e76deb9780b1ab6d2d7bf9acd35053a2047fc..b7c6c1273cb87edf4b10346df763f63ad66a2104 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -938,6 +938,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -939,6 +939,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
                          }
                      }
                  );
@@ -61,7 +61,7 @@ index c800c894a921ae77ed1757794ddf8d737b05681e..a447d7d770a5261dac7f34a9f6991f48
      }
  
 diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
-index d12080e80e51916cefb37a3b7bcb1dd9c092304e..12029a8c54477334986896ff31e98def3444a39b 100644
+index 9286d9bcf3ec4069e77d3133f3d7bf29b2370c5a..f90d5c6aa1eca6509147d96a909b2f1c9845fd5c 100644
 --- a/net/minecraft/world/level/Level.java
 +++ b/net/minecraft/world/level/Level.java
 @@ -157,6 +157,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl

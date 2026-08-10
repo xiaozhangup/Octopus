@@ -80,10 +80,10 @@ index 5435ff6a8668fff246028b63f7167057cd1ff3e3..6da14ab788ffa9e7a0f25d8ac183235d
              this.lastServerStatus = nano;
              this.status = this.buildServerStatus();
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index b0f1b8c5419d5c1179bbaec75366cf7fc49b1e62..33a48682de549accc250ac78219a3eb2a5540c0b 100644
+index 806a7392031ca1ca304aec9f6a3809bd4148097a..e86e76deb9780b1ab6d2d7bf9acd35053a2047fc 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -1431,11 +1431,14 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -1432,11 +1432,14 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
          profiler.push(entity.typeHolder()::getRegisteredName);
          profiler.incrementCounter("tickNonPassenger");
          final boolean isActive = io.papermc.paper.entity.activation.ActivationRange.checkIfActive(entity); // Paper - EAR 2
@@ -98,7 +98,7 @@ index b0f1b8c5419d5c1179bbaec75366cf7fc49b1e62..33a48682de549accc250ac78219a3eb2
  
          for (Entity passenger : entity.getPassengers()) {
              this.tickPassenger(entity, passenger, isActive); // Paper - EAR 2
-@@ -1453,6 +1456,8 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -1454,6 +1457,8 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
          if (entity.isRemoved() || entity.getVehicle() != vehicle) {
              entity.stopRiding();
          } else if (entity instanceof Player || this.entityTickList.contains(entity)) {
@@ -107,7 +107,7 @@ index b0f1b8c5419d5c1179bbaec75366cf7fc49b1e62..33a48682de549accc250ac78219a3eb2
              entity.setOldPosAndRot();
              entity.tickCount++;
              entity.totalEntityAge++; // Paper - age-like counter for all entities
-@@ -1471,6 +1476,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -1472,6 +1477,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
              }
              // Paper end - EAR 2
              profiler.pop();

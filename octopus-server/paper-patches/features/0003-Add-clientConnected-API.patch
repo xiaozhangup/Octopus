@@ -5,10 +5,10 @@ Subject: [PATCH] Add clientConnected API
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 41b77c94bad6761280ac61710e7c14e2c0cc2326..78ec960300248153cd7ea2bcbb93068f53377d6c 100644
+index ad51146ef274106d542bf416cd47d0ebcd17e7c6..76c6860245defb657256aa652ae170ef99a58cec 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -242,6 +242,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -241,6 +241,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
      private int hash = 0;
      private double health = 20;
      private boolean scaledHealth = false;
@@ -16,7 +16,7 @@ index 41b77c94bad6761280ac61710e7c14e2c0cc2326..78ec960300248153cd7ea2bcbb93068f
      private double healthScale = 20;
      private CraftWorldBorder clientWorldBorder = null;
      private BorderChangeListener clientWorldBorderListener = this.createWorldBorderListener();
-@@ -2755,6 +2756,17 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -2754,6 +2755,17 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
          return this.getHandle().allowsListing();
      }
  

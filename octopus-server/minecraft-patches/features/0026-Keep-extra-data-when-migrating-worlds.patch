@@ -5,10 +5,10 @@ Subject: [PATCH] Keep extra data when migrating worlds
 
 
 diff --git a/net/minecraft/server/Main.java b/net/minecraft/server/Main.java
-index a4d608d64b7d3477c9144d93547fd3b4f39a1b02..225c5295a43e1f7ceea6c46c5162e162aa5a3121 100644
+index e2939cc39a8c103e4c4d7b01d39b5546486e4fbc..b79369669495c3fa0a31e30763bde014aaa21d90 100644
 --- a/net/minecraft/server/Main.java
 +++ b/net/minecraft/server/Main.java
-@@ -107,6 +107,19 @@ public class Main {
+@@ -110,6 +110,19 @@ public class Main {
                  JvmProfiler.INSTANCE.start(Environment.SERVER);
              }
  

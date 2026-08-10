@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Mon, 10 Aug 2026 13:20:59 +0800
+Subject: [PATCH] Support dynamic Paper plugin classpaths
+
+
+diff --git a/src/main/java/io/papermc/paper/plugin/entrypoint/classloader/PaperSimplePluginClassLoader.java b/src/main/java/io/papermc/paper/plugin/entrypoint/classloader/PaperSimplePluginClassLoader.java
+index d97f63347cda6ad398709dd584c9b623b01f1284..34543d0ebcabbb87300887c2f7eee1dee971b621 100644
+--- a/src/main/java/io/papermc/paper/plugin/entrypoint/classloader/PaperSimplePluginClassLoader.java
++++ b/src/main/java/io/papermc/paper/plugin/entrypoint/classloader/PaperSimplePluginClassLoader.java
+@@ -68,7 +68,7 @@ public class PaperSimplePluginClassLoader extends URLClassLoader {
+             throw new IllegalStateException("The paper plugin classloader for " + pluginName + " has thrown a zip file error.", zipFileClosed);
+         }
+         if (entry == null) {
+-            throw new ClassNotFoundException(name);
++            return super.findClass(name); // Octopus - Support dynamically appended plugin classpaths
+         }
+ 
+         // See URLClassLoader#defineClass(String, Resource)
