@@ -4,15 +4,14 @@ Date: Wed, 31 Dec 2025 22:56:41 +0800
 Subject: [PATCH] Track how much MSPT each world used
 
 
-diff --git a/src/main/java/io/papermc/paper/command/MSPTCommand.java b/src/main/java/io/papermc/paper/command/MSPTCommand.java
-index 04b8097b147350f97fdee16c0b8aa78a87fddd33..dcd5c5b62f4c31a25bc1517c7d567c18579c60ea 100644
---- a/src/main/java/io/papermc/paper/command/MSPTCommand.java
-+++ b/src/main/java/io/papermc/paper/command/MSPTCommand.java
-@@ -82,6 +82,46 @@ public final class MSPTCommand extends Command {
+diff --git a/src/main/java/io/papermc/paper/command/PaperMSPTCommand.java b/src/main/java/io/papermc/paper/command/PaperMSPTCommand.java
+index c4e9a5771f8015c75bbd16c04040607d8c7e5fbd..252245a217bd792a44026b3378086d760d9e4588 100644
+--- a/src/main/java/io/papermc/paper/command/PaperMSPTCommand.java
++++ b/src/main/java/io/papermc/paper/command/PaperMSPTCommand.java
+@@ -76,6 +76,45 @@ public class PaperMSPTCommand {
                  )
              )
          );
-+
 +        // SparklyPaper start - track world's MSPT
 +        sender.sendMessage(text());
 +        sender.sendMessage(text().content("World tick times ").color(GOLD)
@@ -52,10 +51,10 @@ index 04b8097b147350f97fdee16c0b8aa78a87fddd33..dcd5c5b62f4c31a25bc1517c7d567c18
 +            );
 +        }
 +        // SparklyPaper end
-         return true;
+         return Command.SINGLE_SUCCESS;
      }
  
-@@ -93,6 +133,29 @@ public final class MSPTCommand extends Command {
+@@ -87,6 +126,29 @@ public class PaperMSPTCommand {
          return Arrays.asList(getColor(avgD), getColor(minD), getColor(maxD));
      }
  
@@ -83,5 +82,5 @@ index 04b8097b147350f97fdee16c0b8aa78a87fddd33..dcd5c5b62f4c31a25bc1517c7d567c18
 +    // Octopus end
 +
      private static Component getColor(double avg) {
-         return text(ONE_DECIMAL_PLACES.get().format(avg), avg >= 50 ? RED : avg >= 40 ? YELLOW : GREEN);
+         return text(DF.format(avg), avg >= 50 ? RED : avg >= 40 ? YELLOW : GREEN);
      }

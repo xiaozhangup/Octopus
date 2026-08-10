@@ -5,10 +5,10 @@ Subject: [PATCH] Custom world uuid in WorldCreator
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index 4218204e2faabde692227cf4da0e328ed4554e63..929c1ec1ce086110fccc6babd3981438a1109c21 100644
+index f12f863753c97c702f8507e955e1ad703c6e5942..e85b7b0277a053d4bd1e49badc92b8f3b3d0e220 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -1220,6 +1220,14 @@ public final class CraftServer implements Server {
+@@ -1219,6 +1219,14 @@ public final class CraftServer implements Server {
              dimensionKey,
              name
          );

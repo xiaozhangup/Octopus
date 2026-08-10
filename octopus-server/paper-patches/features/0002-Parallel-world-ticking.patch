@@ -34,10 +34,10 @@ index f3f068011abd8c6585463169d50634bf42a09497..273d094511ca7071a9a2da7d6e869434
 +    }
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
-index afbf9c70f69b02e7b92a8382aa9fb9f1132b7bf8..e4d33d83556b3d292a374627d4e97dd6bac56c5f 100644
+index 72aacb573365c521609ce35af6b430f525edf3e0..f0fd800512ba8165699e1df154847ee8d02823fd 100644
 --- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
 +++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
-@@ -518,8 +518,8 @@ public class CraftBlock implements Block {
+@@ -531,8 +531,8 @@ public class CraftBlock implements Block {
              capturedBlockStates = new ArrayList<>(world.capturedBlockStates.values());
              world.capturedBlockStates.clear();
  
