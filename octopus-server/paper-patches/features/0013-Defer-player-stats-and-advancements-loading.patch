@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Fri, 14 Aug 2026 12:47:00 +0800
+Subject: [PATCH] Defer player stats and advancements loading
+
+
+diff --git a/src/main/java/io/papermc/paper/connection/HorriblePlayerLoginEventHack.java b/src/main/java/io/papermc/paper/connection/HorriblePlayerLoginEventHack.java
+index e6511bddcdf1dc455d17d91d733aad055d2301dc..ffabe811377f3e9d0cbdc015709c33c332bb43ed 100644
+--- a/src/main/java/io/papermc/paper/connection/HorriblePlayerLoginEventHack.java
++++ b/src/main/java/io/papermc/paper/connection/HorriblePlayerLoginEventHack.java
+@@ -79,7 +79,9 @@ public class HorriblePlayerLoginEventHack {
+         if (connection.savedPlayerForLegacyEvents != null) {
+             player = connection.savedPlayerForLegacyEvents;
+         } else {
+-            ServerPlayer serverPlayer = new ServerPlayer(server, server.overworld(), profile, ClientInformation.createDefault());
++            // Octopus start - Defer player stats and advancements loading
++            ServerPlayer serverPlayer = new ServerPlayer(server, server.overworld(), profile, ClientInformation.createDefault(), true);
++            // Octopus end - Defer player stats and advancements loading
+             connection.savedPlayerForLegacyEvents = serverPlayer;
+             player = serverPlayer;
+         }

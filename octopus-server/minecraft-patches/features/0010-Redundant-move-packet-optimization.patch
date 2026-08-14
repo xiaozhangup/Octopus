@@ -52,7 +52,7 @@ index 60af82925d2f7e605bf7340cf01f1a5668f4d725..939f5cb88d4880e77d1d059dc0ad58d5
                  if (packet != null) {
                      this.synchronizer.sendToTrackingPlayers(packet);
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 838af56d8d1263f432ffb8e9a0dd75e2c39cf674..0981125224f34dcd54be7ef7769d3c11a1631623 100644
+index e51bd22e8c5a1a9bc5d7f5fd0be9cc31d80e6c6b..b304a2f5cc264f304a60333d998106d955ac34e3 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -280,6 +280,7 @@ public abstract class Entity
@@ -63,7 +63,7 @@ index 838af56d8d1263f432ffb8e9a0dd75e2c39cf674..0981125224f34dcd54be7ef7769d3c11
      public boolean onGround;
      public boolean horizontalCollision;
      public boolean verticalCollision;
-@@ -1136,6 +1137,11 @@ public abstract class Entity
+@@ -1137,6 +1138,11 @@ public abstract class Entity
      // Paper end - detailed watchdog information
  
      public void move(final MoverType moverType, Vec3 delta) {
@@ -75,7 +75,7 @@ index 838af56d8d1263f432ffb8e9a0dd75e2c39cf674..0981125224f34dcd54be7ef7769d3c11
          final Vec3 originalMovement = delta; // Paper - Expose pre-collision velocity
          // Paper start - detailed watchdog information
          ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread("Cannot move an entity off-main");
-@@ -4583,6 +4589,11 @@ public abstract class Entity
+@@ -4592,6 +4598,11 @@ public abstract class Entity
      }
  
      public final void setBoundingBox(final AABB bb) {

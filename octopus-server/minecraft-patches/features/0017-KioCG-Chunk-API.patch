@@ -17,7 +17,7 @@ index 4baf46256e90a87d684e57ff623076a8e9395f31..c9c3a42ac456288d966d280f6091bd77
      }
  
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 5435ff6a8668fff246028b63f7167057cd1ff3e3..6da14ab788ffa9e7a0f25d8ac183235d9f3a3763 100644
+index fbd393d9d79e3eae370c9b11af58f2b16ea6a664..4f0833f83992dd8c910fb20964cc558e5c01c862 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -25,17 +25,7 @@ import java.nio.file.FileStore;
@@ -39,7 +39,7 @@ index 5435ff6a8668fff246028b63f7167057cd1ff3e3..6da14ab788ffa9e7a0f25d8ac183235d
  import java.util.Map.Entry;
  import java.util.concurrent.CompletableFuture;
  import java.util.concurrent.Executor;
-@@ -1635,7 +1625,39 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1634,7 +1624,39 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          new com.destroystokyo.paper.event.server.ServerTickStartEvent(this.tickCount+1).callEvent(); // Paper - Server Tick Events
          this.tickCount++;
          this.tickRateManager.tick();
@@ -80,7 +80,7 @@ index 5435ff6a8668fff246028b63f7167057cd1ff3e3..6da14ab788ffa9e7a0f25d8ac183235d
              this.lastServerStatus = nano;
              this.status = this.buildServerStatus();
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 806a7392031ca1ca304aec9f6a3809bd4148097a..e86e76deb9780b1ab6d2d7bf9acd35053a2047fc 100644
+index 2d6df26f30029c8964d93fcb0e700adae9acac24..8b5dde9f9235291165e3075f1b9a17c79b37796c 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -1432,11 +1432,14 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
@@ -116,7 +116,7 @@ index 806a7392031ca1ca304aec9f6a3809bd4148097a..e86e76deb9780b1ab6d2d7bf9acd3505
              for (Entity passenger : entity.getPassengers()) {
                  this.tickPassenger(entity, passenger, isActive); // Paper - EAR 2
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index c063fa617ea79b758b9c4ef0456889a91e341ad4..e9a3512fb96e7000b8f6b5d6e3f73b157da91d76 100644
+index 3cd4e850f223100b61ac6831a87dd38f3a3bb58f..508fee327ea44ebb293326e56cf3420de47e3bb4 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -766,7 +766,34 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
@@ -171,10 +171,10 @@ index f03fa06c0ba56f7f5e1e45bc1568a490751efde3..eee1c14249addbf4714df733870da974
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 0981125224f34dcd54be7ef7769d3c11a1631623..8b44192da02d680abc4c16b304b28f89f2c7e64d 100644
+index b304a2f5cc264f304a60333d998106d955ac34e3..7b69508afb8a09b65c062795fd71fa836be3e883 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -5470,4 +5470,6 @@ public abstract class Entity
+@@ -5484,4 +5484,6 @@ public abstract class Entity
          return ((ServerLevel) this.level()).isPositionEntityTicking(this.blockPosition());
      }
      // Paper end
@@ -230,7 +230,7 @@ index 7c92c9335997cee76ff360c51f704ee41a180796..fb4cab83fd23c5561326a58683558e9a
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/entity/player/Player.java b/net/minecraft/world/entity/player/Player.java
-index 5d4b3ed09fe10f545d0720b2919f0d6c822d5196..8ca9d8bf87539c54c93bf1e61a9103b5493e1a08 100644
+index 2a71a2fa949b3a7fb8ff2c44ec3a3d8636237142..b0edbaf4f919e14fe911dc1166bccdbafd56a4ff 100644
 --- a/net/minecraft/world/entity/player/Player.java
 +++ b/net/minecraft/world/entity/player/Player.java
 @@ -1436,6 +1436,13 @@ public abstract class Player extends Avatar implements ContainerUser {

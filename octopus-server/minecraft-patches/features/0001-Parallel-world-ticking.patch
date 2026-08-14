@@ -76,7 +76,7 @@ index 162d7890f204315b0476467e757de5c9dd84aeca..161ad24648c7e0ea7f9e608bf498361c
                  // Paper end
                  // CraftBukkit start
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 68151ce05e7009f28dda0470c744920cbd5f4a27..c32579019af386f4c6a8ea61a51300831788c6eb 100644
+index 879f53a64e3070aca5f6c58a0e200b62c3e51117..5872a31bf92e9dd909f02fc760cded5e6b49809c 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -1,5 +1,9 @@
@@ -113,7 +113,7 @@ index 68151ce05e7009f28dda0470c744920cbd5f4a27..c32579019af386f4c6a8ea61a5130083
          if (!this.hasLoggedStop && this.isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread("Server stopped"); // Paper - Debugging
          this.shutdownThread = Thread.currentThread(); // Paper - Improved watchdog support
          org.spigotmc.WatchdogThread.doStop(); // Paper - Improved watchdog support
-@@ -1520,7 +1529,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1519,7 +1528,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          boolean ret = false; // Paper - force execution of all worlds, do not just bias the first
          if (this.tickRateManager.isSprinting() || this.shouldRunAllTasks() || this.haveTime()) {
              for (ServerLevel level : this.getAllLevels()) {
@@ -122,7 +122,7 @@ index 68151ce05e7009f28dda0470c744920cbd5f4a27..c32579019af386f4c6a8ea61a5130083
                      ret = true; // Paper - force execution of all worlds, do not just bias the first
                  }
              }
-@@ -1762,6 +1771,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1761,6 +1770,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
  
      public final io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList entitySchedulerTickList = new io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList(); // Paper - optimise Folia entity scheduler
  
@@ -139,7 +139,7 @@ index 68151ce05e7009f28dda0470c744920cbd5f4a27..c32579019af386f4c6a8ea61a5130083
      protected void tickChildren(final BooleanSupplier haveTime) {
          ProfilerFiller profiler = Profiler.get();
          this.getPlayerList().getPlayers().forEach(playerx -> playerx.connection.suspendFlushing());
-@@ -1812,26 +1831,62 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1811,26 +1830,62 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          this.updateEffectiveRespawnData();
  
          this.isIteratingOverLevels = true; // Paper - Throw exception on world create while being ticked
@@ -213,7 +213,7 @@ index 68151ce05e7009f28dda0470c744920cbd5f4a27..c32579019af386f4c6a8ea61a5130083
  
          profiler.popPush("connection");
 diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
-index c3adbe0753f6a4158f25126ed7443f8a958763d9..6e43269d5c06eb78c429ab8fa76de8c8d09fc5c0 100644
+index 075e294333115738b25b64a390df323276cf39f9..8c450f7db1a796527a677fc7e38497bf9c31c55c 100644
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
 @@ -116,7 +116,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
@@ -261,7 +261,7 @@ index c3adbe0753f6a4158f25126ed7443f8a958763d9..6e43269d5c06eb78c429ab8fa76de8c8
              if (chunk != null && chunk.sectionLightChanged(layer, pos.y())) {
                  this.chunkHoldersToBroadcast.add(chunk);
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index ca1725b9ad40f41e241447e14948ee4116c3e4c9..662665b9e9646dfc2bd01dc6aa9659a11f8a7dd9 100644
+index 59598bfb95c2f8a38efd92685c46a954dc76739d..d07004a2e3a28628fe7810d7f0564c062a283cd1 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -222,6 +222,25 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
@@ -291,10 +291,10 @@ index ca1725b9ad40f41e241447e14948ee4116c3e4c9..662665b9e9646dfc2bd01dc6aa9659a1
      private final ResourceKey<LevelStem> typeKey;
      public final String bukkitName;
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 1530810cdb74810e37e3e22ce4fcda4ee7511055..838af56d8d1263f432ffb8e9a0dd75e2c39cf674 100644
+index d958c4717739e588c5f8985dec5d215c745f49fc..e51bd22e8c5a1a9bc5d7f5fd0be9cc31d80e6c6b 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -4201,17 +4201,20 @@ public abstract class Entity
+@@ -4203,17 +4203,20 @@ public abstract class Entity
          // Paper end - Fix item duplication and teleport issues
          newEntity.restoreFrom(this);
          this.removeAfterChangingDimensions();

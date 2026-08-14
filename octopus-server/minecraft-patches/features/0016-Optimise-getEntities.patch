@@ -5,10 +5,10 @@ Subject: [PATCH] Optimise getEntities
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/ChunkEntitySlices.java b/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/ChunkEntitySlices.java
-index 8d9ce3d301d5f7e4106587ae00adb8dd5b8b6f88..ed3596919eeb9c3af3a6f4e9725a650ca0333d47 100644
+index 5b7ed8e5067683143c99473a126e17baa531903c..4e62de956fb5624aa1d8e41b7ff07bdc6f9b4cde 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/ChunkEntitySlices.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/level/entity/ChunkEntitySlices.java
-@@ -530,6 +530,14 @@ public final class ChunkEntitySlices {
+@@ -531,6 +531,14 @@ public final class ChunkEntitySlices {
  
              final BasicEntityList<Entity>[] entitiesBySection = this.entitiesBySection;
  
@@ -23,7 +23,7 @@ index 8d9ce3d301d5f7e4106587ae00adb8dd5b8b6f88..ed3596919eeb9c3af3a6f4e9725a650c
              for (int section = min; section <= max; ++section) {
                  final BasicEntityList<Entity> list = entitiesBySection[section - minSection];
  
-@@ -538,11 +546,18 @@ public final class ChunkEntitySlices {
+@@ -539,11 +547,18 @@ public final class ChunkEntitySlices {
                  }
  
                  final Entity[] storage = list.storage;
@@ -44,7 +44,7 @@ index 8d9ce3d301d5f7e4106587ae00adb8dd5b8b6f88..ed3596919eeb9c3af3a6f4e9725a650c
                          continue;
                      }
  
-@@ -569,6 +584,14 @@ public final class ChunkEntitySlices {
+@@ -571,6 +586,14 @@ public final class ChunkEntitySlices {
  
              final BasicEntityList<Entity>[] entitiesBySection = this.entitiesBySection;
  
@@ -59,7 +59,7 @@ index 8d9ce3d301d5f7e4106587ae00adb8dd5b8b6f88..ed3596919eeb9c3af3a6f4e9725a650c
              for (int section = min; section <= max; ++section) {
                  final BasicEntityList<Entity> list = entitiesBySection[section - minSection];
  
-@@ -577,11 +600,18 @@ public final class ChunkEntitySlices {
+@@ -579,11 +602,18 @@ public final class ChunkEntitySlices {
                  }
  
                  final Entity[] storage = list.storage;

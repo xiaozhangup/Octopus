@@ -1,0 +1,86 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Fri, 14 Aug 2026 12:47:00 +0800
+Subject: [PATCH] Defer player stats and advancements loading
+
+
+diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
+index 90395abc24fe284d89c0e7147b310e3f4ffe799c..12e959482354c983010e11014d57e5229f3456ed 100644
+--- a/net/minecraft/server/level/ServerPlayer.java
++++ b/net/minecraft/server/level/ServerPlayer.java
+@@ -233,8 +233,10 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+     public ServerGamePacketListenerImpl connection;
+     private final MinecraftServer server;
+     public final ServerPlayerGameMode gameMode;
+-    private final PlayerAdvancements advancements;
+-    private final ServerStatsCounter stats;
++    // Octopus start - Defer player stats and advancements loading
++    private PlayerAdvancements advancements;
++    private ServerStatsCounter stats;
++    // Octopus end - Defer player stats and advancements loading
+     private float lastRecordedHealthAndAbsorption = Float.MIN_VALUE;
+     private int lastRecordedFoodLevel = Integer.MIN_VALUE;
+     private int lastRecordedAirLevel = Integer.MIN_VALUE;
+@@ -472,15 +474,27 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+     }
+     // Paper end - rewrite chunk system
+ 
++    // Octopus start - Defer player stats and advancements loading
+     public ServerPlayer(final MinecraftServer server, final ServerLevel level, final GameProfile gameProfile, final ClientInformation clientInformation) {
++        this(server, level, gameProfile, clientInformation, false);
++    }
++
++    public ServerPlayer(
++        final MinecraftServer server,
++        final ServerLevel level,
++        final GameProfile gameProfile,
++        final ClientInformation clientInformation,
++        final boolean deferStatsAndAdvancements
++    ) {
+         super(level, gameProfile);
+         this.server = server;
+         this.textFilter = server.createTextFilterForPlayer(this);
+         this.gameMode = server.createGameModeForPlayer(this);
+         this.gameMode.setGameModeForPlayer(this.calculateGameModeForNewPlayer(null), null);
+         this.recipeBook = new ServerRecipeBook((id, output) -> server.getRecipeManager().listDisplaysForRecipe(id, output));
+-        this.stats = server.getPlayerList().getPlayerStats(this);
+-        this.advancements = server.getPlayerList().getPlayerAdvancements(this);
++        if (!deferStatsAndAdvancements) {
++            this.loadStatsAndAdvancements();
++        }
+         this.updateOptionsNoEvents(clientInformation); // Paper - don't call options events on login
+         this.object = null;
+         // CraftBukkit start
+@@ -491,6 +505,16 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+         // CraftBukkit end
+     }
+ 
++    public void loadStatsAndAdvancements() {
++        if (this.stats == null) {
++            this.stats = this.server.getPlayerList().getPlayerStats(this);
++        }
++        if (this.advancements == null) {
++            this.advancements = this.server.getPlayerList().getPlayerAdvancements(this);
++        }
++    }
++    // Octopus end - Defer player stats and advancements loading
++
+     @Override
+     public BlockPos adjustSpawnLocation(final ServerLevel level, final BlockPos spawnSuggestion) {
+         CompletableFuture<Vec3> future = PlayerSpawnFinder.findSpawn(level, spawnSuggestion);
+diff --git a/net/minecraft/server/network/config/PrepareSpawnTask.java b/net/minecraft/server/network/config/PrepareSpawnTask.java
+index f6601bc30fa37a309923ea9883b04233f83b2c0b..82a2cbfbcba837d299a95d58a486706099ebe8c2 100644
+--- a/net/minecraft/server/network/config/PrepareSpawnTask.java
++++ b/net/minecraft/server/network/config/PrepareSpawnTask.java
+@@ -184,6 +184,11 @@ public class PrepareSpawnTask implements ConfigurationTask {
+ 
+             Vec3 spawnPosition = this.spawnPosition.join();
+             if (this.chunkLoadFuture == null) {
++                // Octopus start - Defer player stats and advancements loading
++                if (PrepareSpawnTask.this.listener.connection.savedPlayerForLegacyEvents != null) {
++                    PrepareSpawnTask.this.listener.connection.savedPlayerForLegacyEvents.loadStatsAndAdvancements();
++                }
++                // Octopus end - Defer player stats and advancements loading
+                 // Paper start - PlayerSpawnLocationEvent
+                 if (this.eventFuture == null && org.spigotmc.event.player.PlayerSpawnLocationEvent.getHandlerList().getRegisteredListeners().length != 0) {
+                     ServerPlayer player;
