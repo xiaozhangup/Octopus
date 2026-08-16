@@ -1,0 +1,156 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Mon, 17 Aug 2026 00:58:43 +0800
+Subject: [PATCH] Add asynchronous world loading API
+
+
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index 122e66d21bf935595d2ca213f870fb9820d0e55a..0e675e3ddcf25af6a7673d1fd01eb8b959f09d8d 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -828,6 +828,27 @@ public final class Bukkit {
+         return server.createWorld(creator);
+     }
+ 
++    // Octopus start - asynchronous world loading
++    /**
++     * Creates or loads a world, optionally using the server's asynchronous
++     * world loader.
++     * When {@code async} is {@code true}, this method may be called from any
++     * thread. Otherwise, {@link #createWorld(WorldCreator)} thread requirements
++     * apply.
++     *
++     * @param creator the options to use when creating the world
++     * @param async whether to load the world asynchronously
++     * @return a non-null future that completes with the created or loaded
++     *     world; its completion value may be {@code null}, and loading failures
++     *     complete it exceptionally
++     * @see WorldCreator#createWorld(boolean)
++     */
++    @NotNull
++    public static java.util.concurrent.CompletableFuture<@Nullable World> createWorld(@NotNull WorldCreator creator, boolean async) {
++        return server.createWorld(creator, async);
++    }
++    // Octopus end - asynchronous world loading
++
+     /**
+      * Unloads a world with the given name.
+      * <p>
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index 52c429e9ae91f2c154148ce1216640ada608245a..32c276ed69f6e9e87a454cf4a949d781a00f97a6 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -750,6 +750,24 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+     @Nullable
+     public World createWorld(@NotNull WorldCreator creator);
+ 
++    // Octopus start - asynchronous world loading
++    /**
++     * Creates or loads a world, optionally using an asynchronous world loader.
++     * When {@code async} is {@code true}, this method may be called from any
++     * thread. Otherwise, {@link #createWorld(WorldCreator)} thread requirements
++     * apply.
++     *
++     * @param creator the options to use when creating the world
++     * @param async whether to load the world asynchronously
++     * @return a non-null future that completes with the created or loaded
++     *     world; its completion value may be {@code null}, and loading failures
++     *     complete it exceptionally
++     * @see WorldCreator#createWorld(boolean)
++     */
++    @NotNull
++    public java.util.concurrent.CompletableFuture<@Nullable World> createWorld(@NotNull WorldCreator creator, boolean async);
++    // Octopus end - asynchronous world loading
++
+     /**
+      * Unloads a world with the given name.
+      * <p>
+diff --git a/src/main/java/org/bukkit/WorldCreator.java b/src/main/java/org/bukkit/WorldCreator.java
+index 70138f614e1c71f15deab798937ec0182e0e9461..ee43a7e2541b6066da72d985ba2fa03f1852705b 100644
+--- a/src/main/java/org/bukkit/WorldCreator.java
++++ b/src/main/java/org/bukkit/WorldCreator.java
+@@ -92,6 +92,23 @@ public class WorldCreator {
+         this.uuid = uuid;
+     }
+ 
++    // Octopus start - asynchronous world loading
++    private WorldCreator(@NotNull WorldCreator creator) {
++        this.name = creator.name;
++        this.key = creator.key;
++        this.uuid = creator.uuid;
++        this.copy(creator);
++        Position position = creator.spawnPositionOverride;
++        if (position != null) {
++            this.spawnPositionOverride = position.isBlock()
++                ? Position.block(position.blockX(), position.blockY(), position.blockZ())
++                : Position.fine(position.x(), position.y(), position.z());
++        }
++        this.spawnYawOverride = creator.spawnYawOverride;
++        this.spawnPitchOverride = creator.spawnPitchOverride;
++    }
++    // Octopus end - asynchronous world loading
++
+     /**
+      * Creates an empty WorldCreator for the given key.
+      *
+@@ -211,6 +228,20 @@ public class WorldCreator {
+         return this;
+     }
+ 
++    // Octopus start - asynchronous world loading
++    /**
++     * Creates a snapshot for deferred server use.
++     *
++     * @return a snapshot of this creator
++     * @hidden
++     */
++    @ApiStatus.Internal
++    @NotNull
++    public WorldCreator snapshot() {
++        return new WorldCreator(this);
++    }
++    // Octopus end - asynchronous world loading
++
+     /**
+      * Gets the legacy Bukkit name of the world that is to be loaded or created.
+      *
+@@ -632,6 +663,39 @@ public class WorldCreator {
+         return Bukkit.createWorld(this);
+     }
+ 
++    // Octopus start - asynchronous world loading
++    /**
++     * Creates or loads a world, optionally using Octopus' asynchronous world
++     * loader.
++     * <p>
++     * When {@code async} is {@code false}, this has the same thread requirements
++     * as {@link #createWorld()} and blocks until loading finishes. When it is
++     * {@code true}, it may be called from any thread and returns without waiting.
++     * {@link org.bukkit.event.world.WorldInitEvent} and
++     * {@link org.bukkit.event.world.WorldLoadEvent} still run on the server
++     * thread. When loading is needed, the future completes after the load event,
++     * and the world is absent from Bukkit's global lookups until that event begins.
++     * <p>
++     * Asynchronous loading currently supports existing worlds that have
++     * already been initialized and contain saved world generation settings.
++     * A world that does not meet these requirements must first be loaded and
++     * saved synchronously.
++     * <p>
++     * Cancelling the returned future does not cancel a world load that has
++     * already started.
++     *
++     * @param async whether to load the world asynchronously
++     * @return a non-null future that completes with the created or loaded
++     *     world; the completion value may be {@code null} when the legacy
++     *     synchronous API would return {@code null}, and loading failures
++     *     complete it exceptionally
++     */
++    @NotNull
++    public java.util.concurrent.CompletableFuture<@Nullable World> createWorld(boolean async) {
++        return Bukkit.createWorld(this, async);
++    }
++    // Octopus end - asynchronous world loading
++
+     /**
+      * Creates a new {@link WorldCreator} for the given world name
+      *

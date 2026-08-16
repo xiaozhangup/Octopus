@@ -1,0 +1,484 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Mon, 17 Aug 2026 00:58:43 +0800
+Subject: [PATCH] Add asynchronous world loading API
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index e85b7b0277a053d4bd1e49badc92b8f3b3d0e220..64e758d6b9c3279c1bb9dccef780c1b1297ab1e3 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -277,6 +277,12 @@ public final class CraftServer implements Server {
+     final DedicatedServer console;
+     private final DedicatedPlayerList playerList;
+     private final Map<String, World> worlds = new LinkedHashMap<>();
++    // Octopus start - asynchronous world loading
++    private final Object worldLifecycleLock = new Object();
++    private final Set<String> loadingWorldNames = new HashSet<>();
++    private final Set<NamespacedKey> loadingWorldKeys = new HashSet<>();
++    private final Set<me.xiaozhangup.octopus.world.AsyncWorldLoad> asyncWorldLoads = new HashSet<>();
++    // Octopus end - asynchronous world loading
+     private YamlConfiguration configuration;
+     private YamlConfiguration commandsConfiguration;
+     private final Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
+@@ -1164,6 +1170,10 @@ public final class CraftServer implements Server {
+ 
+     @Override
+     public World createWorld(WorldCreator creator) {
++        return this.createWorld(creator, false).join(); // Octopus - asynchronous world loading
++    }
++
++    private @Nullable World createWorldSync(WorldCreator creator) { // Octopus - asynchronous world loading
+         Preconditions.checkState(this.console.getAllLevels().iterator().hasNext(), "Cannot create additional worlds on STARTUP");
+         //Preconditions.checkState(!this.console.isIteratingOverLevels, "Cannot create a world while worlds are being ticked"); // Paper - Cat - Temp disable. We'll see how this goes.
+         Preconditions.checkArgument(creator != null, "WorldCreator cannot be null");
+@@ -1181,6 +1191,17 @@ public final class CraftServer implements Server {
+             throw new IllegalArgumentException("Cannot create a world with key " + creator.key() + " and name " + name + " one (or both) already match a world that exists");
+         }
+ 
++        // Octopus start - asynchronous world loading
++        synchronized (this.worldLifecycleLock) {
++            Preconditions.checkState(
++                !this.loadingWorldNames.contains(name.toLowerCase(Locale.ROOT)) && !this.loadingWorldKeys.contains(creator.key()),
++                "World %s (%s) is already being loaded",
++                name,
++                creator.key()
++            );
++        }
++        // Octopus end - asynchronous world loading
++
+         if (chunkGenerator == null) {
+             chunkGenerator = this.getGenerator(name);
+         }
+@@ -1189,6 +1210,259 @@ public final class CraftServer implements Server {
+             biomeProvider = this.getBiomeProvider(name);
+         }
+ 
++        // Octopus start - asynchronous world loading
++        me.xiaozhangup.octopus.world.PreparedWorld prepared = this.prepareWorld(creator, chunkGenerator, biomeProvider, false);
++        ServerLevel serverLevel = this.createServerLevel(prepared);
++        // Octopus end - asynchronous world loading
++
++        this.addWorld(serverLevel.getWorld()); // Octopus - asynchronous world loading
++        if (!(this.worlds.containsKey(name.toLowerCase(Locale.ROOT)))) {
++            return null;
++        }
++
++        this.console.addLevel(serverLevel);
++        this.console.initWorld(serverLevel, creator);
++
++        serverLevel.setSpawnSettings(true);
++
++        this.getServer().prepareLevel(serverLevel);
++
++        return serverLevel.getWorld();
++    }
++
++    // Octopus start - asynchronous world loading
++    @Override
++    public java.util.concurrent.CompletableFuture<@Nullable World> createWorld(WorldCreator creator, boolean async) {
++        if (!async) {
++            return java.util.concurrent.CompletableFuture.completedFuture(this.createWorldSync(creator));
++        }
++        Preconditions.checkArgument(creator != null, "WorldCreator cannot be null");
++
++        me.xiaozhangup.octopus.world.AsyncWorldLoad load = new me.xiaozhangup.octopus.world.AsyncWorldLoad(creator.snapshot());
++        synchronized (this.worldLifecycleLock) {
++            this.asyncWorldLoads.add(load);
++        }
++        if (!this.console.isRunning() || this.console.hasStopped()) {
++            this.abandonWorldLoad(load, new IllegalStateException("Server is stopping"));
++            return load.future;
++        }
++
++        this.console.scheduleOnMain(() -> this.beginWorldLoad(load));
++        return load.future;
++    }
++
++    private void beginWorldLoad(me.xiaozhangup.octopus.world.AsyncWorldLoad load) {
++        if (load.finished.get()) {
++            return;
++        }
++
++        WorldCreator creator = load.creator;
++        try {
++            Preconditions.checkState(this.console.isRunning() && !this.console.hasStopped(), "Server is stopping");
++            Preconditions.checkState(this.console.getAllLevels().iterator().hasNext(), "Cannot create additional worlds on STARTUP");
++            World existing = this.reserveAsyncWorld(load);
++            if (existing != null) {
++                this.completeWorldLoad(load, existing);
++                return;
++            }
++
++            ChunkGenerator chunkGenerator = creator.generator();
++            BiomeProvider biomeProvider = creator.biomeProvider();
++            if (chunkGenerator == null) {
++                chunkGenerator = this.getGenerator(creator.name());
++            }
++            if (biomeProvider == null) {
++                biomeProvider = this.getBiomeProvider(creator.name());
++            }
++            Preconditions.checkState(!this.console.options.has("forceUpgrade"), "Asynchronous world loading is unavailable while --forceUpgrade is enabled");
++
++            ChunkGenerator finalChunkGenerator = chunkGenerator;
++            BiomeProvider finalBiomeProvider = biomeProvider;
++            this.console.submitWorldLoad(() -> {
++                me.xiaozhangup.octopus.world.PreparedWorld prepared = this.prepareWorld(creator, finalChunkGenerator, finalBiomeProvider, true);
++                load.prepared = prepared;
++                return prepared;
++            })
++                .whenComplete((prepared, throwable) -> {
++                    if (!this.console.isRunning() || this.console.hasStopped()) {
++                        return;
++                    }
++                    this.console.scheduleOnMain(() -> {
++                        if (throwable != null) {
++                            this.failWorldLoad(load, throwable);
++                        } else {
++                            this.commitWorldLoad(load, prepared);
++                        }
++                    });
++                });
++        } catch (Throwable throwable) {
++            this.failWorldLoad(load, throwable);
++        }
++    }
++
++    private void commitWorldLoad(me.xiaozhangup.octopus.world.AsyncWorldLoad load, me.xiaozhangup.octopus.world.PreparedWorld prepared) {
++        if (load.finished.get()) {
++            return;
++        }
++
++        try {
++            Preconditions.checkState(this.console.isRunning() && !this.console.hasStopped(), "Server is stopping");
++            ServerLevel serverLevel = this.createServerLevel(prepared);
++            load.level = serverLevel;
++            load.prepared = null;
++            if (load.finished.get()) {
++                load.level = null;
++                this.discardWorld(serverLevel);
++                return;
++            }
++
++            if (this.getWorld(serverLevel.getWorld().getUID()) != null) {
++                System.out.println("World " + serverLevel.getWorld().key().asString() + " is a duplicate of another world and has been prevented from loading. Please remove or change the duplicated Paper world metadata before loading it again.");
++                load.level = null;
++                this.discardWorld(serverLevel);
++                this.completeWorldLoad(load, null);
++                return;
++            }
++
++            this.console.initWorld(serverLevel, load.creator);
++            serverLevel.setSpawnSettings(true);
++            this.console.submitWorldLoad(() -> {
++                this.console.prepareLevelChunks(serverLevel);
++                return null;
++            }).whenComplete((ignored, throwable) -> {
++                if (!this.console.isRunning() || this.console.hasStopped()) {
++                    return;
++                }
++                this.console.scheduleOnMain(() -> {
++                    if (load.finished.get()) {
++                        return;
++                    }
++                    if (throwable != null) {
++                        this.failWorldLoad(load, throwable);
++                        return;
++                    }
++
++                    try {
++                        Preconditions.checkState(this.console.isRunning() && !this.console.hasStopped(), "Server is stopping");
++                        this.addWorld(serverLevel.getWorld());
++                        Preconditions.checkState(
++                            this.worlds.get(serverLevel.getWorld().getName().toLowerCase(Locale.ROOT)) == serverLevel.getWorld(),
++                            "World %s could not be published",
++                            serverLevel.getWorld().getName()
++                        );
++                        this.console.addLevel(serverLevel);
++                        this.console.finishPreparingLevel(serverLevel);
++                        load.level = null;
++                        this.completeWorldLoad(load, serverLevel.getWorld());
++                    } catch (Throwable finishFailure) {
++                        this.failWorldLoad(load, finishFailure);
++                    }
++                });
++            });
++        } catch (Throwable throwable) {
++            this.failWorldLoad(load, throwable);
++        }
++    }
++
++    private void failWorldLoad(me.xiaozhangup.octopus.world.AsyncWorldLoad load, Throwable throwable) {
++        if (!load.finished.compareAndSet(false, true)) {
++            return;
++        }
++
++        me.xiaozhangup.octopus.world.PreparedWorld prepared = load.prepared;
++        load.prepared = null;
++        ServerLevel level = load.level;
++        load.level = null;
++        try {
++            if (level != null) {
++                this.discardWorld(level);
++            } else if (prepared != null) {
++                java.util.Objects.requireNonNull(prepared.savedDataStorage()).discard();
++            }
++        } catch (Throwable closeFailure) {
++            throwable.addSuppressed(closeFailure);
++        } finally {
++            this.releaseWorldLoad(load);
++            load.future.completeExceptionally(throwable);
++        }
++    }
++
++    private void completeWorldLoad(me.xiaozhangup.octopus.world.AsyncWorldLoad load, @Nullable World world) {
++        if (!load.finished.compareAndSet(false, true)) {
++            return;
++        }
++        this.releaseWorldLoad(load);
++        load.future.complete(world);
++    }
++
++    private void abandonWorldLoad(me.xiaozhangup.octopus.world.AsyncWorldLoad load, Throwable throwable) {
++        if (!load.finished.compareAndSet(false, true)) {
++            return;
++        }
++        this.releaseWorldLoad(load);
++        load.future.completeExceptionally(throwable);
++    }
++
++    private void releaseWorldLoad(me.xiaozhangup.octopus.world.AsyncWorldLoad load) {
++        synchronized (this.worldLifecycleLock) {
++            if (load.reserved) {
++                this.loadingWorldNames.remove(load.creator.name().toLowerCase(Locale.ROOT));
++                this.loadingWorldKeys.remove(load.creator.key());
++                load.reserved = false;
++            }
++            this.asyncWorldLoads.remove(load);
++        }
++    }
++
++    public void cancelWorldLoads(boolean discard) {
++        List<me.xiaozhangup.octopus.world.AsyncWorldLoad> loads;
++        synchronized (this.worldLifecycleLock) {
++            loads = List.copyOf(this.asyncWorldLoads);
++        }
++        for (me.xiaozhangup.octopus.world.AsyncWorldLoad load : loads) {
++            if (discard) {
++                this.failWorldLoad(load, new IllegalStateException("Server is stopping"));
++            } else {
++                this.abandonWorldLoad(load, new IllegalStateException("Server is stopping"));
++            }
++        }
++    }
++
++    private @Nullable World reserveAsyncWorld(me.xiaozhangup.octopus.world.AsyncWorldLoad load) {
++        WorldCreator creator = load.creator;
++        String name = creator.name();
++        String normalizedName = name.toLowerCase(Locale.ROOT);
++        synchronized (this.worldLifecycleLock) {
++            World world = this.getWorld(name);
++            World worldByKey = this.getWorld(creator.key());
++            if (world != null || worldByKey != null) {
++                if (world == worldByKey) {
++                    return world;
++                }
++                throw new IllegalArgumentException("Cannot create a world with key " + creator.key() + " and name " + name + " one (or both) already match a world that exists");
++            }
++
++            Preconditions.checkState(
++                !this.loadingWorldNames.contains(normalizedName) && !this.loadingWorldKeys.contains(creator.key()),
++                "World %s (%s) is already being loaded",
++                name,
++                creator.key()
++            );
++            this.loadingWorldNames.add(normalizedName);
++            this.loadingWorldKeys.add(creator.key());
++            load.reserved = true;
++        }
++        return null;
++    }
++    // Octopus end - asynchronous world loading
++
++    private me.xiaozhangup.octopus.world.PreparedWorld prepareWorld(WorldCreator creator, @Nullable ChunkGenerator chunkGenerator, @Nullable BiomeProvider biomeProvider, boolean async) { // Octopus - asynchronous world loading
++        String name = creator.name();
++        // Octopus start - asynchronous world loading
++        if (async) {
++            this.checkWorldLoadCancelled();
++        }
++        // Octopus end - asynchronous world loading
+         ResourceKey<LevelStem> actualDimension = switch (creator.environment()) {
+             case NORMAL -> LevelStem.OVERWORLD;
+             case NETHER -> LevelStem.NETHER;
+@@ -1214,6 +1488,11 @@ public final class CraftServer implements Server {
+         } catch (final IOException ex) {
+             throw new RuntimeException("Failed to migrate legacy world " + name, ex);
+         }
++        // Octopus start - asynchronous world loading
++        if (async) {
++            this.checkWorldLoadCancelled();
++        }
++        // Octopus end - asynchronous world loading
+         PaperWorldLoader.LoadedWorldData loadedWorldData = PaperWorldLoader.loadWorldData(
+             this.console,
+             dimensionKey,
+@@ -1227,12 +1506,23 @@ public final class CraftServer implements Server {
+                 loadedWorldData.levelOverrides()
+             );
+         }
++        // Octopus start - asynchronous world loading
++        if (async) {
++            Preconditions.checkState(
++                loadedWorldData.levelOverrides().isInitialized(),
++                "Asynchronous world loading only supports existing initialized worlds; load and save %s synchronously once first",
++                name
++            );
++            this.checkWorldLoadCancelled();
++        }
++        // Octopus end - asynchronous world loading
+         final PrimaryLevelData primaryLevelData = (PrimaryLevelData) this.console.getWorldData();
+         WorldGenSettings worldGenSettings = LevelStorageSource.readExistingSavedData(this.console.storageSource, dimensionKey, registryAccess, WorldGenSettings.TYPE)
+             .result()
+             .orElse(null);
+         RegistryAccess contextRegistryAccess = registryAccess;
+         if (worldGenSettings == null) {
++            Preconditions.checkState(!async, "Asynchronous world loading only supports existing worlds with saved world generation settings: %s", name); // Octopus - asynchronous world loading
+             WorldOptions worldOptions = new WorldOptions(creator.seed(), creator.generateStructures(), creator.bonusChest());
+ 
+             String flatGenSettings = creator.generatorSettings();
+@@ -1265,7 +1555,7 @@ public final class CraftServer implements Server {
+ 
+         levelStemRegistry = contextRegistryAccess.lookupOrThrow(Registries.LEVEL_STEM);
+ 
+-        if (this.console.options.has("forceUpgrade")) {
++        if (!async && this.console.options.has("forceUpgrade")) { // Octopus - asynchronous world loading
+             net.minecraft.server.Main.forceUpgrade(this.console.storageSource, DataFixers.getDataFixer(), this.console.options.has("eraseCache"), () -> true, contextRegistryAccess, this.console.options.has("recreateRegionFiles"));
+         }
+ 
+@@ -1278,49 +1568,101 @@ public final class CraftServer implements Server {
+             throw new IllegalStateException("Missing level stem for world " + name + " using key " + actualDimension);
+         }
+ 
+-        WorldInfo worldInfo = new CraftWorldInfo(loadedWorldData.bukkitName(), CraftNamespacedKey.fromMinecraft(dimensionKey.identifier()), genSettingsFinal.options().seed(), primaryLevelData.enabledFeatures(), creator.environment(), customStem.type().value(), customStem.generator(), registryAccess, loadedWorldData.uuid());
+-        if (biomeProvider == null && chunkGenerator != null) {
+-            biomeProvider = chunkGenerator.getDefaultBiomeProvider(worldInfo);
++        // Octopus start - asynchronous world loading
++        @Nullable SavedDataStorage savedDataStorage = null;
++        if (async) {
++            savedDataStorage = new SavedDataStorage(this.console.storageSource.getDimensionPath(dimensionKey).resolve(LevelResource.DATA.id()), this.console.getFixerUpper(), registryAccess);
++            try {
++                savedDataStorage.set(WorldGenSettings.TYPE, new WorldGenSettings(genSettingsFinal.options(), genSettingsFinal.dimensions()));
++                savedDataStorage.computeIfAbsent(net.minecraft.world.level.gamerules.GameRuleMap.TYPE);
++                savedDataStorage.computeIfAbsent(net.minecraft.world.level.saveddata.WeatherData.TYPE);
++                savedDataStorage.computeIfAbsent(net.minecraft.world.level.timers.TimerQueue.TYPE);
++                if (!GlobalConfiguration.get().time.affectsAllWorlds) {
++                    savedDataStorage.computeIfAbsent(net.minecraft.world.clock.ServerClockManager.TYPE);
++                }
++                savedDataStorage.computeIfAbsent(net.minecraft.world.level.TicketStorage.TYPE);
++                savedDataStorage.computeIfAbsent(net.minecraft.world.entity.raid.Raids.TYPE);
++                if (customStem.type().value().hasEnderDragonFight()) {
++                    savedDataStorage.computeIfAbsent(net.minecraft.world.level.dimension.end.EnderDragonFight.TYPE);
++                }
++                savedDataStorage.computeIfAbsent(net.minecraft.world.level.border.WorldBorder.TYPE);
++                this.checkWorldLoadCancelled();
++            } catch (RuntimeException | Error failure) {
++                try {
++                    savedDataStorage.discard();
++                } catch (RuntimeException closeFailure) {
++                    failure.addSuppressed(closeFailure);
++                }
++                throw failure;
++            }
++        }
++        // Octopus end - asynchronous world loading
++
++        return new me.xiaozhangup.octopus.world.PreparedWorld(creator, chunkGenerator, biomeProvider, actualDimension, dimensionKey, registryAccess, primaryLevelData, loadedWorldData, genSettingsFinal, customStem, biomeZoomSeed, savedDataStorage); // Octopus - asynchronous world loading
++    }
++
++    // Octopus start - asynchronous world loading
++    private void checkWorldLoadCancelled() {
++        if (!this.console.isRunning() || this.console.hasStopped() || Thread.currentThread().isInterrupted()) {
++            throw new java.util.concurrent.CancellationException("Server is stopping");
++        }
++    }
++    // Octopus end - asynchronous world loading
++
++    private ServerLevel createServerLevel(me.xiaozhangup.octopus.world.PreparedWorld prepared) { // Octopus - asynchronous world loading
++        // Octopus start - asynchronous world loading
++        WorldCreator creator = prepared.creator();
++        BiomeProvider biomeProvider = prepared.biomeProvider();
++        WorldInfo worldInfo = new CraftWorldInfo(prepared.loadedWorldData().bukkitName(), CraftNamespacedKey.fromMinecraft(prepared.dimensionKey().identifier()), prepared.worldGenSettings().options().seed(), prepared.primaryLevelData().enabledFeatures(), creator.environment(), prepared.customStem().type().value(), prepared.customStem().generator(), prepared.registryAccess(), prepared.loadedWorldData().uuid());
++        if (biomeProvider == null && prepared.chunkGenerator() != null) {
++            biomeProvider = prepared.chunkGenerator().getDefaultBiomeProvider(worldInfo);
+         }
++        // Octopus end - asynchronous world loading
+ 
+-        final SavedDataStorage savedDataStorage = new SavedDataStorage(this.console.storageSource.getDimensionPath(dimensionKey).resolve(LevelResource.DATA.id()), this.console.getFixerUpper(), registryAccess);
+-        savedDataStorage.set(WorldGenSettings.TYPE, new WorldGenSettings(genSettingsFinal.options(), genSettingsFinal.dimensions()));
++        // Octopus start - asynchronous world loading
++        SavedDataStorage savedDataStorage = prepared.savedDataStorage();
++        if (savedDataStorage == null) {
++            savedDataStorage = new SavedDataStorage(this.console.storageSource.getDimensionPath(prepared.dimensionKey()).resolve(LevelResource.DATA.id()), this.console.getFixerUpper(), prepared.registryAccess());
++            savedDataStorage.set(WorldGenSettings.TYPE, new WorldGenSettings(prepared.worldGenSettings().options(), prepared.worldGenSettings().dimensions()));
++        }
++        // Octopus end - asynchronous world loading
+         List<CustomSpawner> list = ImmutableList.of(
+             new PhantomSpawner(), new PatrolSpawner(), new CatSpawner(), new VillageSiege(), new WanderingTraderSpawner(savedDataStorage)
+         );
+ 
+-        ServerLevel serverLevel = new ServerLevel(
++        return new ServerLevel( // Octopus - asynchronous world loading
+             this.console,
+             Util.backgroundExecutor(),
+             this.console.storageSource,
+-            genSettingsFinal,
+-            dimensionKey,
+-            customStem,
+-            primaryLevelData.isDebugWorld(),
+-            biomeZoomSeed,
++            // Octopus start - asynchronous world loading
++            prepared.worldGenSettings(),
++            prepared.dimensionKey(),
++            prepared.customStem(),
++            prepared.primaryLevelData().isDebugWorld(),
++            prepared.biomeZoomSeed(),
++            // Octopus end - asynchronous world loading
+             creator.environment() == Environment.NORMAL ? list : ImmutableList.of(),
+             true,
+-            actualDimension,
++            prepared.actualDimension(), // Octopus - asynchronous world loading
+             creator.environment(),
+-            chunkGenerator,
++            prepared.chunkGenerator(), // Octopus - asynchronous world loading
+             biomeProvider,
+             savedDataStorage,
+-            loadedWorldData
++            prepared.loadedWorldData() // Octopus - asynchronous world loading
+         );
++    }
+ 
+-        if (!(this.worlds.containsKey(name.toLowerCase(Locale.ROOT)))) {
+-            return null;
++    // Octopus start - asynchronous world loading
++    private void discardWorld(ServerLevel serverLevel) {
++        this.console.removeLevel(serverLevel);
++        this.worlds.remove(serverLevel.getWorld().getName().toLowerCase(Locale.ROOT), serverLevel.getWorld());
++        try {
++            serverLevel.getChunkSource().discard();
++        } catch (Exception exception) {
++            this.logger.log(Level.SEVERE, "Failed to discard partially loaded world " + serverLevel.getWorld().getName(), exception);
+         }
+-
+-        this.console.addLevel(serverLevel);
+-        this.console.initWorld(serverLevel, creator);
+-
+-        serverLevel.setSpawnSettings(true);
+-
+-        this.getServer().prepareLevel(serverLevel);
+-
+-        return serverLevel.getWorld();
+     }
++    // Octopus end - asynchronous world loading
+ 
+     @Override
+     public boolean unloadWorld(String name, boolean save) {

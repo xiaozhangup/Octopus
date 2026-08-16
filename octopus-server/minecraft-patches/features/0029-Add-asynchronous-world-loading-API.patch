@@ -1,0 +1,186 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Mon, 17 Aug 2026 00:58:43 +0800
+Subject: [PATCH] Add asynchronous world loading API
+
+
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index 4f0833f83992dd8c910fb20964cc558e5c01c862..9be0ca299492b4146e4686b830c9bbe0cdf549d4 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -746,6 +746,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+                 loading.data()
+             );
+         }
++        this.server.addWorld(serverLevel.getWorld()); // Octopus - asynchronous world loading
+         this.addLevel(serverLevel);
+         this.initWorld(serverLevel, null);
+     }
+@@ -915,6 +916,42 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+         new org.bukkit.event.world.WorldLoadEvent(level.getWorld()).callEvent(); // Paper - call WorldLoadEvent
+     }
+ 
++    // Octopus start - asynchronous world loading
++    public void prepareLevelChunks(ServerLevel level) {
++        level.worldTaskQueueInstance.acquirePoller();
++        try {
++            ChunkLoadCounter chunkLoadCounter = new ChunkLoadCounter();
++            chunkLoadCounter.track(level, () -> {
++                TicketStorage savedTickets = level.getDataStorage().get(TicketStorage.TYPE);
++                if (savedTickets != null) {
++                    savedTickets.activateAllDeactivatedTickets();
++                }
++            });
++            level.levelLoadListener.start(LevelLoadListener.Stage.LOAD_INITIAL_CHUNKS, chunkLoadCounter.totalChunks());
++            do {
++                if (this.hasStopped() || Thread.currentThread().isInterrupted()) {
++                    throw new java.util.concurrent.CancellationException("Server is stopping");
++                }
++                level.levelLoadListener.update(LevelLoadListener.Stage.LOAD_INITIAL_CHUNKS, chunkLoadCounter.readyChunks(), chunkLoadCounter.totalChunks());
++                level.worldTaskQueueInstance.pollTasks();
++                java.util.concurrent.locks.LockSupport.parkNanos("executing tasks", 1000L);
++            } while (chunkLoadCounter.pendingChunks() > 0);
++            level.levelLoadListener.finish(LevelLoadListener.Stage.LOAD_INITIAL_CHUNKS);
++        } finally {
++            level.worldTaskQueueInstance.releasePoller();
++        }
++    }
++
++    public void finishPreparingLevel(ServerLevel level) {
++        if (Thread.currentThread() != this.serverThread) {
++            throw new IllegalStateException("World loading must finish on the server thread");
++        }
++        level.setSpawnSettings(level.isSpawningMonsters());
++        this.updateEffectiveRespawnData();
++        new org.bukkit.event.world.WorldLoadEvent(level.getWorld()).callEvent();
++    }
++    // Octopus end - asynchronous world loading
++
+     protected GlobalPos selectLevelLoadFocusPos() {
+         return this.worldData.overworldData().getRespawnData().globalPos();
+     }
+@@ -1014,6 +1051,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+             if (this.hasStopped) return;
+             this.hasStopped = true;
+         }
++        // Octopus start - asynchronous world loading
++        this.worldLoadExecutor.shutdownNow();
++        final boolean worldLoaderStopped = this.awaitWorldLoaderShutdown();
++        if (this.server != null) this.server.cancelWorldLoads(worldLoaderStopped && Thread.currentThread() == this.serverThread);
++        // Octopus end - asynchronous world loading
+         this.worldTickExecutor.shutdownNow(); // Octopus
+         if (!this.hasLoggedStop && this.isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread("Server stopped"); // Paper - Debugging
+         this.shutdownThread = Thread.currentThread(); // Paper - Improved watchdog support
+@@ -1811,6 +1853,61 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+         wrapped.setContextClassLoader(MinecraftServer.class.getClassLoader());
+         return wrapped;
+     });
++
++    // Octopus start - asynchronous world loading
++    private volatile Thread worldLoadThread;
++    private final java.util.concurrent.ExecutorService worldLoadExecutor = java.util.concurrent.Executors.newSingleThreadExecutor(task -> {
++        final TickThread wrapped = new TickThread(task, "Octopus World Loader");
++        wrapped.setPriority(6);
++        wrapped.setDaemon(true); // Octopus - asynchronous world loading
++        wrapped.setContextClassLoader(MinecraftServer.class.getClassLoader());
++        this.worldLoadThread = wrapped;
++        return wrapped;
++    });
++
++    public <T> CompletableFuture<T> submitWorldLoad(final Supplier<T> loader) {
++        synchronized (this.stopLock) {
++            if (!this.running || this.hasStopped) {
++                return CompletableFuture.failedFuture(new IllegalStateException("Server is stopping"));
++            }
++
++            try {
++                return CompletableFuture.supplyAsync(() -> {
++                    if (!this.running || this.hasStopped()) {
++                        throw new IllegalStateException("Server is stopping");
++                    }
++                    return loader.get();
++                }, this.worldLoadExecutor);
++            } catch (RejectedExecutionException exception) {
++                return CompletableFuture.failedFuture(exception);
++            }
++        }
++    }
++
++    private boolean awaitWorldLoaderShutdown() {
++        if (Thread.currentThread() == this.worldLoadThread) {
++            return false;
++        }
++
++        final long deadline = Util.getNanos() + java.util.concurrent.TimeUnit.SECONDS.toNanos(30L);
++        boolean interrupted = false;
++        while (!this.worldLoadExecutor.isTerminated() && Util.getNanos() < deadline) {
++            try {
++                this.worldLoadExecutor.awaitTermination(1L, java.util.concurrent.TimeUnit.SECONDS);
++            } catch (InterruptedException exception) {
++                interrupted = true;
++            }
++        }
++        if (interrupted) {
++            Thread.currentThread().interrupt();
++        }
++        if (!this.worldLoadExecutor.isTerminated()) {
++            LOGGER.error("World loader did not stop within 30 seconds; abandoning partial loads during shutdown");
++            return false;
++        }
++        return true;
++    }
++    // Octopus end - asynchronous world loading
+     // Octopus end
+ 
+     protected void tickChildren(final BooleanSupplier haveTime) {
+diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
+index 8c450f7db1a796527a677fc7e38497bf9c31c55c..366d053ea4ac6e8fce2f80f98b5a2b62de185594 100644
+--- a/net/minecraft/server/level/ServerChunkCache.java
++++ b/net/minecraft/server/level/ServerChunkCache.java
+@@ -464,6 +464,13 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+         ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.close(save, true); // Paper - rewrite chunk system
+     }
+ 
++    // Octopus start - asynchronous world loading
++    public void discard() {
++        ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.close(false, true);
++        this.savedDataStorage.discard();
++    }
++    // Octopus end - asynchronous world loading
++
+     // CraftBukkit start - modelled on below
+     public void purgeUnload() {
+         if (true) return; // Paper - rewrite chunk system
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index 7ca4a5112c51a4c3e31ee6debe50aa3fed7604a1..758bfb1a0a015c551a7b0b92d2ebc66c277e2647 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -772,7 +772,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+         this.poiDataController = new ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.PoiDataController((ServerLevel)(Object)this, this.chunkTaskScheduler);
+         this.chunkDataController = new ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.ChunkDataController((ServerLevel)(Object)this, this.chunkTaskScheduler);
+         // Paper end - rewrite chunk system
+-        this.getCraftServer().addWorld(this.getWorld()); // CraftBukkit
++        // this.getCraftServer().addWorld(this.getWorld()); // CraftBukkit // Octopus start - asynchronous world loading
+     }
+ 
+     // Paper start
+diff --git a/net/minecraft/world/level/storage/SavedDataStorage.java b/net/minecraft/world/level/storage/SavedDataStorage.java
+index 2a9574d5d1254cb24b76bac8132838e09655ffb6..52de751385fe89b23a7ea15320dbd7d8be78d0e2 100644
+--- a/net/minecraft/world/level/storage/SavedDataStorage.java
++++ b/net/minecraft/world/level/storage/SavedDataStorage.java
+@@ -333,4 +333,15 @@ public class SavedDataStorage implements AutoCloseable {
+         this.saveAndJoin();
+         this.closed = true;
+     }
++
++    // Octopus start - asynchronous world loading
++    public void discard() {
++        if (this.closed) {
++            throw new IllegalStateException("Trying to close SavedDataStorage when it is already closed");
++        }
++
++        this.pendingWriteFuture.join();
++        this.closed = true;
++    }
++    // Octopus end - asynchronous world loading
+ }
