@@ -21,6 +21,7 @@ Powered by ```HAPPYLAND AssiahLand```
 - 加载世界时允许指定 UUID (Octopus)
 - 新增可选异步世界加载 API (Octopus) (由 AI 完成, 未知可靠性)
 - 迁移世界时保留额外的数据 (Octopus)
+- 优化空岛情况下的 EnderPortal 扫描逻辑 (Octopus)
 - 为聊天和验证使用虚拟线程 (Leaf)
 - 优化了一些实体移动的数据包相关 (Leaf)
 - 优化了 NearestLivingEntitySensor (Leaf)
