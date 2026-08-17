@@ -1,0 +1,73 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Mon, 17 Aug 2026 22:57:10 +0800
+Subject: [PATCH] Skip impossible end exit portal pattern scans
+
+
+diff --git a/net/minecraft/world/level/dimension/end/EnderDragonFight.java b/net/minecraft/world/level/dimension/end/EnderDragonFight.java
+index 26926083cbb2722bb5fbcbc81bcc44a99799ad9e..7d6c305ed4be8604249b50cd71895fecf638cc7e 100644
+--- a/net/minecraft/world/level/dimension/end/EnderDragonFight.java
++++ b/net/minecraft/world/level/dimension/end/EnderDragonFight.java
+@@ -90,6 +90,7 @@ public class EnderDragonFight extends SavedData {
+         .aisle("       ", "  ###  ", " ##### ", " ##### ", " ##### ", "  ###  ", "       ")
+         .where('#', BlockInWorld.hasState(BlockPredicate.forBlock(Blocks.BEDROCK)))
+         .build();
++    private static final int EXIT_PORTAL_PATTERN_BEDROCK_BLOCKS = 41; // Octopus - Skip impossible end exit portal pattern scans
+     private int ticksSinceDragonSeen;
+     private int aliveCrystals;
+     private int ticksSinceCrystalsScanned;
+@@ -338,6 +339,12 @@ public class EnderDragonFight extends SavedData {
+         BlockPos endPodiumLocation = EndPodiumFeature.getLocation(this.origin);
+         int maxY = this.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, endPodiumLocation).getY();
+ 
++        // Octopus start - Skip impossible end exit portal pattern scans
++        if (!this.canContainExitPortal(endPodiumLocation, maxY)) {
++            return null;
++        }
++        // Octopus end - Skip impossible end exit portal pattern scans
++
+         for (int y = maxY; y >= this.level.getMinY(); y--) {
+             BlockPattern.BlockPatternMatch match = this.exitPortalPattern.find(this.level, new BlockPos(endPodiumLocation.getX(), y, endPodiumLocation.getZ()));
+             if (match != null) {
+@@ -353,6 +360,41 @@ public class EnderDragonFight extends SavedData {
+         return null;
+     }
+ 
++    // Octopus start - Skip impossible end exit portal pattern scans
++    private boolean canContainExitPortal(final net.minecraft.core.BlockPos endPodiumLocation, final int maxY) {
++        final int patternSearchOffset = java.lang.Math.max(
++            java.lang.Math.max(this.exitPortalPattern.getWidth(), this.exitPortalPattern.getHeight()), this.exitPortalPattern.getDepth()
++        ) - 1;
++        final int minX = endPodiumLocation.getX() - patternSearchOffset;
++        final int maxX = endPodiumLocation.getX() + patternSearchOffset * 2;
++        final int minZ = endPodiumLocation.getZ() - patternSearchOffset;
++        final int maxZ = endPodiumLocation.getZ() + patternSearchOffset * 2;
++        final int minY = this.level.getMinY();
++        final int maxSearchY = java.lang.Math.min(this.level.getMaxY(), maxY + patternSearchOffset * 2);
++        final net.minecraft.core.BlockPos.MutableBlockPos cursor = new net.minecraft.core.BlockPos.MutableBlockPos();
++        int bedrockBlocks = 0;
++
++        for (int x = minX; x <= maxX; x++) {
++            for (int z = minZ; z <= maxZ; z++) {
++                cursor.set(x, minY, z);
++                if (!this.level.hasChunkAt(cursor)) {
++                    continue;
++                }
++
++                for (int y = minY; y <= maxSearchY; y++) {
++                    cursor.set(x, y, z);
++                    if (this.level.getBlockState(cursor).is(net.minecraft.world.level.block.Blocks.BEDROCK)
++                        && ++bedrockBlocks >= EXIT_PORTAL_PATTERN_BEDROCK_BLOCKS) {
++                        return true;
++                    }
++                }
++            }
++        }
++
++        return false;
++    }
++    // Octopus end - Skip impossible end exit portal pattern scans
++
+     private boolean isArenaLoaded() {
+         if (this.skipArenaLoadedCheck) {
+             return true;
