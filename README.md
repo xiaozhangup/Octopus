@@ -15,7 +15,6 @@ Powered by ```HAPPYLAND AssiahLand```
 - 并行世界 Tick (Octopus)
 - 更详细的 Too many chained neighbor updates 报错 (Octopus)
 - 修复经验球对离线玩家的引用导致的内存泄漏 (Octopus)
-- 限制 CombatTracker 的记录数量防止内存泄漏 (Octopus)
 - 降低了 ShulkerBullet 的计算频次 (Octopus)
 - 禁用了结构生成方块 (Octopus)
 - 加载世界时允许指定 UUID (Octopus)

@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Sat, 29 Aug 2026 02:38:32 +0800
+Subject: [PATCH] Resend full clock state one tick after login
+
+
+diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
+index db7a7e22d4fa3f06b4674fc3fba8d0387dd278d8..9e2b78b0268d06d172dc0d25c00df98be5c53e5c 100644
+--- a/net/minecraft/server/players/PlayerList.java
++++ b/net/minecraft/server/players/PlayerList.java
+@@ -306,6 +306,13 @@ public abstract class PlayerList {
+         player.initInventoryMenu();
+         this.server.notificationManager().playerJoined(player);
+         playerConnection.resumeFlushing();
++        // Octopus start - Resend full clock state one tick after login
++        this.server.scheduleOnMain(() -> {
++            if (playerConnection.isAcceptingMessages()) {
++                playerConnection.send(player.level().clockManager().createFullSyncPacket(player));
++            }
++        });
++        // Octopus end - Resend full clock state one tick after login
+         // Paper start - Configurable player collision; Add to collideRule team if needed
+         final net.minecraft.world.scores.Scoreboard scoreboard = this.getServer().getLevel(Level.OVERWORLD).getScoreboard();
+         final PlayerTeam collideRuleTeam = scoreboard.getPlayerTeam(this.collideRuleTeamName);
