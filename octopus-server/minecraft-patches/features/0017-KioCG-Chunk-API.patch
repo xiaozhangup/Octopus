@@ -17,7 +17,7 @@ index 4baf46256e90a87d684e57ff623076a8e9395f31..c9c3a42ac456288d966d280f6091bd77
      }
  
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index fbd393d9d79e3eae370c9b11af58f2b16ea6a664..4f0833f83992dd8c910fb20964cc558e5c01c862 100644
+index fbd393d9d79e3eae370c9b11af58f2b16ea6a664..8dc3bbd06a522abe19b30245bb3e4d70f5c654ca 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -25,17 +25,7 @@ import java.nio.file.FileStore;
@@ -39,40 +39,31 @@ index fbd393d9d79e3eae370c9b11af58f2b16ea6a664..4f0833f83992dd8c910fb20964cc558e
  import java.util.Map.Entry;
  import java.util.concurrent.CompletableFuture;
  import java.util.concurrent.Executor;
-@@ -1634,7 +1624,39 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1634,7 +1624,30 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          new com.destroystokyo.paper.event.server.ServerTickStartEvent(this.tickCount+1).callEvent(); // Paper - Server Tick Events
          this.tickCount++;
          this.tickRateManager.tick();
 +        // KioCG start - ChunkHot
-+        final ca.spottedleaf.moonrise.common.list.IteratorSafeOrderedReferenceSet<net.minecraft.world.level.chunk.LevelChunk> chunks = new ca.spottedleaf.moonrise.common.list.IteratorSafeOrderedReferenceSet<>();
++        final List<net.minecraft.world.level.chunk.LevelChunk> chunks = new ArrayList<>();
 +        final List<ServerLevel> allLevelsCopy = new ArrayList<>(this.levels.values());
++        final int chunkHotPhase = Math.floorMod(this.tickCount, 20);
 +        for (ServerLevel level : allLevelsCopy) {
 +            for (net.minecraft.world.level.chunk.LevelChunk chunk : level.moonrise$getTickingChunks()) {
-+                chunks.add(chunk);
-+            }
-+        }
-+        if (this.tickCount % 20 == 0){
-+            final java.util.Iterator<net.minecraft.world.level.chunk.LevelChunk> chunkIterator = chunks.unsafeIterator();
-+            while (chunkIterator.hasNext()){
-+                final net.minecraft.world.level.chunk.LevelChunk targetChunk = chunkIterator.next();
++                if (Math.floorMod(level.dimension().identifier().hashCode() + chunk.getPos().x() + 3 * chunk.getPos().z(), 20) != chunkHotPhase) {
++                    continue;
++                }
 +
-+                targetChunk.getChunkHot().nextTick();
-+                targetChunk.getChunkHot().start();
++                chunk.getChunkHot().nextTick();
++                chunk.getChunkHot().start();
++                chunks.add(chunk);
 +            }
 +        }
 +        //KioCG end
          this.tickChildren(haveTime);
 +        // KioCG start - ChunkHot
-+        if (this.tickCount % 20 == 0){
-+            final java.util.Iterator<net.minecraft.world.level.chunk.LevelChunk> chunkIterator = chunks.unsafeIterator();
-+            while (chunkIterator.hasNext()){
-+                final net.minecraft.world.level.chunk.LevelChunk targetChunk = chunkIterator.next();
-+
-+                if (!targetChunk.getChunkHot().isStarted()){
-+                    continue;
-+                }
-+
-+                targetChunk.getChunkHot().stop();
++        for (net.minecraft.world.level.chunk.LevelChunk chunk : chunks) {
++            if (chunk.getChunkHot().isStarted()) {
++                chunk.getChunkHot().stop();
 +            }
 +        }
 +        //KioCG end
@@ -116,7 +107,7 @@ index 2d6df26f30029c8964d93fcb0e700adae9acac24..8b5dde9f9235291165e3075f1b9a17c7
              for (Entity passenger : entity.getPassengers()) {
                  this.tickPassenger(entity, passenger, isActive); // Paper - EAR 2
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 3cd4e850f223100b61ac6831a87dd38f3a3bb58f..508fee327ea44ebb293326e56cf3420de47e3bb4 100644
+index 3cd4e850f223100b61ac6831a87dd38f3a3bb58f..4e2442f57409c891d35a65278ad17e63dc196b68 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -766,7 +766,34 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
@@ -125,7 +116,7 @@ index 3cd4e850f223100b61ac6831a87dd38f3a3bb58f..508fee327ea44ebb293326e56cf3420d
          this.advancements.flushDirty(this, true);
 +
 +        // KioCG start - ChunkHot
-+        if (this.tickCount % 20 == 0){
++        if (Math.floorMod(this.tickCount + this.getUUID().hashCode(), 20) == 0) {
 +            this.nearbyChunkHot = this.refreshNearbyChunkHot();
 +        }
 +        // KioCG end

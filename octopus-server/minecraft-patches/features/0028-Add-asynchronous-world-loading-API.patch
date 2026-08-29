@@ -5,7 +5,7 @@ Subject: [PATCH] Add asynchronous world loading API
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 4f0833f83992dd8c910fb20964cc558e5c01c862..9be0ca299492b4146e4686b830c9bbe0cdf549d4 100644
+index 8dc3bbd06a522abe19b30245bb3e4d70f5c654ca..c61da9cbabcef348894334543f597da788074827 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -746,6 +746,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -71,7 +71,7 @@ index 4f0833f83992dd8c910fb20964cc558e5c01c862..9be0ca299492b4146e4686b830c9bbe0
          this.worldTickExecutor.shutdownNow(); // Octopus
          if (!this.hasLoggedStop && this.isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread("Server stopped"); // Paper - Debugging
          this.shutdownThread = Thread.currentThread(); // Paper - Improved watchdog support
-@@ -1811,6 +1853,61 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1802,6 +1844,61 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          wrapped.setContextClassLoader(MinecraftServer.class.getClassLoader());
          return wrapped;
      });
