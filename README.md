@@ -26,6 +26,7 @@ Powered by ```HAPPYLAND AssiahLand```
 - 优化了 NearestLivingEntitySensor (Leaf)
 - 优化了 getEntities (Leaf)
 - 移植 Lithium sleeping block entities (Leaf)
+- 重写 entity despawn time (Leaf)
 - 优化了 RecipeManager (DivineMC)
 - 优化了 Brain, AttributeMap, GameRule FluidHeight 的集合 (Leaf)
 - 优化了 SetClosestHomeAsWalkTarget's poi finding (Leaf)
