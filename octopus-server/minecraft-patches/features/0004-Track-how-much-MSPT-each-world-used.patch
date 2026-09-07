@@ -5,33 +5,54 @@ Subject: [PATCH] Track how much MSPT each world used
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 5872a31bf92e9dd909f02fc760cded5e6b49809c..815eb342b534b105d2c5509ad040d52a9bed3980 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1842,7 +1842,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1841,6 +1841,7 @@
+             // Octopus start
              java.util.concurrent.Callable<Pair<ServerLevel, Throwable>> tickingFunction = () -> {
                  level.worldTaskQueueInstance.acquirePoller();
++                long tickStart = Util.getNanos(); // SparklyPaper - track world's MSPT
                  try {
-+                    long tickStart = Util.getNanos(); // SparklyPaper - track world's MSPT
                      level.tick(haveTime);
-+                    // SparklyPaper start - track world's MSPT
-+                    long tickTime = Util.getNanos() - tickStart;
+                 } catch (Throwable throwable) {
+@@ -1850,6 +1851,7 @@
+                     level.worldTaskQueueInstance.finalizeCyclicalTasks();
+                     level.explosionDensityCache.clear(); // Paper - Optimize explosions // Octopus - Move up
+                     level.worldTaskQueueInstance.releasePoller();
++                    level.worldTickNanos = Util.getNanos() - tickStart; // Includes scoped and cyclical tasks
+                 }
+                 return Pair.of(level, null);
+             };
+@@ -1872,7 +1874,19 @@
+                     result = tickTask.get();
+                 }
+ 
+-                result.getLeft().worldTaskQueueInstance.finalizeCallbackTasks(); // Octopus
++                // SparklyPaper start - track world's MSPT
++                // Add only callback execution, excluding executor queueing and waiting for other worlds.
++                ServerLevel level = result.getLeft();
++                long callbackStart = Util.getNanos();
++                try {
++                    level.worldTaskQueueInstance.finalizeCallbackTasks(); // Octopus
++                } finally {
++                    long tickTime = level.worldTickNanos + (Util.getNanos() - callbackStart);
 +                    level.tickTimes5s.add(this.tickCount, tickTime);
 +                    level.tickTimes10s.add(this.tickCount, tickTime);
 +                    level.tickTimes60s.add(this.tickCount, tickTime);
-+                    // SparklyPaper end
-                 } catch (Throwable throwable) {
-                     return Pair.of(level, throwable);
-                 } finally {
++                }
++                // SparklyPaper end
+ 
+                 Throwable throwable = result.getRight();
+ 
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index d07004a2e3a28628fe7810d7f0564c062a283cd1..e7e4950823a1b5e4aec1d0cfa9bfdc64e0b1ed61 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -626,6 +626,12 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -626,6 +626,13 @@
      }
      // Paper end - chunk tick iteration
  
 +        // SparklyPaper start - track world's MSPT
++    public long worldTickNanos; // Published to the main thread by WorldTickFutureTask completion
 +    public final MinecraftServer.TickTimes tickTimes5s = new MinecraftServer.TickTimes(100);
 +    public final MinecraftServer.TickTimes tickTimes10s = new MinecraftServer.TickTimes(200);
 +    public final MinecraftServer.TickTimes tickTimes60s = new MinecraftServer.TickTimes(1200);
