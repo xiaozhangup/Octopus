@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Wed, 9 Sep 2026 15:29:11 +0800
+Subject: [PATCH] Isolate block entity snapshot mode between world threads
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlockEntityState.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlockEntityState.java
+index 1ef1943c9934400e40c3c060299c98659709a5cc..4a88cd66e78bcaa747af0d08ae0bde6c9c9858f8 100644
+--- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlockEntityState.java
++++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlockEntityState.java
+@@ -33,7 +33,7 @@ public abstract class CraftBlockEntityState<T extends BlockEntity> extends Craft
+     private final T blockEntity;
+     private final T snapshot;
+     public boolean snapshotDisabled; // Paper
+-    public static boolean DISABLE_SNAPSHOT = false; // Paper
++    public static final ThreadLocal<Boolean> DISABLE_SNAPSHOT = ThreadLocal.withInitial(() -> false); // Octopus - world threads must not share snapshot mode
+ 
+     public CraftBlockEntityState(World world, T blockEntity) {
+         super(world, blockEntity.getBlockPos(), blockEntity.getBlockState());
+@@ -42,8 +42,8 @@ public abstract class CraftBlockEntityState<T extends BlockEntity> extends Craft
+ 
+         try { // Paper - Show blockstate location if we failed to read it
+         // Paper start
+-        this.snapshotDisabled = DISABLE_SNAPSHOT;
+-        if (DISABLE_SNAPSHOT) {
++        this.snapshotDisabled = DISABLE_SNAPSHOT.get();
++        if (this.snapshotDisabled) {
+             this.snapshot = this.blockEntity;
+         } else {
+             this.snapshot = this.createSnapshot(blockEntity);
+diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlockStates.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlockStates.java
+index 063a4ad33d1c12ec2cc1dff5239a7bf58b92fabb..1d7105ef1e0ccf5be4f3df173732405ae95022af 100644
+--- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlockStates.java
++++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlockStates.java
+@@ -198,14 +198,14 @@ public final class CraftBlockStates {
+         BlockPos pos = craftBlock.getPosition();
+         net.minecraft.world.level.block.state.BlockState state = craftBlock.getBlockState();
+         BlockEntity blockEntity = craftBlock.getLevel().getBlockEntity(pos);
+-        boolean prev = CraftBlockEntityState.DISABLE_SNAPSHOT;
+-        CraftBlockEntityState.DISABLE_SNAPSHOT = !useSnapshot;
++        boolean prev = CraftBlockEntityState.DISABLE_SNAPSHOT.get();
++        CraftBlockEntityState.DISABLE_SNAPSHOT.set(!useSnapshot);
+         try {
+             CraftBlockState blockState = CraftBlockStates.getBlockState(world, pos, state, blockEntity);
+             blockState.setWorldHandle(craftBlock.getLevel()); // Inject the block's level accessor
+             return blockState;
+         } finally {
+-            CraftBlockEntityState.DISABLE_SNAPSHOT = prev;
++            CraftBlockEntityState.DISABLE_SNAPSHOT.set(prev);
+         }
+     }
+ 
