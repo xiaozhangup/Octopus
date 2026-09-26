@@ -5,9 +5,10 @@ Subject: [PATCH] Track how much MSPT each world used
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index dad85c1aa5a17c1c565e6889cfdd2c9d1a070091..1eb073ee3f41b467527bd1c8b5cc5b619ab3baf7 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1841,6 +1841,7 @@
+@@ -1823,6 +1823,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              // Octopus start
              java.util.concurrent.Callable<Pair<ServerLevel, Throwable>> tickingFunction = () -> {
                  level.worldTaskQueueInstance.acquirePoller();
@@ -15,7 +16,7 @@ diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/Mi
                  try {
                      level.tick(haveTime);
                  } catch (Throwable throwable) {
-@@ -1850,6 +1851,7 @@
+@@ -1832,6 +1833,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                      level.worldTaskQueueInstance.finalizeCyclicalTasks();
                      level.explosionDensityCache.clear(); // Paper - Optimize explosions // Octopus - Move up
                      level.worldTaskQueueInstance.releasePoller();
@@ -23,7 +24,7 @@ diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/Mi
                  }
                  return Pair.of(level, null);
              };
-@@ -1872,7 +1874,19 @@
+@@ -1854,7 +1856,19 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                      result = tickTask.get();
                  }
  
@@ -45,9 +46,10 @@ diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/Mi
                  Throwable throwable = result.getRight();
  
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index 90f96a1d2cc4e1ceea06e012722db42ede35a295..d8e31ce74631f6c35953088c756de0c19109f6c5 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -626,6 +626,13 @@
+@@ -628,6 +628,13 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
      }
      // Paper end - chunk tick iteration
  

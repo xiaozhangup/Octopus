@@ -5,10 +5,10 @@ Subject: [PATCH] Defer player stats and advancements loading
 
 
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 90395abc24fe284d89c0e7147b310e3f4ffe799c..12e959482354c983010e11014d57e5229f3456ed 100644
+index fea4b92acc6579188978c3a1801a9496b9c3433a..ec6dd9362a6022902e0da1d73e62e84f67c8f4cc 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -233,8 +233,10 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -237,8 +237,10 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
      public ServerGamePacketListenerImpl connection;
      private final MinecraftServer server;
      public final ServerPlayerGameMode gameMode;
@@ -21,7 +21,7 @@ index 90395abc24fe284d89c0e7147b310e3f4ffe799c..12e959482354c983010e11014d57e522
      private float lastRecordedHealthAndAbsorption = Float.MIN_VALUE;
      private int lastRecordedFoodLevel = Integer.MIN_VALUE;
      private int lastRecordedAirLevel = Integer.MIN_VALUE;
-@@ -472,15 +474,27 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -477,15 +479,27 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
      }
      // Paper end - rewrite chunk system
  
@@ -51,7 +51,7 @@ index 90395abc24fe284d89c0e7147b310e3f4ffe799c..12e959482354c983010e11014d57e522
          this.updateOptionsNoEvents(clientInformation); // Paper - don't call options events on login
          this.object = null;
          // CraftBukkit start
-@@ -491,6 +505,16 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -496,6 +510,16 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          // CraftBukkit end
      }
  

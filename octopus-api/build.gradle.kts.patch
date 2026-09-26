@@ -25,7 +25,7 @@
 -    directoriesToSkipFile = layout.projectDirectory.file(".checkstyle/ignored_directories.txt")
 -}
 -
- val annotationsVersion = "26.0.2"
+ val annotationsVersion = "26.1.0"
  val adventureVersion = "5.2.0"
  val bungeeCordChatVersion = "1.21-R0.2-deprecated+build.21"
 @@ -103,12 +_,9 @@

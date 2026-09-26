@@ -5,10 +5,10 @@ Subject: [PATCH] Sniffer sniffing suspicious blocks
 
 
 diff --git a/net/minecraft/data/tags/VanillaBlockTagsProvider.java b/net/minecraft/data/tags/VanillaBlockTagsProvider.java
-index 14a011b2c5fd1c2cf25acb2549553144ff8a69e8..45e42cad470862fbf2ac78765a84d212069d4151 100644
+index 8358941703f634ebc7b7fa08d6cafed6ab667c00..ab8f26a89001b2ab9b4475f3e162632809bc1744 100644
 --- a/net/minecraft/data/tags/VanillaBlockTagsProvider.java
 +++ b/net/minecraft/data/tags/VanillaBlockTagsProvider.java
-@@ -1181,7 +1181,7 @@ public class VanillaBlockTagsProvider extends TagsProvider<Block> {
+@@ -1189,7 +1189,7 @@ public class VanillaBlockTagsProvider extends TagsProvider<Block> {
              .addTag(BlockTags.DIRT)
              .addTag(BlockTags.MUD)
              .addTag(BlockTags.MOSS_BLOCKS)
@@ -18,7 +18,7 @@ index 14a011b2c5fd1c2cf25acb2549553144ff8a69e8..45e42cad470862fbf2ac78765a84d212
          this.tag(BlockTags.REPLACEABLE)
              .addAll(
 diff --git a/net/minecraft/world/entity/animal/sniffer/Sniffer.java b/net/minecraft/world/entity/animal/sniffer/Sniffer.java
-index d5394ae7ce56555ad21aeafb2d78c291c62e2988..c06bbb9054b26181d4f3827ccbb94e1b7bd03bc2 100644
+index 0d84b8885bbd0fb65c3202c68fccea93e3f64e6f..50e3f6dca8ee6412d4d2a0d926aac68e456a9e0a 100644
 --- a/net/minecraft/world/entity/animal/sniffer/Sniffer.java
 +++ b/net/minecraft/world/entity/animal/sniffer/Sniffer.java
 @@ -286,6 +286,20 @@ public class Sniffer extends Animal {

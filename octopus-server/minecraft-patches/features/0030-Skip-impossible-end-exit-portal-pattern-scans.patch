@@ -5,10 +5,10 @@ Subject: [PATCH] Skip impossible end exit portal pattern scans
 
 
 diff --git a/net/minecraft/world/level/dimension/end/EnderDragonFight.java b/net/minecraft/world/level/dimension/end/EnderDragonFight.java
-index 26926083cbb2722bb5fbcbc81bcc44a99799ad9e..7d6c305ed4be8604249b50cd71895fecf638cc7e 100644
+index 6061f047f023919bf7e12ed9385798af5b62dced..3aedf26d326d403984f2bcdddda4a0bdcbbf3fb5 100644
 --- a/net/minecraft/world/level/dimension/end/EnderDragonFight.java
 +++ b/net/minecraft/world/level/dimension/end/EnderDragonFight.java
-@@ -90,6 +90,7 @@ public class EnderDragonFight extends SavedData {
+@@ -91,6 +91,7 @@ public class EnderDragonFight extends SavedData {
          .aisle("       ", "  ###  ", " ##### ", " ##### ", " ##### ", "  ###  ", "       ")
          .where('#', BlockInWorld.hasState(BlockPredicate.forBlock(Blocks.BEDROCK)))
          .build();
@@ -16,8 +16,8 @@ index 26926083cbb2722bb5fbcbc81bcc44a99799ad9e..7d6c305ed4be8604249b50cd71895fec
      private int ticksSinceDragonSeen;
      private int aliveCrystals;
      private int ticksSinceCrystalsScanned;
-@@ -338,6 +339,12 @@ public class EnderDragonFight extends SavedData {
-         BlockPos endPodiumLocation = EndPodiumFeature.getLocation(this.origin);
+@@ -343,6 +344,12 @@ public class EnderDragonFight extends SavedData {
+         BlockPos endPodiumLocation = getPodiumLocation(this.origin);
          int maxY = this.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, endPodiumLocation).getY();
  
 +        // Octopus start - Skip impossible end exit portal pattern scans
@@ -29,7 +29,7 @@ index 26926083cbb2722bb5fbcbc81bcc44a99799ad9e..7d6c305ed4be8604249b50cd71895fec
          for (int y = maxY; y >= this.level.getMinY(); y--) {
              BlockPattern.BlockPatternMatch match = this.exitPortalPattern.find(this.level, new BlockPos(endPodiumLocation.getX(), y, endPodiumLocation.getZ()));
              if (match != null) {
-@@ -353,6 +360,41 @@ public class EnderDragonFight extends SavedData {
+@@ -358,6 +365,41 @@ public class EnderDragonFight extends SavedData {
          return null;
      }
  

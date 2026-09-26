@@ -4,58 +4,11 @@ Date: Wed, 31 Dec 2025 22:10:03 +0800
 Subject: [PATCH] Redundant move packet optimization
 
 
-diff --git a/net/minecraft/server/level/ServerEntity.java b/net/minecraft/server/level/ServerEntity.java
-index 60af82925d2f7e605bf7340cf01f1a5668f4d725..939f5cb88d4880e77d1d059dc0ad58d546d01ec6 100644
---- a/net/minecraft/server/level/ServerEntity.java
-+++ b/net/minecraft/server/level/ServerEntity.java
-@@ -186,18 +186,23 @@ public class ServerEntity {
-                     packet = ClientboundEntityPositionSyncPacket.of(this.entity);
-                     sentPosition = true;
-                     sentRotation = true;
--                } else if ((!pos || !shouldSendRotation) && !(this.entity instanceof AbstractArrow)) {
--                    if (pos) {
--                        packet = new ClientboundMoveEntityPacket.Pos(this.entity.getId(), (short)xa, (short)ya, (short)za, this.entity.onGround());
--                        sentPosition = true;
--                    } else if (shouldSendRotation) {
--                        packet = new ClientboundMoveEntityPacket.Rot(this.entity.getId(), yRotn, xRotn, this.entity.onGround());
--                        sentRotation = true;
--                    }
-+                // Gale start - Airplane - better checking for useless move packets
-                 } else {
--                    packet = new ClientboundMoveEntityPacket.PosRot(this.entity.getId(), (short)xa, (short)ya, (short)za, yRotn, xRotn, this.entity.onGround());
--                    sentPosition = true;
--                    sentRotation = true;
-+                    if (pos || shouldSendRotation || this.entity instanceof AbstractArrow) {
-+                        if ((!pos || !shouldSendRotation) && !(this.entity instanceof AbstractArrow)) {
-+                            if (pos) {
-+                                packet = new ClientboundMoveEntityPacket.Pos(this.entity.getId(), (short)xa, (short)ya, (short)za, this.entity.onGround());
-+                                sentPosition = true;
-+                            } else if (shouldSendRotation) {
-+                                packet = new ClientboundMoveEntityPacket.Rot(this.entity.getId(), yRotn, xRotn, this.entity.onGround());
-+                                sentRotation = true;
-+                            }
-+                        } else {
-+                            packet = new ClientboundMoveEntityPacket.PosRot(this.entity.getId(), (short)xa, (short)ya, (short)za, yRotn, xRotn, this.entity.onGround());
-+                            sentPosition = true;
-+                            sentRotation = true;
-+                        }
-+                    }
-                 }
- 
-                 if (this.entity.needsSync || this.trackDelta || this.entity instanceof LivingEntity livingEntity && livingEntity.isFallFlying()) {
-@@ -220,6 +225,7 @@ public class ServerEntity {
-                         }
-                     }
-                 }
-+                // Gale end - Airplane - better checking for useless move packets
- 
-                 if (packet != null) {
-                     this.synchronizer.sendToTrackingPlayers(packet);
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index e51bd22e8c5a1a9bc5d7f5fd0be9cc31d80e6c6b..b304a2f5cc264f304a60333d998106d955ac34e3 100644
+index c465f32151d8709b6044aed64e5c919826b71e90..72aec91441106bca870bbea2556e4ab17539eee0 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -280,6 +280,7 @@ public abstract class Entity
+@@ -284,6 +284,7 @@ public abstract class Entity
      public float yRotO;
      public float xRotO;
      private AABB bb = INITIAL_AABB;
@@ -63,10 +16,10 @@ index e51bd22e8c5a1a9bc5d7f5fd0be9cc31d80e6c6b..b304a2f5cc264f304a60333d998106d9
      public boolean onGround;
      public boolean horizontalCollision;
      public boolean verticalCollision;
-@@ -1137,6 +1138,11 @@ public abstract class Entity
-     // Paper end - detailed watchdog information
+@@ -1163,6 +1164,11 @@ public abstract class Entity
+             );
+         }
  
-     public void move(final MoverType moverType, Vec3 delta) {
 +        // Gale start - VMP - skip entity move if movement is zero
 +        if (!this.boundingBoxChanged && delta.equals(Vec3.ZERO)) {
 +            return;
@@ -75,7 +28,7 @@ index e51bd22e8c5a1a9bc5d7f5fd0be9cc31d80e6c6b..b304a2f5cc264f304a60333d998106d9
          final Vec3 originalMovement = delta; // Paper - Expose pre-collision velocity
          // Paper start - detailed watchdog information
          ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread("Cannot move an entity off-main");
-@@ -4592,6 +4598,11 @@ public abstract class Entity
+@@ -4725,6 +4731,11 @@ public abstract class Entity
      }
  
      public final void setBoundingBox(final AABB bb) {

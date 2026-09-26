@@ -5,10 +5,10 @@ Subject: [PATCH] Add PlayerMessagePreSendEvent
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index c7bab7dcbaedcc5a13df4a77623bd89039879aaf..80b39c37270e5c98d7e48a49fb120e550a6b63c7 100644
+index e4c901b0bcfe136b51a64aed0442345d954b8d76..b0dd777873c8fd6df457d2e399f13d7c7a1ff59e 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -2850,7 +2850,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -2859,7 +2859,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
      @Override
      public void sendMessage(final net.kyori.adventure.text.Component message) {
          if (getHandle().connection == null) return;
@@ -22,7 +22,7 @@ index c7bab7dcbaedcc5a13df4a77623bd89039879aaf..80b39c37270e5c98d7e48a49fb120e55
      }
  
      @Override
-@@ -3111,8 +3116,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -3120,8 +3125,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
          @Override
          public void sendMessage(net.md_5.bungee.api.ChatMessageType position, UUID sender, BaseComponent... components) {
              if (CraftPlayer.this.getHandle().connection == null) return;

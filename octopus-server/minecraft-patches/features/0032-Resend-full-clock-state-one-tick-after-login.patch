@@ -5,10 +5,10 @@ Subject: [PATCH] Resend full clock state one tick after login
 
 
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index db7a7e22d4fa3f06b4674fc3fba8d0387dd278d8..9e2b78b0268d06d172dc0d25c00df98be5c53e5c 100644
+index 59e1c1b90f66f633110548a690cb17628c9e71eb..0e407997c3ce347ff7a9cdd5757fc05fbb9ac794 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -306,6 +306,13 @@ public abstract class PlayerList {
+@@ -309,6 +309,13 @@ public abstract class PlayerList {
          player.initInventoryMenu();
          this.server.notificationManager().playerJoined(player);
          playerConnection.resumeFlushing();

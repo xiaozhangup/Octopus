@@ -115,10 +115,10 @@ index 328784ba08236553e49d62320b79f7222292412f..f053ecfe4cc205597bfc55fac2ab9e73
  
          private final ChunkEntitySlices[] slices = new ChunkEntitySlices[REGION_SIZE * REGION_SIZE];
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index f4f02b8a83263a5c2641610118c15712f8f69136..773c57eecf35c09383d1f1a69fba4efef9fd7370 100644
+index ad5022ca94bbbc5d22917a18a307f78bbb007bfa..3e07d3ccd7c7e083b0dc48c1d62500374afa3c72 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -830,6 +830,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -837,6 +837,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
          ProfilerFiller profiler = Profiler.get();
          this.handlingTick = true;
          this.environmentAttributes().invalidateTickCache();
@@ -126,29 +126,11 @@ index f4f02b8a83263a5c2641610118c15712f8f69136..773c57eecf35c09383d1f1a69fba4efe
          TickRateManager tickRateManager = this.tickRateManager();
          boolean runs = tickRateManager.runsNormally();
          if (runs) {
-@@ -1429,7 +1430,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
-         entity.setOldPosAndRot();
-         ProfilerFiller profiler = Profiler.get();
-         entity.tickCount++;
--        entity.totalEntityAge++; // Paper - age-like counter for all entities
-+        entity.updateEntityAge(); // Paper - age-like counter for all entities // Leaf - Rewrite entity despawn time
-         profiler.push(entity.typeHolder()::getRegisteredName);
-         profiler.incrementCounter("tickNonPassenger");
-         final boolean isActive = io.papermc.paper.entity.activation.ActivationRange.checkIfActive(entity); // Paper - EAR 2
-@@ -1462,7 +1463,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
-             if (levelChunk != null) levelChunk.getChunkHot().startTicking(); try { // KioCG
-             entity.setOldPosAndRot();
-             entity.tickCount++;
--            entity.totalEntityAge++; // Paper - age-like counter for all entities
-+            entity.updateEntityAge(); // Paper - age-like counter for all entities // Leaf - Rewrite entity despawn time
-             ProfilerFiller profiler = Profiler.get();
-             profiler.push(entity.typeHolder()::getRegisteredName);
-             profiler.incrementCounter("tickPassenger");
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 9e5f37d4dceba7ace99e5dd051b6a3daea4f2b86..e48f1b9b304aa4ffa80842495a494da877741592 100644
+index e18639660c557a66f2966a7cbae407f93fe50e14..6799f7b427c179215d24256dcadb74660b2d5e28 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -381,9 +381,11 @@ public abstract class Entity
+@@ -386,9 +386,11 @@ public abstract class Entity
      // Paper end
      public boolean freezeLocked = false; // Paper - Freeze Tick Lock API
      public boolean fixedPose = false; // Paper - Expand Pose API
@@ -161,7 +143,7 @@ index 9e5f37d4dceba7ace99e5dd051b6a3daea4f2b86..e48f1b9b304aa4ffa80842495a494da8
      // Paper start - EAR 2
      public final boolean defaultActivationState;
      public long activatedTick = Integer.MIN_VALUE;
-@@ -408,6 +410,7 @@ public abstract class Entity
+@@ -413,6 +415,7 @@ public abstract class Entity
      private int sectionY = Integer.MIN_VALUE;
      private int sectionZ = Integer.MIN_VALUE;
      private boolean updatingSectionStatus;
@@ -169,7 +151,7 @@ index 9e5f37d4dceba7ace99e5dd051b6a3daea4f2b86..e48f1b9b304aa4ffa80842495a494da8
  
      @Override
      public final boolean moonrise$isHardColliding() {
-@@ -580,6 +583,7 @@ public abstract class Entity
+@@ -586,6 +589,7 @@ public abstract class Entity
          this.setPos(0.0, 0.0, 0.0);
          this.eyeHeight = this.dimensions.eyeHeight();
          this.despawnTime = level == null || type == EntityTypes.PLAYER ? -1 : level.paperConfig().entities.spawning.despawnTime.getOrDefault(type, io.papermc.paper.configuration.type.number.IntOr.Disabled.DISABLED).or(-1); // Paper - entity despawn time limit
@@ -177,7 +159,7 @@ index 9e5f37d4dceba7ace99e5dd051b6a3daea4f2b86..e48f1b9b304aa4ffa80842495a494da8
      }
  
      public boolean isColliding(final BlockPos pos, final BlockState state) {
-@@ -858,15 +862,69 @@ public abstract class Entity
+@@ -864,12 +868,19 @@ public abstract class Entity
      }
  
      public void tick() {
@@ -197,6 +179,14 @@ index 9e5f37d4dceba7ace99e5dd051b6a3daea4f2b86..e48f1b9b304aa4ffa80842495a494da8
          this.baseTick();
      }
  
+@@ -884,8 +895,55 @@ public abstract class Entity
+         }
+ 
+         this.tickCount++;
+-        this.totalEntityAge++; // Paper - age-like counter for all entities
++        this.updateEntityAge(); // Paper - age-like counter for all entities // Leaf - Rewrite entity despawn time
++    }
++
 +    // Leaf start - Rewrite entity despawn time
 +    private int calculateMissedTicks() {
 +        return net.minecraft.server.MinecraftServer.currentTick - this.lastTickTime;
@@ -241,13 +231,12 @@ index 9e5f37d4dceba7ace99e5dd051b6a3daea4f2b86..e48f1b9b304aa4ffa80842495a494da8
 +
 +    protected void updateLastTick() {
 +        this.lastTickTime = net.minecraft.server.MinecraftServer.currentTick;
-+    }
+     }
 +    // Leaf end - Rewrite entity despawn time
-+
+ 
      // CraftBukkit start
      public void postTick() {
-         // No clean way to break out of ticking once the entity has been copied to a new world, so instead we move the portalling later in the tick cycle
-@@ -2697,7 +2755,7 @@ public abstract class Entity
+@@ -2755,7 +2813,7 @@ public abstract class Entity
              if (this.maxAirTicks != this.getDefaultMaxAirSupply()) {
                  output.putInt("Bukkit.MaxAirSupply", this.getMaxAirSupply());
              }
@@ -256,7 +245,7 @@ index 9e5f37d4dceba7ace99e5dd051b6a3daea4f2b86..e48f1b9b304aa4ffa80842495a494da8
              // CraftBukkit end
              output.storeNullable("CustomName", ComponentSerialization.CODEC, this.getCustomName());
              if (this.isCustomNameVisible()) {
-@@ -5278,7 +5336,8 @@ public abstract class Entity
+@@ -5424,7 +5482,8 @@ public abstract class Entity
      public boolean shouldBeSaved() {
          return (this.removalReason == null || this.removalReason.shouldSave())
              && !this.isPassenger()
@@ -267,10 +256,10 @@ index 9e5f37d4dceba7ace99e5dd051b6a3daea4f2b86..e48f1b9b304aa4ffa80842495a494da8
  
      @Override
 diff --git a/net/minecraft/world/entity/projectile/ThrowableProjectile.java b/net/minecraft/world/entity/projectile/ThrowableProjectile.java
-index 62a073c3cf878b8ef7592f5157b729b969e32107..39b0accc66bdbb84fc43df3e5c11afcac8aefb6c 100644
+index 82358c4f98a2720da6adf8c63616a810c2117919..aab9ef42324619dcef6afcba040e4a01b69822a9 100644
 --- a/net/minecraft/world/entity/projectile/ThrowableProjectile.java
 +++ b/net/minecraft/world/entity/projectile/ThrowableProjectile.java
-@@ -44,6 +44,11 @@ public abstract class ThrowableProjectile extends Projectile {
+@@ -42,6 +42,11 @@ public abstract class ThrowableProjectile extends Projectile {
  
      @Override
      public void tick() {

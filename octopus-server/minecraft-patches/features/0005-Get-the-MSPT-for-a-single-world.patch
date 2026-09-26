@@ -5,10 +5,10 @@ Subject: [PATCH] Get the MSPT for a single world
 
 
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index df20d5c9d7dcaf64588fc21a2bf2630da430179e..b0f1b8c5419d5c1179bbaec75366cf7fc49b1e62 100644
+index d8e31ce74631f6c35953088c756de0c19109f6c5..970fdb67766b5f37a3b502351fceeda73e938b39 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -632,6 +632,12 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -635,6 +635,12 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
      public final MinecraftServer.TickTimes tickTimes60s = new MinecraftServer.TickTimes(1200);
      // SparklyPaper end
  

@@ -5,10 +5,10 @@ Subject: [PATCH] Add asynchronous world loading API
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 8dc3bbd06a522abe19b30245bb3e4d70f5c654ca..c61da9cbabcef348894334543f597da788074827 100644
+index be98b92e6b8b7d6006c99d49db7c9cb50113e17f..8c2aca8db82692185d1b4e40dfd363c1ebf006e7 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -746,6 +746,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -739,6 +739,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                  loading.data()
              );
          }
@@ -16,7 +16,7 @@ index 8dc3bbd06a522abe19b30245bb3e4d70f5c654ca..c61da9cbabcef348894334543f597da7
          this.addLevel(serverLevel);
          this.initWorld(serverLevel, null);
      }
-@@ -915,6 +916,42 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -908,6 +909,42 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          new org.bukkit.event.world.WorldLoadEvent(level.getWorld()).callEvent(); // Paper - call WorldLoadEvent
      }
  
@@ -59,7 +59,7 @@ index 8dc3bbd06a522abe19b30245bb3e4d70f5c654ca..c61da9cbabcef348894334543f597da7
      protected GlobalPos selectLevelLoadFocusPos() {
          return this.worldData.overworldData().getRespawnData().globalPos();
      }
-@@ -1014,6 +1051,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -996,6 +1033,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              if (this.hasStopped) return;
              this.hasStopped = true;
          }
@@ -71,7 +71,7 @@ index 8dc3bbd06a522abe19b30245bb3e4d70f5c654ca..c61da9cbabcef348894334543f597da7
          this.worldTickExecutor.shutdownNow(); // Octopus
          if (!this.hasLoggedStop && this.isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread("Server stopped"); // Paper - Debugging
          this.shutdownThread = Thread.currentThread(); // Paper - Improved watchdog support
-@@ -1802,6 +1844,61 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1784,6 +1826,61 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          wrapped.setContextClassLoader(MinecraftServer.class.getClassLoader());
          return wrapped;
      });
@@ -134,10 +134,10 @@ index 8dc3bbd06a522abe19b30245bb3e4d70f5c654ca..c61da9cbabcef348894334543f597da7
  
      protected void tickChildren(final BooleanSupplier haveTime) {
 diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
-index 8c450f7db1a796527a677fc7e38497bf9c31c55c..366d053ea4ac6e8fce2f80f98b5a2b62de185594 100644
+index 6d6c5f50b990fe4bc6d4d8e7cfd8f6ded1041187..362c56eb35dfbf1978b893ff3e3ccacfcc277d9e 100644
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
-@@ -464,6 +464,13 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -466,6 +466,13 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
          ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.close(save, true); // Paper - rewrite chunk system
      }
  
@@ -152,10 +152,10 @@ index 8c450f7db1a796527a677fc7e38497bf9c31c55c..366d053ea4ac6e8fce2f80f98b5a2b62
      public void purgeUnload() {
          if (true) return; // Paper - rewrite chunk system
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 7ca4a5112c51a4c3e31ee6debe50aa3fed7604a1..758bfb1a0a015c551a7b0b92d2ebc66c277e2647 100644
+index 3ea5f179e9f5dd98f1c0c9b59034543734692bc5..f4bc7c4305b93e04b30685bd0efa253f3ee83c06 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -772,7 +772,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -775,7 +775,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
          this.poiDataController = new ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.PoiDataController((ServerLevel)(Object)this, this.chunkTaskScheduler);
          this.chunkDataController = new ca.spottedleaf.moonrise.patches.chunk_system.io.datacontroller.ChunkDataController((ServerLevel)(Object)this, this.chunkTaskScheduler);
          // Paper end - rewrite chunk system

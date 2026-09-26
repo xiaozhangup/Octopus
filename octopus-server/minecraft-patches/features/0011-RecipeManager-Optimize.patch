@@ -5,10 +5,10 @@ Subject: [PATCH] RecipeManager Optimize
 
 
 diff --git a/net/minecraft/world/item/crafting/RecipeManager.java b/net/minecraft/world/item/crafting/RecipeManager.java
-index 6812ade4d9de26d507234b8357b109ec7e5cbb50..ede5e8bd30d06711a2a6a5f2f76eb9e4a1724ce8 100644
+index 1cb69160c792dc59621d87061831d73876662606..97e436008462c0f4c3a6ee4f4f493b87614b217a 100644
 --- a/net/minecraft/world/item/crafting/RecipeManager.java
 +++ b/net/minecraft/world/item/crafting/RecipeManager.java
-@@ -164,7 +164,7 @@ public class RecipeManager extends SimplePreparableReloadListener<RecipeMap> imp
+@@ -136,7 +136,7 @@ public class RecipeManager implements RecipeAccess {
  
      public <I extends RecipeInput, T extends Recipe<I>> Optional<RecipeHolder<T>> getRecipeFor(final RecipeType<T> type, final I input, final Level level) {
          // CraftBukkit start
@@ -18,10 +18,10 @@ index 6812ade4d9de26d507234b8357b109ec7e5cbb50..ede5e8bd30d06711a2a6a5f2f76eb9e4
          // CraftBukkit end
      }
 diff --git a/net/minecraft/world/item/crafting/RecipeMap.java b/net/minecraft/world/item/crafting/RecipeMap.java
-index ca18f048955a4ea937914f1145ee52c40f56a7fa..6d1230a17be5c6701d038b82cb7ea337a4885e84 100644
+index c53044e04fbc3de6b59b1117210b59867be413e1..79aaf95405da0a25b3d00602e4fb0b1cde00f97b 100644
 --- a/net/minecraft/world/item/crafting/RecipeMap.java
 +++ b/net/minecraft/world/item/crafting/RecipeMap.java
-@@ -72,4 +72,24 @@ public class RecipeMap {
+@@ -76,4 +76,24 @@ public class RecipeMap {
      public <I extends RecipeInput, T extends Recipe<I>> Stream<RecipeHolder<T>> getRecipesFor(final RecipeType<T> type, final I container, final Level level) {
          return container.isEmpty() ? Stream.empty() : this.byType(type).stream().filter(r -> r.value().matches(container, level));
      }

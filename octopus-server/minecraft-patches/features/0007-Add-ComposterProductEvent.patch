@@ -5,32 +5,32 @@ Subject: [PATCH] Add ComposterProductEvent
 
 
 diff --git a/net/minecraft/world/level/block/ComposterBlock.java b/net/minecraft/world/level/block/ComposterBlock.java
-index 69e3969242ad52168e947af209e6fa72f36178ae..2de90dc4ecf472b31583fe01b4f979eb2077009c 100644
+index c89b85391ab2b982b7a6f0f11f74599d5acbb0fa..fcbebcf5060b8a801da869718f14f288fa36dd3b 100644
 --- a/net/minecraft/world/level/block/ComposterBlock.java
 +++ b/net/minecraft/world/level/block/ComposterBlock.java
-@@ -323,7 +323,11 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
+@@ -185,7 +185,11 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
          // CraftBukkit end
          if (!level.isClientSide()) {
              Vec3 itemPos = Vec3.atLowerCornerWithOffset(pos, 0.5, 1.01, 0.5).offsetRandomXZ(level.getRandom(), 0.7F);
 -            ItemEntity entity = new ItemEntity(level, itemPos.x(), itemPos.y(), itemPos.z(), new ItemStack(Items.BONE_MEAL));
 +            // Octopus start - Add ComposterProductEvent
-+            org.bukkit.event.block.ComposterProductEvent event = new org.bukkit.event.block.ComposterProductEvent(level.getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ()), new ItemStack(Items.BONE_MEAL).asBukkitMirror());
++            org.bukkit.event.block.ComposterProductEvent event = new org.bukkit.event.block.ComposterProductEvent(level.getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ()), org.bukkit.craftbukkit.inventory.CraftItemStack.asBukkitMirror(new ItemStack(Items.BONE_MEAL)));
 +            event.callEvent();
-+            ItemEntity entity = new ItemEntity(level, itemPos.x(), itemPos.y(), itemPos.z(), ItemStack.fromBukkitCopy(event.getItem()));
++            ItemEntity entity = new ItemEntity(level, itemPos.x(), itemPos.y(), itemPos.z(), org.bukkit.craftbukkit.inventory.CraftItemStack.asNMSCopy(event.getItem()));
 +            // Octopus end - Add ComposterProductEvent
              entity.setDefaultPickUpDelay();
              level.addFreshEntity(entity);
          }
-@@ -419,11 +423,15 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
+@@ -278,11 +282,15 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
      @Override
      public WorldlyContainer getContainer(final BlockState state, final LevelAccessor level, final BlockPos pos) {
          int contentLevel = state.getValue(LEVEL);
 +        // Octopus start - Add ComposterProductEvent
          if (contentLevel == 8) {
 -            return new ComposterBlock.OutputContainer(state, level, pos, new ItemStack(Items.BONE_MEAL));
-+            org.bukkit.event.block.ComposterProductEvent event = new org.bukkit.event.block.ComposterProductEvent(level.getMinecraftWorld().getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ()), new ItemStack(Items.BONE_MEAL).asBukkitMirror());
++            org.bukkit.event.block.ComposterProductEvent event = new org.bukkit.event.block.ComposterProductEvent(level.getMinecraftWorld().getWorld().getBlockAt(pos.getX(), pos.getY(), pos.getZ()), org.bukkit.craftbukkit.inventory.CraftItemStack.asBukkitMirror(new ItemStack(Items.BONE_MEAL)));
 +            event.callEvent();
-+            return new ComposterBlock.OutputContainer(state, level, pos, ItemStack.fromBukkitCopy(event.getItem()));
++            return new ComposterBlock.OutputContainer(state, level, pos, org.bukkit.craftbukkit.inventory.CraftItemStack.asNMSCopy(event.getItem()));
          } else {
              return contentLevel < 7 ? new ComposterBlock.InputContainer(state, level, pos) : new ComposterBlock.EmptyContainer(level, pos); // CraftBukkit - empty levelAccessor, blockPos
          }
@@ -38,7 +38,7 @@ index 69e3969242ad52168e947af209e6fa72f36178ae..2de90dc4ecf472b31583fe01b4f979eb
      }
  
      public static class EmptyContainer extends SimpleContainer implements WorldlyContainer {
-@@ -528,9 +536,9 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
+@@ -388,9 +396,9 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
              return false;
          }
  

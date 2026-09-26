@@ -5,7 +5,7 @@ Subject: [PATCH] Parallel world ticking
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java b/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java
-index 3bb9b58ee97464687e348e23b99159226415c267..dd5a6829bc1466c6741f7b66db2fef9824306eb5 100644
+index 775d93d35855e394e5eccf0ad80eca43b1ed9562..7bf7f9e8ba300f3de697bbc9fabab197e317af04 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java
 @@ -181,6 +181,12 @@ public final class MoonriseRegionFileIO {
@@ -48,10 +48,10 @@ index 3bb9b58ee97464687e348e23b99159226415c267..dd5a6829bc1466c6741f7b66db2fef98
       * Returns the priority associated with blocking I/O based on the current thread. The goal is to avoid
       * dumb plugins from taking away priority from threads we consider crucial.
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
-index 640548d78b87653871dd1f7b0f84574c5e205fe8..135d593c89312abaa391e60971fa9fc168fd031d 100644
+index bbba1766ed9da671022c467a45f7de479fb6abb4..8cd82f679cced67fa38db21317a1fb83c95f1da1 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
-@@ -553,7 +553,7 @@ public final class ChunkTaskScheduler {
+@@ -544,7 +544,7 @@ public final class ChunkTaskScheduler {
  
          // we could do a simple spinwait here, since we do not need to process tasks while performing this load
          // but we process tasks only because it's a better use of the time spent
@@ -61,10 +61,10 @@ index 640548d78b87653871dd1f7b0f84574c5e205fe8..135d593c89312abaa391e60971fa9fc1
          });
  
 diff --git a/net/minecraft/core/dispenser/DispenseItemBehavior.java b/net/minecraft/core/dispenser/DispenseItemBehavior.java
-index 162d7890f204315b0476467e757de5c9dd84aeca..161ad24648c7e0ea7f9e608bf498361cbdf0973d 100644
+index c650f26d3ecdeb94a4d0f40637c07c59a6cbdfa6..52ea860312d5065402f33f10f9d8f1ddfeeac905 100644
 --- a/net/minecraft/core/dispenser/DispenseItemBehavior.java
 +++ b/net/minecraft/core/dispenser/DispenseItemBehavior.java
-@@ -307,8 +307,8 @@ public interface DispenseItemBehavior {
+@@ -308,8 +308,8 @@ public interface DispenseItemBehavior {
                      capturedBlockStates = new java.util.ArrayList<>(level.capturedBlockStates.values());
                      level.capturedBlockStates.clear();
  
@@ -76,7 +76,7 @@ index 162d7890f204315b0476467e757de5c9dd84aeca..161ad24648c7e0ea7f9e608bf498361c
                  // Paper end
                  // CraftBukkit start
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 879f53a64e3070aca5f6c58a0e200b62c3e51117..5872a31bf92e9dd909f02fc760cded5e6b49809c 100644
+index c3bf41af0273e902f881cc070fcef6dd64abb063..dad85c1aa5a17c1c565e6889cfdd2c9d1a070091 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -1,5 +1,9 @@
@@ -89,7 +89,7 @@ index 879f53a64e3070aca5f6c58a0e200b62c3e51117..5872a31bf92e9dd909f02fc760cded5e
  import com.google.common.base.Splitter;
  import com.google.common.collect.ImmutableList;
  import com.google.common.collect.Lists;
-@@ -449,10 +453,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -444,10 +448,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              if (currTime - ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)world).moonrise$getLastMidTickFailure() <= TASK_EXECUTION_FAILURE_BACKOFF) {
                  continue;
              }
@@ -105,7 +105,7 @@ index 879f53a64e3070aca5f6c58a0e200b62c3e51117..5872a31bf92e9dd909f02fc760cded5e
                  executed = true;
              }
          }
-@@ -1011,6 +1019,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -993,6 +1001,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              if (this.hasStopped) return;
              this.hasStopped = true;
          }
@@ -113,7 +113,7 @@ index 879f53a64e3070aca5f6c58a0e200b62c3e51117..5872a31bf92e9dd909f02fc760cded5e
          if (!this.hasLoggedStop && this.isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread("Server stopped"); // Paper - Debugging
          this.shutdownThread = Thread.currentThread(); // Paper - Improved watchdog support
          org.spigotmc.WatchdogThread.doStop(); // Paper - Improved watchdog support
-@@ -1519,7 +1528,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1501,7 +1510,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          boolean ret = false; // Paper - force execution of all worlds, do not just bias the first
          if (this.tickRateManager.isSprinting() || this.shouldRunAllTasks() || this.haveTime()) {
              for (ServerLevel level : this.getAllLevels()) {
@@ -122,7 +122,7 @@ index 879f53a64e3070aca5f6c58a0e200b62c3e51117..5872a31bf92e9dd909f02fc760cded5e
                      ret = true; // Paper - force execution of all worlds, do not just bias the first
                  }
              }
-@@ -1761,6 +1770,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1743,6 +1752,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
  
      public final io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList entitySchedulerTickList = new io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList(); // Paper - optimise Folia entity scheduler
  
@@ -139,7 +139,7 @@ index 879f53a64e3070aca5f6c58a0e200b62c3e51117..5872a31bf92e9dd909f02fc760cded5e
      protected void tickChildren(final BooleanSupplier haveTime) {
          ProfilerFiller profiler = Profiler.get();
          this.getPlayerList().getPlayers().forEach(playerx -> playerx.connection.suspendFlushing());
-@@ -1811,26 +1830,62 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1793,26 +1812,62 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          this.updateEffectiveRespawnData();
  
          this.isIteratingOverLevels = true; // Paper - Throw exception on world create while being ticked
@@ -213,10 +213,10 @@ index 879f53a64e3070aca5f6c58a0e200b62c3e51117..5872a31bf92e9dd909f02fc760cded5e
  
          profiler.popPush("connection");
 diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
-index 075e294333115738b25b64a390df323276cf39f9..8c450f7db1a796527a677fc7e38497bf9c31c55c 100644
+index 66d706d2a7995b437d102903012a714c38e4876c..6d6c5f50b990fe4bc6d4d8e7cfd8f6ded1041187 100644
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
-@@ -116,7 +116,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -120,7 +120,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
  
          if (ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this.level, chunkX, chunkZ)) {
              ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler.pushChunkWait(this.level, chunkX, chunkZ);
@@ -225,7 +225,7 @@ index 075e294333115738b25b64a390df323276cf39f9..8c450f7db1a796527a677fc7e38497bf
              ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler.popChunkWait();
          }
  
-@@ -353,7 +353,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -355,7 +355,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
          CompletableFuture<ChunkResult<ChunkAccess>> serverFuture;
          if (isMainThread) {
              serverFuture = this.getChunkFutureMainThread(x, z, targetStatus, loadOrGenerate);
@@ -234,7 +234,7 @@ index 075e294333115738b25b64a390df323276cf39f9..8c450f7db1a796527a677fc7e38497bf
          } else {
              serverFuture = CompletableFuture.<CompletableFuture<ChunkResult<ChunkAccess>>>supplyAsync(
                      () -> this.getChunkFutureMainThread(x, z, targetStatus, loadOrGenerate), this.mainThreadProcessor
-@@ -431,6 +431,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -433,6 +433,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
      }
  
      public boolean pollTask() {
@@ -242,7 +242,7 @@ index 075e294333115738b25b64a390df323276cf39f9..8c450f7db1a796527a677fc7e38497bf
          return this.mainThreadProcessor.pollTask();
      }
  
-@@ -638,7 +639,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -635,7 +636,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
  
      @VisibleForTesting
      public int getPendingTasksCount() {
@@ -251,7 +251,7 @@ index 075e294333115738b25b64a390df323276cf39f9..8c450f7db1a796527a677fc7e38497bf
      }
  
      public ChunkGenerator getGenerator() {
-@@ -669,7 +670,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -666,7 +667,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
  
      @Override
      public void onLightUpdate(final LightLayer layer, final SectionPos pos) {
@@ -261,10 +261,10 @@ index 075e294333115738b25b64a390df323276cf39f9..8c450f7db1a796527a677fc7e38497bf
              if (chunk != null && chunk.sectionLightChanged(layer, pos.y())) {
                  this.chunkHoldersToBroadcast.add(chunk);
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 59598bfb95c2f8a38efd92685c46a954dc76739d..d07004a2e3a28628fe7810d7f0564c062a283cd1 100644
+index 8389d812b2d80a122fd1945b3182c08cdeda7d1c..90f96a1d2cc4e1ceea06e012722db42ede35a295 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -222,6 +222,25 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -224,6 +224,25 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
      private final boolean tickTime;
      private final LevelDebugSynchronizers debugSynchronizers = new LevelDebugSynchronizers(this);
  
@@ -291,10 +291,10 @@ index 59598bfb95c2f8a38efd92685c46a954dc76739d..d07004a2e3a28628fe7810d7f0564c06
      private final ResourceKey<LevelStem> typeKey;
      public final String bukkitName;
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index d958c4717739e588c5f8985dec5d215c745f49fc..e51bd22e8c5a1a9bc5d7f5fd0be9cc31d80e6c6b 100644
+index cf3619b6de23f32e9e5a81fbe287fb438ecfcabc..c465f32151d8709b6044aed64e5c919826b71e90 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -4203,17 +4203,20 @@ public abstract class Entity
+@@ -4315,17 +4315,20 @@ public abstract class Entity
          // Paper end - Fix item duplication and teleport issues
          newEntity.restoreFrom(this);
          this.removeAfterChangingDimensions();
@@ -386,25 +386,25 @@ index 09cc0f75c0dea7d9ef9caf9b1f14f46e4da84375..1845baef1c7da6f3b211f4dbdbe0c670
                              });
                          return true;
 diff --git a/net/minecraft/world/item/ItemStack.java b/net/minecraft/world/item/ItemStack.java
-index 44a7590558fa73fb570f76ba7a4e7db1415d08f7..59a670689419975f3b58dd8a235ed4bbff2036a7 100644
+index 00861318771cd184c9f75a9a036deee9ec2ba310..81a4a55bf44914a314b1bbf6753f493b7e07787a 100644
 --- a/net/minecraft/world/item/ItemStack.java
 +++ b/net/minecraft/world/item/ItemStack.java
-@@ -403,8 +403,8 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
-             capturedBlockEntities = new java.util.ArrayList<>(level.capturedBlockEntities.values());
-             level.capturedBlockEntities.clear();
+@@ -404,8 +404,8 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+                 capturedBlockEntities = new java.util.ArrayList<>(level.capturedBlockEntities.values());
+                 level.capturedBlockEntities.clear();
  
--            treeType = net.minecraft.world.level.block.SaplingBlock.treeType;
--            net.minecraft.world.level.block.SaplingBlock.treeType = null;
-+            treeType = net.minecraft.world.level.block.SaplingBlock.treeTypeRT.get(); // Octopus
-+            net.minecraft.world.level.block.SaplingBlock.treeTypeRT.set(null); // Octopus
-         }
+-                treeType = net.minecraft.world.level.block.SaplingBlock.treeType;
+-                net.minecraft.world.level.block.SaplingBlock.treeType = null;
++                treeType = net.minecraft.world.level.block.SaplingBlock.treeTypeRT.get(); // Octopus
++                net.minecraft.world.level.block.SaplingBlock.treeTypeRT.set(null); // Octopus
+             }
  
-         DataComponentPatch newPatch = this.components.asPatch();
+             DataComponentPatch newPatch = this.components.asPatch();
 diff --git a/net/minecraft/world/level/block/MushroomBlock.java b/net/minecraft/world/level/block/MushroomBlock.java
-index 8d466e5a3e187cb151a7513de3e78d3350b32277..89a7a69478a1ffd2d94664d7a347ace42717d4ba 100644
+index c0779cb3c237e4399a53a7e6fc95bb2d88483bca..7e47df17c1f32dac37caa463791af40028ad700e 100644
 --- a/net/minecraft/world/level/block/MushroomBlock.java
 +++ b/net/minecraft/world/level/block/MushroomBlock.java
-@@ -94,7 +94,7 @@ public class MushroomBlock extends VegetationBlock implements BonemealableBlock
+@@ -83,7 +83,7 @@ public class MushroomBlock extends VegetationBlock implements BonemealableBlock
          }
  
          level.removeBlock(pos, false);
@@ -414,10 +414,10 @@ index 8d466e5a3e187cb151a7513de3e78d3350b32277..89a7a69478a1ffd2d94664d7a347ace4
              return true;
          }
 diff --git a/net/minecraft/world/level/block/NetherFungusBlock.java b/net/minecraft/world/level/block/NetherFungusBlock.java
-index 82ab930bf438e988d637786bdde88e34ea073a2f..2e7c6db4e9b81a803ddb5dda6a3a126954fc0669 100644
+index fefb4e7a3bf922be16cf7fb6b70c0689867dd963..fc08e3bb1651e593110e15542eaba533835d8c04 100644
 --- a/net/minecraft/world/level/block/NetherFungusBlock.java
 +++ b/net/minecraft/world/level/block/NetherFungusBlock.java
-@@ -84,9 +84,9 @@ public class NetherFungusBlock extends VegetationBlock implements BonemealableBl
+@@ -64,9 +64,9 @@ public class NetherFungusBlock extends VegetationBlock implements BonemealableBl
              // CraftBukkit start
              .map((value) -> {
                  if (this == Blocks.WARPED_FUNGUS) {
@@ -430,19 +430,19 @@ index 82ab930bf438e988d637786bdde88e34ea073a2f..2e7c6db4e9b81a803ddb5dda6a3a1269
                  return value;
              })
 diff --git a/net/minecraft/world/level/block/SaplingBlock.java b/net/minecraft/world/level/block/SaplingBlock.java
-index cbf7845ca64f1b716af3e50ac8716373d2ae3755..ebd48179e48fa8c9afa398f31303080975429368 100644
+index 5564a54f23aab158b9506325953ec70cab55c961..4ee1a9b11d71382e0c93501b17c2af0ef87a2d16 100644
 --- a/net/minecraft/world/level/block/SaplingBlock.java
 +++ b/net/minecraft/world/level/block/SaplingBlock.java
-@@ -24,7 +24,7 @@ public class SaplingBlock extends VegetationBlock implements BonemealableBlock {
-     public static final IntegerProperty STAGE = BlockStateProperties.STAGE;
+@@ -21,7 +21,7 @@ public class SaplingBlock extends VegetationBlock implements BonemealableBlock {
+     public static final int TICK_CHANCE_FOR_SAPLING_GROWTH = 7;
      private static final VoxelShape SHAPE = Block.column(12.0, 0.0, 12.0);
      protected final TreeGrower treeGrower;
 -    public static org.bukkit.@org.jspecify.annotations.Nullable TreeType treeType; // CraftBukkit
 +    public static final ThreadLocal<org.bukkit.TreeType> treeTypeRT = new ThreadLocal<>(); // CraftBukkit // Octopus (from Folia)
  
-     @Override
-     public MapCodec<? extends SaplingBlock> codec() {
-@@ -68,8 +68,8 @@ public class SaplingBlock extends VegetationBlock implements BonemealableBlock {
+     protected SaplingBlock(final TreeGrower treeGrower, final BlockBehaviour.Properties properties) {
+         super(properties);
+@@ -60,8 +60,8 @@ public class SaplingBlock extends VegetationBlock implements BonemealableBlock {
                      capturedBlockStates = new java.util.ArrayList<>(level.capturedBlockStates.values());
                      level.capturedBlockStates.clear();
  
@@ -454,13 +454,13 @@ index cbf7845ca64f1b716af3e50ac8716373d2ae3755..ebd48179e48fa8c9afa398f313030809
                  if (!capturedBlockStates.isEmpty()) {
                      org.bukkit.Location location = org.bukkit.craftbukkit.util.CraftLocation.toBukkit(pos, level);
 diff --git a/net/minecraft/world/level/block/grower/TreeGrower.java b/net/minecraft/world/level/block/grower/TreeGrower.java
-index 2a537a329b635d48865e59c03589b89594ef012e..af6f59d0fb5fd51c941b0dd07b2d5573f085efb5 100644
+index 95ac67eeee1c5c12fd709fe44288d6de9a28b3a1..c2986002efc48987fce96511bea553961378719d 100644
 --- a/net/minecraft/world/level/block/grower/TreeGrower.java
 +++ b/net/minecraft/world/level/block/grower/TreeGrower.java
-@@ -215,55 +215,57 @@ public final class TreeGrower {
+@@ -234,57 +234,59 @@ public final class TreeGrower {
  
      // CraftBukkit start
-     private void setTreeType(Holder<ConfiguredFeature<?, ?>> feature) {
+     private void setTreeType(Holder<Feature> feature) {
 +        org.bukkit.TreeType treeType; // Octopus
          if (feature.is(TreeFeatures.OAK) || feature.is(TreeFeatures.OAK_BEES_005)) {
 -            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.TREE;
@@ -531,7 +531,10 @@ index 2a537a329b635d48865e59c03589b89594ef012e..af6f59d0fb5fd51c941b0dd07b2d5573
          } else if (feature.is(TreeFeatures.PALE_OAK_CREAKING)) {
 -            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.PALE_OAK_CREAKING;
 +            treeType = org.bukkit.TreeType.PALE_OAK_CREAKING; // Octopus
-         } else {
+         } else if (feature.is(TreeFeatures.RED_POPLAR) || feature.is(TreeFeatures.ORANGE_POPLAR) || feature.is(TreeFeatures.YELLOW_POPLAR)) {
+-            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.POPLAR;
++            treeType = org.bukkit.TreeType.POPLAR; // Octopus
+         }  else {
              throw new IllegalArgumentException("Unknown tree generator " + feature);
          }
 +        net.minecraft.world.level.block.SaplingBlock.treeTypeRT.set(treeType); // Octopus

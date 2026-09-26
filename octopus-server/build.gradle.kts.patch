@@ -16,7 +16,7 @@
 +    activeFork = fork
 +
      updatingMinecraft {
-         // oldPaperCommit = "d4fe85375af18bfa88f44d7c1e6a61904ae550cc"
+         //oldPaperCommit = "e5fe71723e2ffde7cc9fafc085ac3bb73e63175e"
      }
 @@ -86,7 +_,19 @@
      }
@@ -45,7 +45,7 @@
  dependencies {
 -    implementation(project(":paper-api"))
 +    implementation(project(":octopus-api"))
-     implementation("ca.spottedleaf:leafpile:1.2.0")
+     implementation("ca.spottedleaf:leafpile:1.2.2")
      implementation("org.jline:jline-terminal-ffm:3.27.1") // use ffm on java 22+
      implementation("org.jline:jline-terminal-jni:3.27.1") // fall back to jni on java 21
 @@ -164,21 +_,21 @@

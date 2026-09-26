@@ -5,10 +5,10 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 9f4667ecaa88e7aeb942bbd49f97aab73922bc43..fbd393d9d79e3eae370c9b11af58f2b16ea6a664 100644
+index ab4d371497e7a8597f034aec1a9e67447e3e157a..c0d6f5afc4dae3e1e9d71a17686dd66c4a968b2c 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -229,6 +229,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -226,6 +226,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      private Consumer<ProfileResults> onMetricsRecordingStopped = results -> this.stopRecordingMetrics();
      private Consumer<Path> onMetricsRecordingFinished = ignored -> {};
      private boolean willStartRecordingMetrics;
@@ -20,7 +20,7 @@ index 9f4667ecaa88e7aeb942bbd49f97aab73922bc43..fbd393d9d79e3eae370c9b11af58f2b1
      private MinecraftServer.@Nullable TimeProfiler debugCommandProfiler;
      private boolean debugCommandProfilerDelayStart;
      private ServerConnectionListener connection;
-@@ -1617,6 +1622,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1599,6 +1604,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                  // Paper end - avoid issues with certain tasks not processing during sleep
                  this.server.spark.executeMainThreadTasks(); // Paper - spark
                  this.tickConnection();
@@ -30,7 +30,7 @@ index 9f4667ecaa88e7aeb942bbd49f97aab73922bc43..fbd393d9d79e3eae370c9b11af58f2b1
                  this.server.spark.tickEnd(((double)(System.nanoTime() - this.currentTickStart) / 1000000D)); // Paper - spark
                  return;
              }
-@@ -1665,6 +1673,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1647,6 +1655,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          long endTime = System.nanoTime();
          long remaining = this.nextTickTimeNanos - endTime;
          new com.destroystokyo.paper.event.server.ServerTickEndEvent(this.tickCount, ((double)(endTime - this.currentTickStart) / 1000000D), remaining).callEvent();
@@ -41,10 +41,10 @@ index 9f4667ecaa88e7aeb942bbd49f97aab73922bc43..fbd393d9d79e3eae370c9b11af58f2b1
          this.server.spark.tickEnd(((double)(endTime - this.currentTickStart) / 1000000D)); // Paper - spark
          profiler.push("tallying");
 diff --git a/net/minecraft/server/PlayerAdvancements.java b/net/minecraft/server/PlayerAdvancements.java
-index d447b444abd9b62ab241419301a96d19ae77a7eb..a00fbdfa9ce372a956b9dbd9126b531a8eea6496 100644
+index e70701663abd6f19a506690167d80f0dceab8000..079787d719dcb1a5b2277e787c6ce242bc1c9dae 100644
 --- a/net/minecraft/server/PlayerAdvancements.java
 +++ b/net/minecraft/server/PlayerAdvancements.java
-@@ -110,6 +110,17 @@ public class PlayerAdvancements {
+@@ -111,6 +111,17 @@ public class PlayerAdvancements {
      }
  
      private void load(final ServerAdvancementManager manager) {
@@ -62,7 +62,7 @@ index d447b444abd9b62ab241419301a96d19ae77a7eb..a00fbdfa9ce372a956b9dbd9126b531a
          if (Files.isRegularFile(this.playerSavePath)) {
              try (Reader reader = Files.newBufferedReader(this.playerSavePath, StandardCharsets.UTF_8)) {
                  JsonElement json = StrictJsonParser.parse(reader);
-@@ -131,6 +142,10 @@ public class PlayerAdvancements {
+@@ -132,6 +143,10 @@ public class PlayerAdvancements {
          JsonElement json = this.codec.encodeStart(JsonOps.INSTANCE, this.asData()).getOrThrow();
  
          try {
@@ -74,10 +74,10 @@ index d447b444abd9b62ab241419301a96d19ae77a7eb..a00fbdfa9ce372a956b9dbd9126b531a
  
              try (Writer outputWriter = Files.newBufferedWriter(this.playerSavePath, StandardCharsets.UTF_8)) {
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index bc192197941658321c3d98b830f35e0bc78a56fb..db7a7e22d4fa3f06b4674fc3fba8d0387dd278d8 100644
+index 85ba06d7bcb8a69f8b8c0ca7b00070ab34bffaa1..59e1c1b90f66f633110548a690cb17628c9e71eb 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -1174,7 +1174,7 @@ public abstract class PlayerList {
+@@ -1177,7 +1177,7 @@ public abstract class PlayerList {
      }
      public ServerStatsCounter getPlayerStats(final GameProfile gameProfile) {
              Path targetFile = this.locateStatsFile(gameProfile);
@@ -152,10 +152,10 @@ index 6b3ce2ded53a7ea46cf7f0cb49043a022f6d9ee7..eacc782661ce549fb7bf7c4de7a20fb0
          this.setDirty();
          return id;
 diff --git a/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java b/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
-index f05ab5fdab4cb587974e2864e859e49375f8165e..9a2447c20c7280f2da320ef3dd27af636bda1a03 100644
+index 1c8b9c0a1f615dedca9028379a1d8f60e9c39947..cbe3340708b6d97af8df7b795e60e204ed4c8ba8 100644
 --- a/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
 +++ b/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
-@@ -760,4 +760,15 @@ public class MapItemSavedData extends SavedData {
+@@ -746,4 +746,15 @@ public class MapItemSavedData extends SavedData {
          };
      }
      // Paper end - store target world by uuid in addition to dimension

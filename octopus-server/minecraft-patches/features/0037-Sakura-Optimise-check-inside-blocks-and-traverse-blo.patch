@@ -25,19 +25,6 @@ index 04f7b2b5900b03df1e012335c4100b8e8bdac28c..bb10c649722775ae05c16c6a7802433b
                      if (!this.blockTraversalPossible(this.mob.level(), null, null, pos, false, false)) {
                          return false;
                      }
-diff --git a/net/minecraft/world/entity/projectile/ThrowableProjectile.java b/net/minecraft/world/entity/projectile/ThrowableProjectile.java
-index 39b0accc66bdbb84fc43df3e5c11afcac8aefb6c..ccd0ed111fd84a14069403a1aa236892c0aa4f1c 100644
---- a/net/minecraft/world/entity/projectile/ThrowableProjectile.java
-+++ b/net/minecraft/world/entity/projectile/ThrowableProjectile.java
-@@ -103,7 +103,7 @@ public abstract class ThrowableProjectile extends Projectile {
- 
-     private void handleFirstTickBubbleColumn() {
-         if (this.firstTick) {
--            for (BlockPos pos : BlockPos.betweenClosed(this.getBoundingBox())) {
-+            for (BlockPos pos : org.dreeam.leaf.util.list.SimpleBlockPosIterator.iterable(this.getBoundingBox())) { // Leaf - Sakura - optimise check inside blocks
-                 BlockState state = this.level().getBlockState(pos);
-                 if (state.is(Blocks.BUBBLE_COLUMN)) {
-                     state.entityInside(this.level(), pos, this, InsideBlockEffectApplier.NOOP, true);
 diff --git a/net/minecraft/world/level/BlockGetter.java b/net/minecraft/world/level/BlockGetter.java
 index 2a4c928281c7e455d6f210aeb599881855d328f8..4fb03447398608d48618a1b52e1ad1800c51029e 100644
 --- a/net/minecraft/world/level/BlockGetter.java

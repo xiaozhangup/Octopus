@@ -5,10 +5,10 @@ Subject: [PATCH] Parallel world ticking
 
 
 diff --git a/src/main/java/org/bukkit/World.java b/src/main/java/org/bukkit/World.java
-index bf2f7c4959f9f2cd43bbd4d4310e7eedf10cf892..6eadc3ca6b7b4d5ae61dd9bc7b564db63e495dfc 100644
+index 0d39006698a60f7dbf47892e80c2d3b0c9f4f027..2e5296f2648153ccbf0f0147a5d42d61ded2dfd3 100644
 --- a/src/main/java/org/bukkit/World.java
 +++ b/src/main/java/org/bukkit/World.java
-@@ -4660,6 +4660,34 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+@@ -4686,6 +4686,34 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
      @NotNull
      public Collection<GeneratedStructure> getStructures(int x, int z, @NotNull Structure structure);
  

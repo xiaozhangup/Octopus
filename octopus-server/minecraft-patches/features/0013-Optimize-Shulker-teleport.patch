@@ -5,10 +5,10 @@ Subject: [PATCH] Optimize Shulker teleport
 
 
 diff --git a/net/minecraft/world/entity/monster/Shulker.java b/net/minecraft/world/entity/monster/Shulker.java
-index a4e9ec3ddc68af0ffa39f22b34d8214e274fbec0..8b962d70ed3ef1ac3225d33280cce535bb711cc7 100644
+index 8ed256ad6dce91d44d683afdcdf1639c87ba30dc..956c3ee45eaa949ecbcf8f119d5af814150bba93 100644
 --- a/net/minecraft/world/entity/monster/Shulker.java
 +++ b/net/minecraft/world/entity/monster/Shulker.java
-@@ -86,6 +86,10 @@ public class Shulker extends AbstractGolem implements Enemy {
+@@ -89,6 +89,10 @@ public class Shulker extends AbstractGolem implements Enemy {
      private @Nullable BlockPos clientOldAttachPosition;
      private int clientSideTeleportInterpolation;
      private static final float MAX_LID_OPEN = 1.0F;
@@ -19,7 +19,7 @@ index a4e9ec3ddc68af0ffa39f22b34d8214e274fbec0..8b962d70ed3ef1ac3225d33280cce535
  
      public Shulker(final EntityType<? extends Shulker> type, final Level level) {
          super(type, level);
-@@ -172,6 +176,11 @@ public class Shulker extends AbstractGolem implements Enemy {
+@@ -175,6 +179,11 @@ public class Shulker extends AbstractGolem implements Enemy {
      @Override
      public void tick() {
          super.tick();
@@ -31,7 +31,7 @@ index a4e9ec3ddc68af0ffa39f22b34d8214e274fbec0..8b962d70ed3ef1ac3225d33280cce535
          if (!this.level().isClientSide() && !this.isPassenger() && !this.canStayAt(this.blockPosition(), this.getAttachFace())) {
              this.findNewAttachment();
          }
-@@ -389,6 +398,11 @@ public class Shulker extends AbstractGolem implements Enemy {
+@@ -392,6 +401,11 @@ public class Shulker extends AbstractGolem implements Enemy {
  
      protected boolean teleportSomewhere() {
          if (!this.isNoAi() && this.isAlive()) {
@@ -40,11 +40,11 @@ index a4e9ec3ddc68af0ffa39f22b34d8214e274fbec0..8b962d70ed3ef1ac3225d33280cce535
 +                return false;
 +            }
 +            // Octopus end - Optimize Shulker teleport
-             BlockPos current = this.blockPosition();
+             BlockPos oldPos = this.blockPosition();
+             Level level = this.level();
  
-             for (int attempt = 0; attempt < 5; attempt++) {
-@@ -418,11 +432,19 @@ public class Shulker extends AbstractGolem implements Enemy {
-                         this.level().gameEvent(GameEvent.TELEPORT, current, GameEvent.Context.of(this));
+@@ -425,11 +439,19 @@ public class Shulker extends AbstractGolem implements Enemy {
+                         level.levelEvent(LevelEvent.PARTICLES_SHULKER_TELEPORT, oldPos, packedDiff);
                          this.entityData.set(DATA_PEEK_ID, (byte)0);
                          this.setTarget(null);
 +                        // Octopus start - Optimize Shulker teleport

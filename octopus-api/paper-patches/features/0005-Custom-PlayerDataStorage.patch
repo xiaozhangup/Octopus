@@ -5,10 +5,10 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
-index a8e67888e63ae1d387e432827dc96590767b7b7f..52c429e9ae91f2c154148ce1216640ada608245a 100644
+index 9069939b755b1aaec15be572b979ef908ad61b27..d2320c934dda6c5f1afb0a5cf798cede3d7e61bf 100644
 --- a/src/main/java/org/bukkit/Server.java
 +++ b/src/main/java/org/bukkit/Server.java
-@@ -2774,4 +2774,36 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+@@ -2778,4 +2778,36 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
       */
      void allowPausing(@NotNull org.bukkit.plugin.Plugin plugin, boolean value);
      // Paper end - API to check if the server is sleeping

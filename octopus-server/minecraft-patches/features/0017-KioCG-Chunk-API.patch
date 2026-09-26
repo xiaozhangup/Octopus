@@ -17,7 +17,7 @@ index 4baf46256e90a87d684e57ff623076a8e9395f31..c9c3a42ac456288d966d280f6091bd77
      }
  
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index fbd393d9d79e3eae370c9b11af58f2b16ea6a664..8dc3bbd06a522abe19b30245bb3e4d70f5c654ca 100644
+index c0d6f5afc4dae3e1e9d71a17686dd66c4a968b2c..be98b92e6b8b7d6006c99d49db7c9cb50113e17f 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -25,17 +25,7 @@ import java.nio.file.FileStore;
@@ -39,7 +39,7 @@ index fbd393d9d79e3eae370c9b11af58f2b16ea6a664..8dc3bbd06a522abe19b30245bb3e4d70
  import java.util.Map.Entry;
  import java.util.concurrent.CompletableFuture;
  import java.util.concurrent.Executor;
-@@ -1634,7 +1624,30 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1616,7 +1606,30 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          new com.destroystokyo.paper.event.server.ServerTickStartEvent(this.tickCount+1).callEvent(); // Paper - Server Tick Events
          this.tickCount++;
          this.tickRateManager.tick();
@@ -71,12 +71,12 @@ index fbd393d9d79e3eae370c9b11af58f2b16ea6a664..8dc3bbd06a522abe19b30245bb3e4d70
              this.lastServerStatus = nano;
              this.status = this.buildServerStatus();
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 2d6df26f30029c8964d93fcb0e700adae9acac24..8b5dde9f9235291165e3075f1b9a17c79b37796c 100644
+index 970fdb67766b5f37a3b502351fceeda73e938b39..270678b309e0b9d3a9debd359cad78a5442750e4 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -1432,11 +1432,14 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
-         profiler.push(entity.typeHolder()::getRegisteredName);
+@@ -1439,11 +1439,14 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
          profiler.incrementCounter("tickNonPassenger");
+         entity.commonTick();
          final boolean isActive = io.papermc.paper.entity.activation.ActivationRange.checkIfActive(entity); // Paper - EAR 2
 +            LevelChunk levelChunk = entity.shouldTickHot() ? this.getChunkIfLoaded(entity.moonrise$getSectionX(),entity.moonrise$getSectionZ()) : null; // KioCG
 +            if (levelChunk != null) levelChunk.getChunkHot().startTicking(); try { // KioCG
@@ -89,16 +89,16 @@ index 2d6df26f30029c8964d93fcb0e700adae9acac24..8b5dde9f9235291165e3075f1b9a17c7
  
          for (Entity passenger : entity.getPassengers()) {
              this.tickPassenger(entity, passenger, isActive); // Paper - EAR 2
-@@ -1454,6 +1457,8 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -1461,6 +1464,8 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
          if (entity.isRemoved() || entity.getVehicle() != vehicle) {
              entity.stopRiding();
          } else if (entity instanceof Player || this.entityTickList.contains(entity)) {
 +            LevelChunk levelChunk = !(entity instanceof Player) ? this.getChunkIfLoaded(entity.blockPosition()) : null; // KioCG
 +            if (levelChunk != null) levelChunk.getChunkHot().startTicking(); try { // KioCG
-             entity.setOldPosAndRot();
-             entity.tickCount++;
-             entity.totalEntityAge++; // Paper - age-like counter for all entities
-@@ -1472,6 +1477,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+             ProfilerFiller profiler = Profiler.get();
+             profiler.push(entity.typeHolder()::getRegisteredName);
+             profiler.incrementCounter("tickPassenger");
+@@ -1477,6 +1482,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
              }
              // Paper end - EAR 2
              profiler.pop();
@@ -107,13 +107,13 @@ index 2d6df26f30029c8964d93fcb0e700adae9acac24..8b5dde9f9235291165e3075f1b9a17c7
              for (Entity passenger : entity.getPassengers()) {
                  this.tickPassenger(entity, passenger, isActive); // Paper - EAR 2
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 3cd4e850f223100b61ac6831a87dd38f3a3bb58f..4e2442f57409c891d35a65278ad17e63dc196b68 100644
+index 23b3a82ab3e1c6abc85000d9285470cb12300a6b..8b6388cb69d875acfd919952de8dea28cf62a4db 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -766,7 +766,34 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
-         this.trackEnteredOrExitedLavaOnVehicle();
-         this.updatePlayerAttributes();
-         this.advancements.flushDirty(this, true);
+@@ -776,7 +776,34 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+         if (this.postEffectsDirty) {
+             this.sendPostEffects();
+         }
 +
 +        // KioCG start - ChunkHot
 +        if (Math.floorMod(this.tickCount + this.getUUID().hashCode(), 20) == 0) {
@@ -146,7 +146,7 @@ index 3cd4e850f223100b61ac6831a87dd38f3a3bb58f..4e2442f57409c891d35a65278ad17e63
      private void updatePlayerAttributes() {
          AttributeInstance blockInteractionRange = this.getAttribute(Attributes.BLOCK_INTERACTION_RANGE);
 diff --git a/net/minecraft/world/entity/AreaEffectCloud.java b/net/minecraft/world/entity/AreaEffectCloud.java
-index f03fa06c0ba56f7f5e1e45bc1568a490751efde3..eee1c14249addbf4714df733870da9747bda2245 100644
+index c5a212e73c2efeb1f440778cb3f1fa6ee8165e63..52f0b0ad01d852f5bd17202eeaccd9a538cd5085 100644
 --- a/net/minecraft/world/entity/AreaEffectCloud.java
 +++ b/net/minecraft/world/entity/AreaEffectCloud.java
 @@ -415,4 +415,11 @@ public class AreaEffectCloud extends Entity implements TraceableEntity {
@@ -162,10 +162,10 @@ index f03fa06c0ba56f7f5e1e45bc1568a490751efde3..eee1c14249addbf4714df733870da974
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index b304a2f5cc264f304a60333d998106d955ac34e3..7b69508afb8a09b65c062795fd71fa836be3e883 100644
+index 72aec91441106bca870bbea2556e4ab17539eee0..80f2c1718b633937dab64841c4639e67670ee081 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -5484,4 +5484,6 @@ public abstract class Entity
+@@ -5638,4 +5638,6 @@ public abstract class Entity
          return ((ServerLevel) this.level()).isPositionEntityTicking(this.blockPosition());
      }
      // Paper end
@@ -173,10 +173,10 @@ index b304a2f5cc264f304a60333d998106d955ac34e3..7b69508afb8a09b65c062795fd71fa83
 +    public boolean shouldTickHot() { return this.tickCount > 20 * 10 && this.isAlive(); } // KioCG
  }
 diff --git a/net/minecraft/world/entity/LightningBolt.java b/net/minecraft/world/entity/LightningBolt.java
-index 5b19fee8a4861e5dbfb545bbe4dabda7787c430a..0afca6f5f5b02609fd55e9ea4d72b8862cc03420 100644
+index c756d28b396520264336832f17527981248556f3..90630d3528cb6c07b5242fe868a6b610df241570 100644
 --- a/net/minecraft/world/entity/LightningBolt.java
 +++ b/net/minecraft/world/entity/LightningBolt.java
-@@ -283,4 +283,11 @@ public class LightningBolt extends Entity {
+@@ -285,4 +285,11 @@ public class LightningBolt extends Entity {
      public final boolean hurtServer(final ServerLevel level, final DamageSource source, final float damage) {
          return false;
      }
@@ -189,12 +189,12 @@ index 5b19fee8a4861e5dbfb545bbe4dabda7787c430a..0afca6f5f5b02609fd55e9ea4d72b886
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/entity/Mob.java b/net/minecraft/world/entity/Mob.java
-index c2dd2da4bfb7d65ad2730ba1ce771e2b488beda4..2f4e5ae7068586320b8f7664cd5312858350584d 100644
+index 648826138efdc48487c78133893394c9e4908d3f..045458dc4935602f8d337b593259a23bf386f15b 100644
 --- a/net/minecraft/world/entity/Mob.java
 +++ b/net/minecraft/world/entity/Mob.java
-@@ -1704,4 +1704,11 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
-     public float chargeSpeedModifier() {
-         return 1.0F;
+@@ -1711,4 +1711,11 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
+     public void swing(final InteractionHand hand, final SwingAnimation animation) {
+         this.swing(hand, animation, false);
      }
 +
 +    // KioCG start
@@ -221,10 +221,10 @@ index 7c92c9335997cee76ff360c51f704ee41a180796..fb4cab83fd23c5561326a58683558e9a
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/entity/player/Player.java b/net/minecraft/world/entity/player/Player.java
-index 2a71a2fa949b3a7fb8ff2c44ec3a3d8636237142..b0edbaf4f919e14fe911dc1166bccdbafd56a4ff 100644
+index 4068dc1cea4edca196dc0c58b4804e94dd07881e..2db02b1202297691e27052360698863e0106642b 100644
 --- a/net/minecraft/world/entity/player/Player.java
 +++ b/net/minecraft/world/entity/player/Player.java
-@@ -1436,6 +1436,13 @@ public abstract class Player extends Avatar implements ContainerUser {
+@@ -1435,6 +1435,13 @@ public abstract class Player extends Avatar implements ContainerUser {
          return true;
      }
  
@@ -235,14 +235,14 @@ index 2a71a2fa949b3a7fb8ff2c44ec3a3d8636237142..b0edbaf4f919e14fe911dc1166bccdba
 +    }
 +    // KioCG end
 +
-     public Either<Player.BedSleepingProblem, Unit> startSleepInBed(final BlockPos pos) {
-         // CraftBukkit start
-         return this.startSleepInBed(pos, false);
+     public Either<Player.BedSleepingProblem, Unit> startSleepInBed(
+         final AbstractBedBlock bedBlock, final BlockState bedBlockState, final BedRule rule, final BlockPos pos
+     ) {
 diff --git a/net/minecraft/world/entity/projectile/Projectile.java b/net/minecraft/world/entity/projectile/Projectile.java
-index 9af4bf76974f05d9f752bbd4e8037560ec481cdf..9d2cac89490696329f27bc7d152530169fe23f6d 100644
+index 089dd82e6806f4f1fbff554058dc44f15593e37f..20844e011c471c379824e7b821a6fb74673dec8f 100644
 --- a/net/minecraft/world/entity/projectile/Projectile.java
 +++ b/net/minecraft/world/entity/projectile/Projectile.java
-@@ -501,4 +501,11 @@ public abstract class Projectile extends Entity implements TraceableEntity {
+@@ -567,4 +567,11 @@ public abstract class Projectile extends Entity implements TraceableEntity {
      public interface ProjectileFactory<T extends Projectile> {
          T create(final ServerLevel level, LivingEntity entity, ItemStack itemStack);
      }
@@ -255,10 +255,10 @@ index 9af4bf76974f05d9f752bbd4e8037560ec481cdf..9d2cac89490696329f27bc7d15253016
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/level/chunk/LevelChunk.java b/net/minecraft/world/level/chunk/LevelChunk.java
-index 681563230061212afa7994c8eb16c068754db5dd..ced619c1e283ef9151048453a010debd9c903a4a 100644
+index af4106497a69f9b311970197016c6157475a7d85..519f7415fc6663af9eae3fb1568ed7b3a9b7d63c 100644
 --- a/net/minecraft/world/level/chunk/LevelChunk.java
 +++ b/net/minecraft/world/level/chunk/LevelChunk.java
-@@ -105,6 +105,7 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
+@@ -104,6 +104,7 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
      // Paper start - rewrite chunk system
      private boolean postProcessingDone;
      private ca.spottedleaf.moonrise.patches.chunk_system.scheduling.NewChunkHolder chunkAndHolder;
@@ -266,7 +266,7 @@ index 681563230061212afa7994c8eb16c068754db5dd..ced619c1e283ef9151048453a010debd
  
      @Override
      public final boolean moonrise$isPostProcessingDone() {
-@@ -946,6 +947,7 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
+@@ -943,6 +944,7 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
                      try {
                          ProfilerFiller profiler = Profiler.get();
                          profiler.push(this::getType);
@@ -274,7 +274,7 @@ index 681563230061212afa7994c8eb16c068754db5dd..ced619c1e283ef9151048453a010debd
                          BlockState blockState = LevelChunk.this.getBlockState(pos);
                          if (this.blockEntity.getType().isValid(blockState)) {
                              this.ticker.tick(LevelChunk.this.level, this.blockEntity.getBlockPos(), blockState, this.blockEntity);
-@@ -974,6 +976,8 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
+@@ -971,6 +973,8 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
                          LevelChunk.this.level.getCraftServer().getPluginManager().callEvent(new com.destroystokyo.paper.event.server.ServerExceptionEvent(new com.destroystokyo.paper.exception.ServerInternalException(msg, t))); // Paper - ServerExceptionEvent
                          LevelChunk.this.removeBlockEntity(this.getPos());
                          // Paper end - Prevent block entity and entity crashes

@@ -5,7 +5,7 @@ Subject: [PATCH] Parallel world ticking
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-index f3f068011abd8c6585463169d50634bf42a09497..273d094511ca7071a9a2da7d6e869434a022404c 100644
+index a26249fbae41b8915ab8b3e876485213ab992599..f3a5d2a57c77c48c9d7a3d24734c5ac0a0ad4e5e 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 @@ -2049,4 +2049,24 @@ public class CraftWorld extends CraftRegionAccessor implements World {
@@ -34,10 +34,10 @@ index f3f068011abd8c6585463169d50634bf42a09497..273d094511ca7071a9a2da7d6e869434
 +    }
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
-index 72aacb573365c521609ce35af6b430f525edf3e0..f0fd800512ba8165699e1df154847ee8d02823fd 100644
+index 0ab39922e53ebeb044958f99b7f0f06391d78d31..3951468107ef897f454d2b082fcde1a3a79f0e70 100644
 --- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
 +++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
-@@ -531,8 +531,8 @@ public class CraftBlock implements Block {
+@@ -532,8 +532,8 @@ public class CraftBlock implements Block {
              capturedBlockStates = new ArrayList<>(world.capturedBlockStates.values());
              world.capturedBlockStates.clear();
  

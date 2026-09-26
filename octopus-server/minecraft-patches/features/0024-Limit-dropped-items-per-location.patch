@@ -5,10 +5,10 @@ Subject: [PATCH] Limit dropped items per location
 
 
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index e86e76deb9780b1ab6d2d7bf9acd35053a2047fc..b7c6c1273cb87edf4b10346df763f63ad66a2104 100644
+index 270678b309e0b9d3a9debd359cad78a5442750e4..3ea5f179e9f5dd98f1c0c9b59034543734692bc5 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -939,6 +939,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+@@ -947,6 +947,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
                          }
                      }
                  );
@@ -17,10 +17,10 @@ index e86e76deb9780b1ab6d2d7bf9acd35053a2047fc..b7c6c1273cb87edf4b10346df763f63a
              profiler.popPush("blockEntities");
              this.tickBlockEntities();
 diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
-index c800c894a921ae77ed1757794ddf8d737b05681e..a447d7d770a5261dac7f34a9f6991f48a98de7c2 100644
+index 8b10b2121b61892eb4f98533c7df1ba549cdc64f..b77b32f5650a7c7611bb53a18cb8e596b7e856e7 100644
 --- a/net/minecraft/world/entity/item/ItemEntity.java
 +++ b/net/minecraft/world/entity/item/ItemEntity.java
-@@ -150,6 +150,18 @@ public class ItemEntity extends Entity implements TraceableEntity {
+@@ -143,6 +143,18 @@ public class ItemEntity extends Entity implements TraceableEntity {
  
      @Override
      public void tick() {
@@ -39,7 +39,7 @@ index c800c894a921ae77ed1757794ddf8d737b05681e..a447d7d770a5261dac7f34a9f6991f48
          if (this.getItem().isEmpty()) {
              this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
          } else {
-@@ -203,6 +215,12 @@ public class ItemEntity extends Entity implements TraceableEntity {
+@@ -196,6 +208,12 @@ public class ItemEntity extends Entity implements TraceableEntity {
                  }
              }
  
@@ -52,7 +52,7 @@ index c800c894a921ae77ed1757794ddf8d737b05681e..a447d7d770a5261dac7f34a9f6991f48
              boolean moved = Mth.floor(this.xo) != Mth.floor(this.getX())
                  || Mth.floor(this.yo) != Mth.floor(this.getY())
                  || Mth.floor(this.zo) != Mth.floor(this.getZ());
-@@ -232,6 +250,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
+@@ -225,6 +243,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
                  // CraftBukkit end
                  this.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DESPAWN); // CraftBukkit - add Bukkit remove cause
              }
@@ -61,10 +61,10 @@ index c800c894a921ae77ed1757794ddf8d737b05681e..a447d7d770a5261dac7f34a9f6991f48
      }
  
 diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
-index 9286d9bcf3ec4069e77d3133f3d7bf29b2370c5a..f90d5c6aa1eca6509147d96a909b2f1c9845fd5c 100644
+index 21878bd770f6c0bc10dd0a67be5bd94d7e16f741..7fa823182c4e5de9b4e79cd468c1e28031ada07e 100644
 --- a/net/minecraft/world/level/Level.java
 +++ b/net/minecraft/world/level/Level.java
-@@ -157,6 +157,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -155,6 +155,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
      @Nullable
      public List<net.minecraft.world.entity.item.ItemEntity> captureDrops;
      public final it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap<SpawnCategory> ticksPerSpawnCategory = new it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap<>();

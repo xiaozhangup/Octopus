@@ -5,10 +5,10 @@ Subject: [PATCH] Add clientConnected API
 
 
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index baec5d072b8f2d9379dba850b04e881e5267ca6b..bc192197941658321c3d98b830f35e0bc78a56fb 100644
+index a7f589970a04e520eb5cbe6dfeb333bc9cd479a8..85ba06d7bcb8a69f8b8c0ca7b00070ab34bffaa1 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -441,6 +441,7 @@ public abstract class PlayerList {
+@@ -444,6 +444,7 @@ public abstract class PlayerList {
              player.closeContainer(org.bukkit.event.inventory.InventoryCloseEvent.Reason.DISCONNECT); // Paper - Inventory close reason
          }
  

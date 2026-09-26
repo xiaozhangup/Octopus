@@ -5,10 +5,10 @@ Subject: [PATCH] Add EntityPortalPreparedEvent
 
 
 diff --git a/net/minecraft/world/level/block/EndPortalBlock.java b/net/minecraft/world/level/block/EndPortalBlock.java
-index 66c8f1abf36c9f4598bde83e4375d0f72eac4668..4d8c70bb3dba8bf852c0224017803c2de2c426bd 100644
+index 23a3c9cd26666f909e5b512e276a2fcdcbc42c05..651bdedc55ac14dfc069e17030a7a8390160d717 100644
 --- a/net/minecraft/world/level/block/EndPortalBlock.java
 +++ b/net/minecraft/world/level/block/EndPortalBlock.java
-@@ -83,6 +83,13 @@ public class EndPortalBlock extends BaseEntityBlock implements Portal {
+@@ -76,6 +76,13 @@ public class EndPortalBlock extends BaseEntityBlock implements Portal {
  
      @Override
      public @Nullable TeleportTransition getPortalDestination(final ServerLevel currentLevel, final Entity entity, final BlockPos portalEntryPos) {
@@ -23,10 +23,10 @@ index 66c8f1abf36c9f4598bde83e4375d0f72eac4668..4d8c70bb3dba8bf852c0224017803c2d
          boolean fromEnd = currentLevel.getTypeKey() == net.minecraft.world.level.dimension.LevelStem.END; // CraftBukkit - SPIGOT-6152: send back to main overworld in custom ends
          ResourceKey<Level> newDimension = fromEnd ? respawnData.dimension() : Level.END;
 diff --git a/net/minecraft/world/level/block/NetherPortalBlock.java b/net/minecraft/world/level/block/NetherPortalBlock.java
-index 070880adc13501f8011d81de339a66d474f7948a..1b4199986e5489342a927ad039746a9002a1a369 100644
+index 28ab25af5929991622629f056f32b1184853cb24..1c3daefe8b208f13da463d7dd44011619ef89e92 100644
 --- a/net/minecraft/world/level/block/NetherPortalBlock.java
 +++ b/net/minecraft/world/level/block/NetherPortalBlock.java
-@@ -145,6 +145,13 @@ public class NetherPortalBlock extends Block implements Portal {
+@@ -138,6 +138,13 @@ public class NetherPortalBlock extends Block implements Portal {
  
      @Override
      public @Nullable TeleportTransition getPortalDestination(final ServerLevel currentLevel, final Entity entity, final BlockPos portalEntryPos) {
