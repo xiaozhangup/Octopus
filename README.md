@@ -19,6 +19,7 @@ Powered by ```HAPPYLAND AssiahLand```
 - 禁用了结构生成方块 (Octopus)
 - 加载世界时允许指定 UUID (Octopus)
 - 新增可选异步世界加载 API (Octopus) (由 AI 完成, 未知可靠性)
+- 新增 Hamster 本地异常记录与离线 JSONL 查看器 (Octopus)
 - 迁移世界时保留额外的数据 (Octopus)
 - 优化空岛情况下的 EnderPortal 扫描逻辑 (Octopus)
 - 为聊天和验证使用虚拟线程 (Leaf)
@@ -42,3 +43,5 @@ Powered by ```HAPPYLAND AssiahLand```
 - 新增区块热度统计 API (KioCG)
 - 使用平台自带的 Math 方法 (Gale)
 ```
+
+Hamster 的配置、JSONL 格式和离线查看方法见 [hamster/README.md](hamster/README.md)。

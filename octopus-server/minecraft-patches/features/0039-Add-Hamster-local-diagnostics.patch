@@ -1,0 +1,62 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Fri, 2 Oct 2026 13:18:53 +0800
+Subject: [PATCH] Add Hamster local diagnostics
+
+
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index 8c2aca8db82692185d1b4e40dfd363c1ebf006e7..b7c49b47e572538bb7303cf765b474edd9469a44 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -1414,6 +1414,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+                 LOGGER.error("Exception stopping the server", t);
+             } finally {
+                 //this.onServerExit(); // Paper - Improved watchdog support; moved into stop
++                me.xiaozhangup.octopus.hamster.HamsterRecorder.stop(); // Octopus - Hamster: also drain after a failed shutdown
+             }
+         }
+     }
+@@ -1945,7 +1946,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+             java.util.concurrent.Callable<Pair<ServerLevel, Throwable>> tickingFunction = () -> {
+                 level.worldTaskQueueInstance.acquirePoller();
+                 long tickStart = Util.getNanos(); // SparklyPaper - track world's MSPT
+-                try {
++                try (var context = me.xiaozhangup.octopus.hamster.HamsterContext.world(
++                    level.getWorld().getName(), level.dimension().identifier().toString())) {
+                     level.tick(haveTime);
+                 } catch (Throwable throwable) {
+                     return Pair.of(level, throwable);
+@@ -1996,7 +1998,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+                 if (throwable != null) {
+                     CrashReport report = CrashReport.forThrowable(throwable, "Exception ticking world");
+                     result.getLeft().fillReportDetails(report);
+-                    throw new ReportedException(report);
++                    throw new me.xiaozhangup.octopus.hamster.HamsterWorldException(report,
++                        level.getWorld().getName(), level.dimension().identifier().toString(), tickTask.getThreadName());
+                 }
+             } catch (InterruptedException | java.util.concurrent.ExecutionException e) {
+                 e.printStackTrace();
+diff --git a/net/minecraft/server/dedicated/DedicatedServer.java b/net/minecraft/server/dedicated/DedicatedServer.java
+index 68675926ee85f738b3693a76fc29b80b80c717ed..3d318ec7b972c1ada61d4576796eaa98a2198b03 100644
+--- a/net/minecraft/server/dedicated/DedicatedServer.java
++++ b/net/minecraft/server/dedicated/DedicatedServer.java
+@@ -236,6 +236,11 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         // Spigot end
+         // Paper start - initialize global and world-defaults configuration
+         this.paperConfigurations.initializeGlobalConfiguration(this.registryAccess());
++        // Octopus start - Hamster
++        var hamster = io.papermc.paper.configuration.GlobalConfiguration.get().hamster;
++        me.xiaozhangup.octopus.hamster.HamsterRecorder.start(hamster.enabled, hamster.directory,
++            hamster.retentionDays, hamster.maxDiskMib, this.server.getVersion());
++        // Octopus end - Hamster
+         this.paperConfigurations.initializeWorldDefaultsConfiguration(this.registryAccess());
+         // Paper end - initialize global and world-defaults configuration
+         this.server.spark.enableEarlyIfRequested(); // Paper - spark
+@@ -521,6 +526,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         }
+ 
+         this.hasFullyShutdown = true; // Paper - Improved watchdog support
++        me.xiaozhangup.octopus.hamster.HamsterRecorder.stop(); // Octopus - Hamster
+         System.exit(this.abnormalExit ? 70 : 0); // CraftBukkit // Paper - Improved watchdog support
+     }
+ 

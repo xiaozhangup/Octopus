@@ -16,3 +16,9 @@ build
 .idea/
 /paper-api/
 /paper-server/
+
+# Octopus generated sources and local code index
+/octopus-api/build.gradle.kts
+/octopus-server/build.gradle.kts
+/octopus-server/src/minecraft/
+/.codegraph/

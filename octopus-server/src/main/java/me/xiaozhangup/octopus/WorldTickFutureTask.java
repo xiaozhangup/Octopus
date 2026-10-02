@@ -12,10 +12,15 @@ import java.util.logging.Logger;
 public class WorldTickFutureTask extends FutureTask<Pair<ServerLevel, Throwable>> {
     private final ServerLevel level;
     private volatile Thread runningThread;
+    private String threadName;
 
     public WorldTickFutureTask(ServerLevel level, Callable<Pair<ServerLevel, Throwable>> callable) {
         super(callable);
         this.level = level;
+    }
+
+    public String getThreadName() {
+        return this.threadName;
     }
 
     public String getLevelName() {
@@ -48,6 +53,7 @@ public class WorldTickFutureTask extends FutureTask<Pair<ServerLevel, Throwable>
     @Override
     public void run() {
         this.runningThread = Thread.currentThread();
+        this.threadName = this.runningThread.getName();
         try {
             super.run();
         } finally {

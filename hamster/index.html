@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Hamster · 异常查看器</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="toolbar">
+    <h1>Hamster</h1>
+    <button id="import-button" class="primary">导入 JSONL</button>
+    <input id="file-input" type="file" accept=".jsonl,.ndjson" multiple hidden>
+    <button id="clear-button" disabled>清空数据</button>
+    <details id="files-panel" class="files-panel">
+      <summary id="file-summary">文件 (0)</summary>
+      <div class="files-content"><div id="file-list"></div><p>追加导入；重复记录自动去重。刷新页面后清空。</p></div>
+    </details>
+    <span class="totals">发生 <b id="stat-events">0</b> · 分组 <b id="stat-issues">0</b> · 会话 <b id="stat-sessions">0</b> · 丢弃 <b id="stat-loss">0</b></span>
+  </header>
+  <section class="filterbar" aria-label="记录筛选">
+    <div class="filter-row">
+      <input id="search" type="search" placeholder="搜索消息、堆栈、上下文、ID（/）" aria-label="搜索异常">
+      <select id="plugin-filter" aria-label="按插件筛选"><option value="">所有插件</option></select>
+      <select id="level-filter" aria-label="按级别筛选"><option value="">所有级别</option><option>WARN</option><option>ERROR</option><option>FATAL</option></select>
+      <select id="source-filter" aria-label="按来源筛选"><option value="">所有来源</option></select>
+      <select id="session-filter" aria-label="按会话筛选"><option value="">所有会话</option></select>
+    </div>
+    <div class="filter-row secondary">
+      <label>从 <input id="time-from" type="datetime-local" step="1" aria-label="开始时间"></label>
+      <label>至 <input id="time-to" type="datetime-local" step="1" aria-label="结束时间"></label>
+      <span id="timezone"></span>
+      <button id="reset-filters">重置筛选</button>
+      <label class="sort-label">排序 <select id="sort" aria-label="分组排序"><option value="latest">最近发生</option><option value="count">匹配次数</option><option value="first">首次发生</option></select></label>
+    </div>
+  </section>
+  <div class="statusbar"><span id="import-status" role="status" aria-live="polite">导入或拖入服务端 logs/hamster/ 中的 JSONL 文件。</span><span id="filter-status" role="status"></span></div>
+  <details id="warnings" class="warnings" hidden><summary id="warning-summary"></summary><ul id="warning-list"></ul></details>
+  <main id="workspace" class="workspace">
+    <section class="navigation" aria-label="异常与发生记录">
+      <section class="group-panel">
+        <div class="panel-heading"><h2>异常分组</h2><span id="result-count">0 组 / 0 次</span></div>
+        <div id="issue-list" class="table-scroll" tabindex="0" aria-label="分组列表，方向键切换分组"></div>
+        <div id="issue-pagination" class="pager"></div>
+      </section>
+      <section class="occurrence-panel">
+        <div class="panel-heading"><h2>发生记录</h2><span id="occurrence-count">未选择分组</span></div>
+        <div id="occurrence-list" class="table-scroll" tabindex="0" aria-label="发生列表，方向键切换记录"></div>
+        <div id="occurrence-pagination" class="pager"></div>
+      </section>
+    </section>
+    <article id="detail-panel" class="detail-panel" aria-label="所选发生记录详情"><p class="empty">导入文件后选择发生记录，查看消息、堆栈和上下文。</p></article>
+  </main>
+  <div id="drop-overlay" hidden>松开鼠标导入 JSONL 文件</div>
+</body>
+</html>
