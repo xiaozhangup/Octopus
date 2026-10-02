@@ -189,10 +189,10 @@ index c756d28b396520264336832f17527981248556f3..90630d3528cb6c07b5242fe868a6b610
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/entity/Mob.java b/net/minecraft/world/entity/Mob.java
-index 648826138efdc48487c78133893394c9e4908d3f..045458dc4935602f8d337b593259a23bf386f15b 100644
+index 078054c499e7b29d64543f92c1808b5623e3c8e5..53099ce01fef8661580e8157807606c59e8b388d 100644
 --- a/net/minecraft/world/entity/Mob.java
 +++ b/net/minecraft/world/entity/Mob.java
-@@ -1711,4 +1711,11 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
+@@ -1718,4 +1718,11 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
      public void swing(final InteractionHand hand, final SwingAnimation animation) {
          this.swing(hand, animation, false);
      }

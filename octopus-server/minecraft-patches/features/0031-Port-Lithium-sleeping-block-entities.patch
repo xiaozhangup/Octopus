@@ -2196,7 +2196,7 @@ index 7903289b01c652226b58d1f22f25cfabcbb10274..cfb5b92cbf5f20be050df5a1ed80a517
          public static final int LISTENER_RANGE = 8;
          protected final BlockPos blockPos;
 diff --git a/net/minecraft/world/level/block/entity/SculkShriekerBlockEntity.java b/net/minecraft/world/level/block/entity/SculkShriekerBlockEntity.java
-index 8ad288bfb58d888950c2404ccd287b16d34bf67f..ce505d4875c1770b6f7105b2615597df4081547e 100644
+index 3adfffd3f0a7e6b4867248f6483a36ca9f5f1ee3..afb5258efbc6f8ffbfd3d14706d5c4d3af4e134e 100644
 --- a/net/minecraft/world/level/block/entity/SculkShriekerBlockEntity.java
 +++ b/net/minecraft/world/level/block/entity/SculkShriekerBlockEntity.java
 @@ -40,7 +40,7 @@ import net.minecraft.world.level.storage.ValueOutput;
@@ -2228,7 +2228,7 @@ index 8ad288bfb58d888950c2404ccd287b16d34bf67f..ce505d4875c1770b6f7105b2615597df
      }
  
      @Override
-@@ -181,6 +187,32 @@ public class SculkShriekerBlockEntity extends BlockEntity implements GameEventLi
+@@ -193,6 +199,32 @@ public class SculkShriekerBlockEntity extends BlockEntity implements GameEventLi
          return this.vibrationListener;
      }
  

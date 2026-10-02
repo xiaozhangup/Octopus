@@ -213,7 +213,7 @@ index c3bf41af0273e902f881cc070fcef6dd64abb063..dad85c1aa5a17c1c565e6889cfdd2c9d
  
          profiler.popPush("connection");
 diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
-index 66d706d2a7995b437d102903012a714c38e4876c..6d6c5f50b990fe4bc6d4d8e7cfd8f6ded1041187 100644
+index c4cfb53e145d69666ffc27ef4ee0c50b54eb9143..ee1d65d460a69f61bf81db6be48bcb8fbb74dcfe 100644
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
 @@ -120,7 +120,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
@@ -225,16 +225,16 @@ index 66d706d2a7995b437d102903012a714c38e4876c..6d6c5f50b990fe4bc6d4d8e7cfd8f6de
              ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkTaskScheduler.popChunkWait();
          }
  
-@@ -355,7 +355,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
-         CompletableFuture<ChunkResult<ChunkAccess>> serverFuture;
-         if (isMainThread) {
-             serverFuture = this.getChunkFutureMainThread(x, z, targetStatus, loadOrGenerate);
--            this.mainThreadProcessor.managedBlock(serverFuture::isDone);
-+            this.level.worldTaskQueueInstance.spinWait(serverFuture::isDone); // Octopus
+@@ -356,7 +356,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+                                                                       final boolean create) {
+         if (ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this.level, chunkX, chunkZ)) {
+             final CompletableFuture<ChunkResult<ChunkAccess>> ret = this.getChunkFutureInternal(chunkX, chunkZ, toStatus, create, true);
+-            this.mainThreadProcessor.managedBlock(ret::isDone);
++            this.level.worldTaskQueueInstance.spinWait(ret::isDone); // Octopus
+             return ret;
          } else {
-             serverFuture = CompletableFuture.<CompletableFuture<ChunkResult<ChunkAccess>>>supplyAsync(
-                     () -> this.getChunkFutureMainThread(x, z, targetStatus, loadOrGenerate), this.mainThreadProcessor
-@@ -433,6 +433,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+             final CompletableFuture<ChunkResult<ChunkAccess>> ret = new CompletableFuture<>();
+@@ -446,6 +446,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
      }
  
      public boolean pollTask() {
@@ -242,7 +242,7 @@ index 66d706d2a7995b437d102903012a714c38e4876c..6d6c5f50b990fe4bc6d4d8e7cfd8f6de
          return this.mainThreadProcessor.pollTask();
      }
  
-@@ -635,7 +636,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -648,7 +649,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
  
      @VisibleForTesting
      public int getPendingTasksCount() {
@@ -251,7 +251,7 @@ index 66d706d2a7995b437d102903012a714c38e4876c..6d6c5f50b990fe4bc6d4d8e7cfd8f6de
      }
  
      public ChunkGenerator getGenerator() {
-@@ -666,7 +667,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -679,7 +680,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
  
      @Override
      public void onLightUpdate(final LightLayer layer, final SectionPos pos) {

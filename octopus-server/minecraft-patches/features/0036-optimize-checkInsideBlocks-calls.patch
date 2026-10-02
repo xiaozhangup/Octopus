@@ -98,7 +98,7 @@ index 6799f7b427c179215d24256dcadb74660b2d5e28..a6acf1b6350b7fa8f9096e9e71c3c08d
      private void debugBlockIntersection(final ServerLevel level, final BlockPos pos, final boolean insideBlock, final boolean insideFluid) {
          DebugEntityBlockIntersection type;
 diff --git a/net/minecraft/world/entity/InsideBlockEffectApplier.java b/net/minecraft/world/entity/InsideBlockEffectApplier.java
-index fc7cfc75e3e5c274f01498e4afd8693236b4e394..149e2a11534aaffe00b7304898c4f1eb932651c2 100644
+index c2f124383be06ae777c1ee7f0820c959c8359f87..10f76d324fc4b528bcafb70f76a258b10b90f770 100644
 --- a/net/minecraft/world/entity/InsideBlockEffectApplier.java
 +++ b/net/minecraft/world/entity/InsideBlockEffectApplier.java
 @@ -32,16 +32,19 @@ public interface InsideBlockEffectApplier {
@@ -210,4 +210,4 @@ index fc7cfc75e3e5c274f01498e4afd8693236b4e394..149e2a11534aaffe00b7304898c4f1eb
 +        // Leaf end - optimize checkInsideBlocks calls
  
          // Paper start - track position inside effect was triggered on
-         private net.minecraft.core.BlockPos currentBlockPos = null;
+         private net.minecraft.core.@org.jspecify.annotations.Nullable BlockPos currentBlockPos = null;

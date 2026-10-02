@@ -45,9 +45,9 @@
  dependencies {
 -    implementation(project(":paper-api"))
 +    implementation(project(":octopus-api"))
-     implementation("ca.spottedleaf:leafpile:1.2.2")
-     implementation("org.jline:jline-terminal-ffm:3.27.1") // use ffm on java 22+
-     implementation("org.jline:jline-terminal-jni:3.27.1") // fall back to jni on java 21
+     implementation(platform("ca.spottedleaf.leafpile:bom:1.2.4"))
+     implementation("ca.spottedleaf.leafpile:common")
+     implementation("ca.spottedleaf.leafpile:concurrentutil")
 @@ -164,21 +_,21 @@
          val git = Git(rootProject.layout.projectDirectory.path)
          val mcVersion = rootProject.providers.gradleProperty("mcVersion").get()

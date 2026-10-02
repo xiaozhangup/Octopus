@@ -134,10 +134,10 @@ index be98b92e6b8b7d6006c99d49db7c9cb50113e17f..8c2aca8db82692185d1b4e40dfd363c1
  
      protected void tickChildren(final BooleanSupplier haveTime) {
 diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
-index 6d6c5f50b990fe4bc6d4d8e7cfd8f6ded1041187..362c56eb35dfbf1978b893ff3e3ccacfcc277d9e 100644
+index ee1d65d460a69f61bf81db6be48bcb8fbb74dcfe..fc0625068bab6ca677223e5c007f08f078b2eed6 100644
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
-@@ -466,6 +466,13 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -479,6 +479,13 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
          ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)this.level).moonrise$getChunkTaskScheduler().chunkHolderManager.close(save, true); // Paper - rewrite chunk system
      }
  
