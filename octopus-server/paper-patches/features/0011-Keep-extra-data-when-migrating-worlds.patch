@@ -211,10 +211,10 @@ index f2bc81da188526de7682841be8135b97f073eda2..f1e800a17504da0687281f6f2d38cb99
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
-index 8ce8de8eedfe8557848b0508857744a5b9641239..1a6a9d31b276c23d7de5e8c004f15cf6f1d86443 100644
+index eb0ac87536692ea1215bdbb4646cfa6589e6fb10..cb93f2250a7f70ddcb1dcee8138d56f9d880c38b 100644
 --- a/src/main/java/org/bukkit/craftbukkit/Main.java
 +++ b/src/main/java/org/bukkit/craftbukkit/Main.java
-@@ -94,6 +94,12 @@ public class Main {
+@@ -99,6 +99,12 @@ public class Main {
                  this.accepts("forceUpgrade", "Whether to force a world upgrade");
                  this.accepts("eraseCache", "Whether to force cache erase during world upgrade");
                  this.accepts("recreateRegionFiles", "Whether to recreate region files during world upgrade");

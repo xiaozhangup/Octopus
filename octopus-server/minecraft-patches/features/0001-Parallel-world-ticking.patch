@@ -261,7 +261,7 @@ index c4cfb53e145d69666ffc27ef4ee0c50b54eb9143..ee1d65d460a69f61bf81db6be48bcb8f
              if (chunk != null && chunk.sectionLightChanged(layer, pos.y())) {
                  this.chunkHoldersToBroadcast.add(chunk);
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 8389d812b2d80a122fd1945b3182c08cdeda7d1c..90f96a1d2cc4e1ceea06e012722db42ede35a295 100644
+index ea4cc487002a0edc54cc49bfbecf72be156b6af7..a2b056424b7d9dfa781a3676ec8750c117140c85 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -224,6 +224,25 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
@@ -291,10 +291,10 @@ index 8389d812b2d80a122fd1945b3182c08cdeda7d1c..90f96a1d2cc4e1ceea06e012722db42e
      private final ResourceKey<LevelStem> typeKey;
      public final String bukkitName;
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index cf3619b6de23f32e9e5a81fbe287fb438ecfcabc..c465f32151d8709b6044aed64e5c919826b71e90 100644
+index 9757a49eca1d52194881841e5f8661b523b375a5..94fa4b9dd0eea741e624fdb72081aa0bc82ee5c8 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -4315,17 +4315,20 @@ public abstract class Entity
+@@ -4311,17 +4311,20 @@ public abstract class Entity
          // Paper end - Fix item duplication and teleport issues
          newEntity.restoreFrom(this);
          this.removeAfterChangingDimensions();

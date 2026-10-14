@@ -38,7 +38,7 @@ index d8cacf975c2c35e5fe7370bd5b007fbe0d4bd031..1c8e2a7cdcb7f134d4936adf3c91ee5b
      }
  
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index f4bc7c4305b93e04b30685bd0efa253f3ee83c06..ad5022ca94bbbc5d22917a18a307f78bbb007bfa 100644
+index fe2a052be3ace2139ce4a62c3ca342508c2f7d37..a92b717648b612c970c49a7ef2df8cb23c1ae36f 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -2835,6 +2835,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
@@ -50,7 +50,7 @@ index f4bc7c4305b93e04b30685bd0efa253f3ee83c06..ad5022ca94bbbc5d22917a18a307f78b
          }
      }
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 80f2c1718b633937dab64841c4639e67670ee081..e18639660c557a66f2966a7cbae407f93fe50e14 100644
+index cf1b29efa7220bc1457f8b507213f43c8f6d24b6..f4f4c27a858941877b958a84cc59aa794bc283e5 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -328,7 +328,7 @@ public abstract class Entity
@@ -62,7 +62,7 @@ index 80f2c1718b633937dab64841c4639e67670ee081..e18639660c557a66f2966a7cbae407f9
      private final VecDeltaCodec packetPositionCodec = new VecDeltaCodec();
      public boolean needsSync;
      public boolean syncPosition;
-@@ -5231,6 +5231,18 @@ public abstract class Entity
+@@ -5227,6 +5227,18 @@ public abstract class Entity
              this.setBoundingBox(this.makeBoundingBox());
          }
          // Paper end - Block invalid positions and bounding box
@@ -1181,7 +1181,7 @@ index 6109d8da984b398bb1eb6cd6ab9a55f0511a615c..dbcf8552f618ec0a41b7a61777270fa0
 +    // Leaves end - Lithium Sleeping Block Entity
  }
 diff --git a/net/minecraft/world/level/block/entity/HopperBlockEntity.java b/net/minecraft/world/level/block/entity/HopperBlockEntity.java
-index 86f005e755f58f9f6a674a5065444fa08ae9ec08..cd1f658acfc898abfc8950a54e1989505dcebe15 100644
+index 17c28fbedde81aaf792508af1d0e33ef521e4ef0..41a40de6a6b7adc6f879581d78b17a8b4f55d6fe 100644
 --- a/net/minecraft/world/level/block/entity/HopperBlockEntity.java
 +++ b/net/minecraft/world/level/block/entity/HopperBlockEntity.java
 @@ -28,7 +28,7 @@ import net.minecraft.world.level.storage.ValueOutput;
@@ -1223,7 +1223,7 @@ index 86f005e755f58f9f6a674a5065444fa08ae9ec08..cd1f658acfc898abfc8950a54e198950
                  return true;
              }
          }
-@@ -375,6 +384,7 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+@@ -380,6 +389,7 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
      private static void applyCooldown(final Hopper hopper) {
          if (hopper instanceof HopperBlockEntity blockEntity && blockEntity.getLevel() != null) {
              blockEntity.setCooldown(blockEntity.getLevel().spigotConfig.hopperTransfer);
@@ -1231,7 +1231,7 @@ index 86f005e755f58f9f6a674a5065444fa08ae9ec08..cd1f658acfc898abfc8950a54e198950
          }
      }
  
-@@ -418,12 +428,18 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+@@ -423,12 +433,18 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
      // Paper end - Perf: Optimize Hoppers
  
      private static boolean ejectItems(final Level level, final BlockPos blockPos, final HopperBlockEntity self) {
@@ -1251,7 +1251,7 @@ index 86f005e755f58f9f6a674a5065444fa08ae9ec08..cd1f658acfc898abfc8950a54e198950
          if (isFullContainer(container, direction)) {
              return false;
          }
-@@ -478,10 +494,16 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+@@ -483,10 +499,16 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
      public static boolean suckInItems(final Level level, final Hopper hopper) {
          BlockPos blockPos = BlockPos.containing(hopper.getLevelX(), hopper.getLevelY() + 1.0, hopper.getLevelZ());
          BlockState blockState = level.getBlockState(blockPos);
@@ -1269,7 +1269,7 @@ index 86f005e755f58f9f6a674a5065444fa08ae9ec08..cd1f658acfc898abfc8950a54e198950
  
              for (int slot : getSlots(container, direction)) {
                  if (tryTakeInItemFromSlot(hopper, container, slot, direction, level)) { // Spigot
-@@ -495,7 +517,7 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+@@ -500,7 +522,7 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
                  && blockState.isCollisionShapeFullBlock(level, blockPos)
                  && !blockState.is(BlockTags.DOES_NOT_BLOCK_HOPPERS);
              if (!isBlocked) {
@@ -1278,7 +1278,7 @@ index 86f005e755f58f9f6a674a5065444fa08ae9ec08..cd1f658acfc898abfc8950a54e198950
                      if (addItem(hopper, entity)) {
                          return true;
                      }
-@@ -617,7 +639,7 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+@@ -622,7 +644,7 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
  
      // CraftBukkit start
      private static @Nullable Container runHopperInventorySearchEvent(
@@ -1287,7 +1287,7 @@ index 86f005e755f58f9f6a674a5065444fa08ae9ec08..cd1f658acfc898abfc8950a54e198950
          org.bukkit.craftbukkit.block.CraftBlock hopper,
          org.bukkit.craftbukkit.block.CraftBlock searchLocation,
          org.bukkit.event.inventory.HopperInventorySearchEvent.ContainerType containerType
-@@ -743,6 +765,17 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+@@ -748,6 +770,17 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
      }
  
      public void setCooldown(final int time) {
@@ -1305,7 +1305,7 @@ index 86f005e755f58f9f6a674a5065444fa08ae9ec08..cd1f658acfc898abfc8950a54e198950
          this.cooldownTime = time;
      }
  
-@@ -762,6 +795,7 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+@@ -767,6 +800,7 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
      @Override
      protected void setItems(final NonNullList<ItemStack> items) {
          this.items = items;
@@ -1313,7 +1313,7 @@ index 86f005e755f58f9f6a674a5065444fa08ae9ec08..cd1f658acfc898abfc8950a54e198950
      }
  
      public static void entityInside(final Level level, final BlockPos pos, final BlockState blockState, final Entity entity, final HopperBlockEntity hopper) {
-@@ -776,4 +810,740 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
+@@ -781,4 +815,740 @@ public class HopperBlockEntity extends RandomizableContainerBlockEntity implemen
      protected AbstractContainerMenu createMenu(final int containerId, final Inventory inventory) {
          return new HopperMenu(containerId, inventory, this);
      }
@@ -2340,10 +2340,10 @@ index c0ec84f3366297b72a12b1f534fd29226165034f..548a087f05729896befe478a0fa549c7
 +    // Leaves end - Lithium Sleeping Block Entity
  }
 diff --git a/net/minecraft/world/level/chunk/LevelChunk.java b/net/minecraft/world/level/chunk/LevelChunk.java
-index 519f7415fc6663af9eae3fb1568ed7b3a9b7d63c..f98c7067c3871c60c116c7aea0a322f42b7e20bf 100644
+index af764a4d5dca784ddee0bd9d96d12d0e69967238..fa780e7b7e661d2b50dcaeffe493f49b1de31690 100644
 --- a/net/minecraft/world/level/chunk/LevelChunk.java
 +++ b/net/minecraft/world/level/chunk/LevelChunk.java
-@@ -909,10 +909,12 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
+@@ -914,10 +914,12 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
              this.tickersInLevel.compute(blockEntity.getBlockPos(), (blockPos, existingTicker) -> {
                  TickingBlockEntity actualTicker = this.createTicker(blockEntity, ticker);
                  if (existingTicker != null) {
@@ -2356,7 +2356,7 @@ index 519f7415fc6663af9eae3fb1568ed7b3a9b7d63c..f98c7067c3871c60c116c7aea0a322f4
                      this.level.addBlockEntityTicker(result);
                      return result;
                  } else {
-@@ -1012,14 +1014,14 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
+@@ -1017,14 +1019,14 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
          void run(LevelChunk levelChunk);
      }
  

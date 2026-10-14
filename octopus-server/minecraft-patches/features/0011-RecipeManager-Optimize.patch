@@ -5,10 +5,10 @@ Subject: [PATCH] RecipeManager Optimize
 
 
 diff --git a/net/minecraft/world/item/crafting/RecipeManager.java b/net/minecraft/world/item/crafting/RecipeManager.java
-index 1cb69160c792dc59621d87061831d73876662606..97e436008462c0f4c3a6ee4f4f493b87614b217a 100644
+index f30349dacbc58bf88c594c84a1cc63ffce29325c..385428352341daac68dd15fd69cd33872b4d329e 100644
 --- a/net/minecraft/world/item/crafting/RecipeManager.java
 +++ b/net/minecraft/world/item/crafting/RecipeManager.java
-@@ -136,7 +136,7 @@ public class RecipeManager implements RecipeAccess {
+@@ -137,7 +137,7 @@ public class RecipeManager implements RecipeAccess {
  
      public <I extends RecipeInput, T extends Recipe<I>> Optional<RecipeHolder<T>> getRecipeFor(final RecipeType<T> type, final I input, final Level level) {
          // CraftBukkit start

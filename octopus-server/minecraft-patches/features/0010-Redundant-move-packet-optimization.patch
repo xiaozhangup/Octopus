@@ -5,7 +5,7 @@ Subject: [PATCH] Redundant move packet optimization
 
 
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index c465f32151d8709b6044aed64e5c919826b71e90..72aec91441106bca870bbea2556e4ab17539eee0 100644
+index 94fa4b9dd0eea741e624fdb72081aa0bc82ee5c8..30cc297ee7cd4da61bee6485a92ee2ed86d8e3c5 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -284,6 +284,7 @@ public abstract class Entity
@@ -28,7 +28,7 @@ index c465f32151d8709b6044aed64e5c919826b71e90..72aec91441106bca870bbea2556e4ab1
          final Vec3 originalMovement = delta; // Paper - Expose pre-collision velocity
          // Paper start - detailed watchdog information
          ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread("Cannot move an entity off-main");
-@@ -4725,6 +4731,11 @@ public abstract class Entity
+@@ -4721,6 +4727,11 @@ public abstract class Entity
      }
  
      public final void setBoundingBox(final AABB bb) {

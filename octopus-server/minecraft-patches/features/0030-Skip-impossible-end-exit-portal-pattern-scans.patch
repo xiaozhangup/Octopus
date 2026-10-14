@@ -5,7 +5,7 @@ Subject: [PATCH] Skip impossible end exit portal pattern scans
 
 
 diff --git a/net/minecraft/world/level/dimension/end/EnderDragonFight.java b/net/minecraft/world/level/dimension/end/EnderDragonFight.java
-index 6061f047f023919bf7e12ed9385798af5b62dced..3aedf26d326d403984f2bcdddda4a0bdcbbf3fb5 100644
+index 5440b181eca0a97b42742fdd21f7c27accc0a3ec..ef813afd79256152e932cd7f164858a29abd0dd7 100644
 --- a/net/minecraft/world/level/dimension/end/EnderDragonFight.java
 +++ b/net/minecraft/world/level/dimension/end/EnderDragonFight.java
 @@ -91,6 +91,7 @@ public class EnderDragonFight extends SavedData {
@@ -16,7 +16,7 @@ index 6061f047f023919bf7e12ed9385798af5b62dced..3aedf26d326d403984f2bcdddda4a0bd
      private int ticksSinceDragonSeen;
      private int aliveCrystals;
      private int ticksSinceCrystalsScanned;
-@@ -343,6 +344,12 @@ public class EnderDragonFight extends SavedData {
+@@ -345,6 +346,12 @@ public class EnderDragonFight extends SavedData {
          BlockPos endPodiumLocation = getPodiumLocation(this.origin);
          int maxY = this.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, endPodiumLocation).getY();
  
@@ -29,7 +29,7 @@ index 6061f047f023919bf7e12ed9385798af5b62dced..3aedf26d326d403984f2bcdddda4a0bd
          for (int y = maxY; y >= this.level.getMinY(); y--) {
              BlockPattern.BlockPatternMatch match = this.exitPortalPattern.find(this.level, new BlockPos(endPodiumLocation.getX(), y, endPodiumLocation.getZ()));
              if (match != null) {
-@@ -358,6 +365,41 @@ public class EnderDragonFight extends SavedData {
+@@ -360,6 +367,41 @@ public class EnderDragonFight extends SavedData {
          return null;
      }
  

@@ -5,10 +5,10 @@ Subject: [PATCH] Add PlayerMessagePreSendEvent
 
 
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 8b6388cb69d875acfd919952de8dea28cf62a4db..fea4b92acc6579188978c3a1801a9496b9c3433a 100644
+index 1924032cf1a063b95bbabf532b7bbdfd0dde396e..5a26ea63ba289ccb1c04b981903072f22447f341 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -2466,14 +2466,19 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2467,14 +2467,19 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
  
      public void sendSystemMessage(final Component message, final boolean overlay) {
          if (this.acceptsSystemMessages(overlay)) {

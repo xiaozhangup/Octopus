@@ -71,7 +71,7 @@ index c0d6f5afc4dae3e1e9d71a17686dd66c4a968b2c..be98b92e6b8b7d6006c99d49db7c9cb5
              this.lastServerStatus = nano;
              this.status = this.buildServerStatus();
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 970fdb67766b5f37a3b502351fceeda73e938b39..270678b309e0b9d3a9debd359cad78a5442750e4 100644
+index 181cab30601967a05cda68bfca0e3be3eb291837..08e01e4c42700a8bd71f75a39a1b4879973c1886 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -1439,11 +1439,14 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
@@ -107,7 +107,7 @@ index 970fdb67766b5f37a3b502351fceeda73e938b39..270678b309e0b9d3a9debd359cad78a5
              for (Entity passenger : entity.getPassengers()) {
                  this.tickPassenger(entity, passenger, isActive); // Paper - EAR 2
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 23b3a82ab3e1c6abc85000d9285470cb12300a6b..8b6388cb69d875acfd919952de8dea28cf62a4db 100644
+index 1137be30f125cb79f05f3e5c104cdf8cca979ff1..1924032cf1a063b95bbabf532b7bbdfd0dde396e 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -776,7 +776,34 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
@@ -162,10 +162,10 @@ index c5a212e73c2efeb1f440778cb3f1fa6ee8165e63..52f0b0ad01d852f5bd17202eeaccd9a5
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 72aec91441106bca870bbea2556e4ab17539eee0..80f2c1718b633937dab64841c4639e67670ee081 100644
+index 30cc297ee7cd4da61bee6485a92ee2ed86d8e3c5..cf1b29efa7220bc1457f8b507213f43c8f6d24b6 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -5638,4 +5638,6 @@ public abstract class Entity
+@@ -5634,4 +5634,6 @@ public abstract class Entity
          return ((ServerLevel) this.level()).isPositionEntityTicking(this.blockPosition());
      }
      // Paper end
@@ -189,7 +189,7 @@ index c756d28b396520264336832f17527981248556f3..90630d3528cb6c07b5242fe868a6b610
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/entity/Mob.java b/net/minecraft/world/entity/Mob.java
-index 078054c499e7b29d64543f92c1808b5623e3c8e5..53099ce01fef8661580e8157807606c59e8b388d 100644
+index 51dec65d0f437deb370eabbfa0369c4232caac14..7ee9c58e336518113244f3f30a4ccc4e97fc85ee 100644
 --- a/net/minecraft/world/entity/Mob.java
 +++ b/net/minecraft/world/entity/Mob.java
 @@ -1718,4 +1718,11 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
@@ -255,7 +255,7 @@ index 089dd82e6806f4f1fbff554058dc44f15593e37f..20844e011c471c379824e7b821a6fb74
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/level/chunk/LevelChunk.java b/net/minecraft/world/level/chunk/LevelChunk.java
-index af4106497a69f9b311970197016c6157475a7d85..519f7415fc6663af9eae3fb1568ed7b3a9b7d63c 100644
+index 76dae652c910e36c860791a8285bd9fee466d5b9..af764a4d5dca784ddee0bd9d96d12d0e69967238 100644
 --- a/net/minecraft/world/level/chunk/LevelChunk.java
 +++ b/net/minecraft/world/level/chunk/LevelChunk.java
 @@ -104,6 +104,7 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
@@ -266,7 +266,7 @@ index af4106497a69f9b311970197016c6157475a7d85..519f7415fc6663af9eae3fb1568ed7b3
  
      @Override
      public final boolean moonrise$isPostProcessingDone() {
-@@ -943,6 +944,7 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
+@@ -948,6 +949,7 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
                      try {
                          ProfilerFiller profiler = Profiler.get();
                          profiler.push(this::getType);
@@ -274,7 +274,7 @@ index af4106497a69f9b311970197016c6157475a7d85..519f7415fc6663af9eae3fb1568ed7b3
                          BlockState blockState = LevelChunk.this.getBlockState(pos);
                          if (this.blockEntity.getType().isValid(blockState)) {
                              this.ticker.tick(LevelChunk.this.level, this.blockEntity.getBlockPos(), blockState, this.blockEntity);
-@@ -971,6 +973,8 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
+@@ -976,6 +978,8 @@ public class LevelChunk extends ChunkAccess implements DebugValueSource, ca.spot
                          LevelChunk.this.level.getCraftServer().getPluginManager().callEvent(new com.destroystokyo.paper.event.server.ServerExceptionEvent(new com.destroystokyo.paper.exception.ServerInternalException(msg, t))); // Paper - ServerExceptionEvent
                          LevelChunk.this.removeBlockEntity(this.getPos());
                          // Paper end - Prevent block entity and entity crashes

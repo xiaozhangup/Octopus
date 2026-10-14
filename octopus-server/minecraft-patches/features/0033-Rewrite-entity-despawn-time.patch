@@ -115,7 +115,7 @@ index 328784ba08236553e49d62320b79f7222292412f..f053ecfe4cc205597bfc55fac2ab9e73
  
          private final ChunkEntitySlices[] slices = new ChunkEntitySlices[REGION_SIZE * REGION_SIZE];
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index ad5022ca94bbbc5d22917a18a307f78bbb007bfa..3e07d3ccd7c7e083b0dc48c1d62500374afa3c72 100644
+index a92b717648b612c970c49a7ef2df8cb23c1ae36f..565dfe67bbb5a7dbb2459c7308caab019fd904b1 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -837,6 +837,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
@@ -127,7 +127,7 @@ index ad5022ca94bbbc5d22917a18a307f78bbb007bfa..3e07d3ccd7c7e083b0dc48c1d6250037
          boolean runs = tickRateManager.runsNormally();
          if (runs) {
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index e18639660c557a66f2966a7cbae407f93fe50e14..6799f7b427c179215d24256dcadb74660b2d5e28 100644
+index f4f4c27a858941877b958a84cc59aa794bc283e5..89a2d3d1b11ad33a9159c3d244a57a4e660b0769 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -386,9 +386,11 @@ public abstract class Entity
@@ -245,7 +245,7 @@ index e18639660c557a66f2966a7cbae407f93fe50e14..6799f7b427c179215d24256dcadb7466
              // CraftBukkit end
              output.storeNullable("CustomName", ComponentSerialization.CODEC, this.getCustomName());
              if (this.isCustomNameVisible()) {
-@@ -5424,7 +5482,8 @@ public abstract class Entity
+@@ -5420,7 +5478,8 @@ public abstract class Entity
      public boolean shouldBeSaved() {
          return (this.removalReason == null || this.removalReason.shouldSave())
              && !this.isPassenger()
@@ -256,7 +256,7 @@ index e18639660c557a66f2966a7cbae407f93fe50e14..6799f7b427c179215d24256dcadb7466
  
      @Override
 diff --git a/net/minecraft/world/entity/projectile/ThrowableProjectile.java b/net/minecraft/world/entity/projectile/ThrowableProjectile.java
-index 82358c4f98a2720da6adf8c63616a810c2117919..aab9ef42324619dcef6afcba040e4a01b69822a9 100644
+index 787addf20375517333f2b75f20aff026c5b953d1..49df6d81ff3d1feb7ab2c392f7a52cad5e3d012a 100644
 --- a/net/minecraft/world/entity/projectile/ThrowableProjectile.java
 +++ b/net/minecraft/world/entity/projectile/ThrowableProjectile.java
 @@ -42,6 +42,11 @@ public abstract class ThrowableProjectile extends Projectile {

@@ -5,7 +5,7 @@ Subject: [PATCH] Add PlayerMessagePreSendEvent
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index e4c901b0bcfe136b51a64aed0442345d954b8d76..b0dd777873c8fd6df457d2e399f13d7c7a1ff59e 100644
+index f1f2bf1efac729bc8f302b7612289a2b49835f9f..781cb3f0e4b2a4de30a079f32132656050acf64d 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 @@ -2859,7 +2859,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
@@ -22,7 +22,7 @@ index e4c901b0bcfe136b51a64aed0442345d954b8d76..b0dd777873c8fd6df457d2e399f13d7c
      }
  
      @Override
-@@ -3120,8 +3125,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
+@@ -3119,8 +3124,12 @@ public class CraftPlayer extends CraftHumanEntity implements Player, PluginMessa
          @Override
          public void sendMessage(net.md_5.bungee.api.ChatMessageType position, UUID sender, BaseComponent... components) {
              if (CraftPlayer.this.getHandle().connection == null) return;

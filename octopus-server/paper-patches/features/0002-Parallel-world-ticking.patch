@@ -5,10 +5,10 @@ Subject: [PATCH] Parallel world ticking
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-index a26249fbae41b8915ab8b3e876485213ab992599..f3a5d2a57c77c48c9d7a3d24734c5ac0a0ad4e5e 100644
+index 9db1a0be9fc09b0e33ed522a4566468474a5632b..c43f2c6144478b9a642b858a49aaf0a00fb72b17 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-@@ -2049,4 +2049,24 @@ public class CraftWorld extends CraftRegionAccessor implements World {
+@@ -2048,4 +2048,24 @@ public class CraftWorld extends CraftRegionAccessor implements World {
          return POINTERS_SUPPLIER.view(this);
      }
      // Paper end
