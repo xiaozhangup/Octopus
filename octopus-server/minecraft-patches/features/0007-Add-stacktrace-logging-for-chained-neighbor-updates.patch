@@ -5,7 +5,7 @@ Subject: [PATCH] Add stacktrace logging for chained neighbor updates
 
 
 diff --git a/net/minecraft/world/level/redstone/CollectingNeighborUpdater.java b/net/minecraft/world/level/redstone/CollectingNeighborUpdater.java
-index deb62cf4b878f34ba13f83faf711c0666f12e6fa..ff2be44d283974668d3c4c9e87a9ae7289e6a500 100644
+index 1c7862ae4eaeb4d83e0fb423c86489f534e92be5..e7ac1fcb742d278f2bb354360acba8e6234bf54b 100644
 --- a/net/minecraft/world/level/redstone/CollectingNeighborUpdater.java
 +++ b/net/minecraft/world/level/redstone/CollectingNeighborUpdater.java
 @@ -76,7 +76,8 @@ public class CollectingNeighborUpdater implements NeighborUpdater {

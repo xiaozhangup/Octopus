@@ -152,7 +152,7 @@ index ee1d65d460a69f61bf81db6be48bcb8fbb74dcfe..fc0625068bab6ca677223e5c007f08f0
      public void purgeUnload() {
          if (true) return; // Paper - rewrite chunk system
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 3ea5f179e9f5dd98f1c0c9b59034543734692bc5..f4bc7c4305b93e04b30685bd0efa253f3ee83c06 100644
+index ca13c2d640ba8ed3105478c21fd6e3546370469b..fe2a052be3ace2139ce4a62c3ca342508c2f7d37 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -775,7 +775,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet

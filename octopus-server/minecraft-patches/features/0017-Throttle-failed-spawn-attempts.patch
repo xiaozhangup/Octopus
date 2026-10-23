@@ -147,7 +147,7 @@ index 06c63a3429d010546c8b9de610cbae7bf6bb6935..9433df4055496ad4698748284c5bf26f
  
      private static boolean isRightDistanceToPlayerAndSpawnPoint(
 diff --git a/net/minecraft/world/level/chunk/ChunkAccess.java b/net/minecraft/world/level/chunk/ChunkAccess.java
-index d0d435f53683bae1a4c333aed18cc36c9797a188..6524530c00d0c4f513439b05cc87f16f9a66fccd 100644
+index 39ea7198f3bbe4525e686504887e0074de80854d..e1ba7240adde03940098a749cd3f6b6e2b7b02b1 100644
 --- a/net/minecraft/world/level/chunk/ChunkAccess.java
 +++ b/net/minecraft/world/level/chunk/ChunkAccess.java
 @@ -82,6 +82,8 @@ public abstract class ChunkAccess implements LightChunk, StructureAccess, BiomeR

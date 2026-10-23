@@ -11,7 +11,7 @@ Subject: [PATCH] optimize checkInsideBlocks calls
 License: LGPL-3.0-only (https://www.gnu.org/licenses/lgpl-3.0.html)
 
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 6799f7b427c179215d24256dcadb74660b2d5e28..a6acf1b6350b7fa8f9096e9e71c3c08dad021329 100644
+index 89a2d3d1b11ad33a9159c3d244a57a4e660b0769..58e192a2a25a162ce2861895875b05ce27e90f43 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -1938,7 +1938,11 @@ public abstract class Entity

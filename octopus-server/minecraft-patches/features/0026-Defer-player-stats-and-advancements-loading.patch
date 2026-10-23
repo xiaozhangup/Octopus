@@ -5,7 +5,7 @@ Subject: [PATCH] Defer player stats and advancements loading
 
 
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index fea4b92acc6579188978c3a1801a9496b9c3433a..ec6dd9362a6022902e0da1d73e62e84f67c8f4cc 100644
+index 5a26ea63ba289ccb1c04b981903072f22447f341..ce0da0ed0b0e33065a9b49bab33540b32ef60a73 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -237,8 +237,10 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc

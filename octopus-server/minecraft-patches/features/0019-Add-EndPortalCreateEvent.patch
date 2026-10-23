@@ -5,7 +5,7 @@ Subject: [PATCH] Add EndPortalCreateEvent
 
 
 diff --git a/net/minecraft/world/item/EnderEyeItem.java b/net/minecraft/world/item/EnderEyeItem.java
-index c0e57166efba48688d553ce50d4d0ff98fec668c..7a5b65cc0cadadfe253aaf601f5f14d35a4912f3 100644
+index ab0239a9d32bd937fb8eef9696b8b7d32e89406c..56f12eb358dc807e46595dfaf490789f566aa90b 100644
 --- a/net/minecraft/world/item/EnderEyeItem.java
 +++ b/net/minecraft/world/item/EnderEyeItem.java
 @@ -64,8 +64,15 @@ public class EnderEyeItem extends Item {

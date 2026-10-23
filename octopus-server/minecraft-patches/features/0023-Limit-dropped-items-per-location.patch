@@ -5,7 +5,7 @@ Subject: [PATCH] Limit dropped items per location
 
 
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 270678b309e0b9d3a9debd359cad78a5442750e4..3ea5f179e9f5dd98f1c0c9b59034543734692bc5 100644
+index 08e01e4c42700a8bd71f75a39a1b4879973c1886..ca13c2d640ba8ed3105478c21fd6e3546370469b 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -947,6 +947,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
@@ -17,7 +17,7 @@ index 270678b309e0b9d3a9debd359cad78a5442750e4..3ea5f179e9f5dd98f1c0c9b590345437
              profiler.popPush("blockEntities");
              this.tickBlockEntities();
 diff --git a/net/minecraft/world/entity/item/ItemEntity.java b/net/minecraft/world/entity/item/ItemEntity.java
-index 8b10b2121b61892eb4f98533c7df1ba549cdc64f..1c8b4aecaf9268ba5b9d35dbdb0e40c382e2e9c3 100644
+index a1fa75b4a02187686f1bd18f409abd2e6cbe31be..1bd3a5f9f9067d5db1b151a5c15441b788200894 100644
 --- a/net/minecraft/world/entity/item/ItemEntity.java
 +++ b/net/minecraft/world/entity/item/ItemEntity.java
 @@ -56,6 +56,7 @@ public class ItemEntity extends Entity implements TraceableEntity {

@@ -5,7 +5,7 @@ Subject: [PATCH] Add clientConnected API
 
 
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index a7f589970a04e520eb5cbe6dfeb333bc9cd479a8..85ba06d7bcb8a69f8b8c0ca7b00070ab34bffaa1 100644
+index 62f57eb254321902692550d0a86c24292ef9e87d..a28991cfe2540106682b3def399b55fb4321a9ec 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
 @@ -444,6 +444,7 @@ public abstract class PlayerList {

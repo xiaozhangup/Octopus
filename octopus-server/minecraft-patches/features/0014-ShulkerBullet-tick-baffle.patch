@@ -5,7 +5,7 @@ Subject: [PATCH] ShulkerBullet tick baffle
 
 
 diff --git a/net/minecraft/world/entity/projectile/ShulkerBullet.java b/net/minecraft/world/entity/projectile/ShulkerBullet.java
-index d5506bfc84912ec50cd5391225b9b5291435d3aa..297307e84515e9710251f01e45788c16b3c62973 100644
+index 1b80fa0239ec0c23515639f2b58905eade80412d..4097b03fe685abf33cf455dfbb9a52c9ed41cd3f 100644
 --- a/net/minecraft/world/entity/projectile/ShulkerBullet.java
 +++ b/net/minecraft/world/entity/projectile/ShulkerBullet.java
 @@ -36,6 +36,10 @@ import org.jspecify.annotations.Nullable;
