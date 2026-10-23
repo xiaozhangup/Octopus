@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Sat, 24 Oct 2026 02:41:03 +0800
+Subject: [PATCH] Add entity tick callback API
+
+
+diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
+index 30483ee49deaa6294fc5eb76d9ab6cc9f399894a..a803312e0fd3607007fc9666f376138ef77e0234 100644
+--- a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
++++ b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
+@@ -267,6 +267,10 @@ class PaperPluginInstanceManager {
+                 + pluginName + " (Is it up to date?)", ex, plugin); // Paper
+         }
+ 
++        // Octopus start - entity tick callbacks
++        ((org.bukkit.craftbukkit.CraftServer) this.server).entityTickers.unregisterAll(plugin);
++        // Octopus end - entity tick callbacks
++
+         try {
+             this.server.getScheduler().cancelTasks(plugin);
+         } catch (Throwable ex) {
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index 165f3b79413d19370b80ee7bf8c9a2bbfdde43f0..4b8bcdd36ba6554f94317bd3d48278c994236fd4 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -3390,6 +3390,18 @@ public final class CraftServer implements Server {
+         return mobGoals;
+     }
+ 
++    // Octopus start - entity tick callbacks
++    public final me.xiaozhangup.octopus.entity.EntityTickerManager entityTickers = new me.xiaozhangup.octopus.entity.EntityTickerManager();
++
++    @Override
++    public me.xiaozhangup.octopus.entity.EntityTicker registerEntityTicker(
++        Plugin plugin, org.bukkit.entity.EntityType type, long initialDelayTicks, long periodTicks,
++        java.util.function.Consumer<? super org.bukkit.entity.Entity> callback
++    ) {
++        return this.entityTickers.register(plugin, type, initialDelayTicks, periodTicks, callback);
++    }
++    // Octopus end - entity tick callbacks
++
+     @Override
+     public io.papermc.paper.datapack.PaperDatapackManager getDatapackManager() {
+         return datapackManager;

@@ -1,0 +1,107 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Sat, 24 Oct 2026 02:41:03 +0800
+Subject: [PATCH] Add entity tick callback API
+
+
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index 87f3f457c6bc8af02751033fcf5c74a185624f1f..492e78541f6a509efaacc5b1dc4b1cdd0ce3c1f6 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -2880,6 +2880,30 @@ public final class Bukkit {
+         return server.getMobGoals();
+     }
+ 
++    // Octopus start - entity tick callbacks
++    /**
++     * @see Server#registerEntityTicker(org.bukkit.plugin.Plugin, org.bukkit.entity.EntityType, long, java.util.function.Consumer)
++     */
++    @NotNull
++    public static me.xiaozhangup.octopus.entity.EntityTicker registerEntityTicker(
++        @NotNull org.bukkit.plugin.Plugin plugin, @NotNull org.bukkit.entity.EntityType type, long periodTicks,
++        @NotNull java.util.function.Consumer<? super org.bukkit.entity.Entity> callback
++    ) {
++        return server.registerEntityTicker(plugin, type, periodTicks, callback);
++    }
++
++    /**
++     * @see Server#registerEntityTicker(org.bukkit.plugin.Plugin, org.bukkit.entity.EntityType, long, long, java.util.function.Consumer)
++     */
++    @NotNull
++    public static me.xiaozhangup.octopus.entity.EntityTicker registerEntityTicker(
++        @NotNull org.bukkit.plugin.Plugin plugin, @NotNull org.bukkit.entity.EntityType type, long initialDelayTicks, long periodTicks,
++        @NotNull java.util.function.Consumer<? super org.bukkit.entity.Entity> callback
++    ) {
++        return server.registerEntityTicker(plugin, type, initialDelayTicks, periodTicks, callback);
++    }
++    // Octopus end - entity tick callbacks
++
+     /**
+      * @return the datapack manager
+      */
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index 3fafc16104132a319ca2553cdb0aec4f9134089f..4e7f2e4d5e3c55570fb86772001bf0cca7c8c05a 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -2666,6 +2666,61 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+     @NotNull
+     com.destroystokyo.paper.entity.ai.MobGoals getMobGoals();
+ 
++    // Octopus start - entity tick callbacks
++    /**
++     * Registers a callback for an exact entity type, first running after one period.
++     *
++     * @param plugin the owning plugin
++     * @param type the exact entity type
++     * @param periodTicks the positive interval in server ticks
++     * @param callback the callback for each ticking entity of this type
++     * @return a handle for unregistering the callback
++     * @see #registerEntityTicker(org.bukkit.plugin.Plugin, org.bukkit.entity.EntityType, long, long, java.util.function.Consumer)
++     */
++    @NotNull
++    default me.xiaozhangup.octopus.entity.EntityTicker registerEntityTicker(
++        @NotNull org.bukkit.plugin.Plugin plugin, @NotNull org.bukkit.entity.EntityType type, long periodTicks,
++        @NotNull java.util.function.Consumer<? super org.bukkit.entity.Entity> callback
++    ) {
++        return this.registerEntityTicker(plugin, type, periodTicks, periodTicks, callback);
++    }
++
++    /**
++     * Registers a periodic callback on the existing entity tick path, after the entity's
++     * own update and before its passengers are ticked. Existing and future entities of
++     * the exact type participate without individual task registration.
++     * <p>
++     * All matching entities share the schedule measured from registration in server
++     * ticks. Newly spawned or loaded entities join the next scheduled tick. Only
++     * ticking entities are called: unloading, freezing, or stopping world ticks
++     * suspends callbacks, with no catch-up. Activation-range inactive entities still
++     * participate; the callback does not depend on AI being enabled.
++     * <p>
++     * Callbacks execute on the entity's world tick thread. Different worlds can call
++     * the same callback concurrently. Callbacks may modify or remove the supplied
++     * entity; access to other worlds must be scheduled on their owning threads.
++     * Exceptions are logged without preventing other callbacks from running.
++     * <p>
++     * Registration and unregistration are thread-safe. The registration is removed
++     * automatically when the owning plugin is disabled. A callback already executing
++     * may finish after unregistration.
++     *
++     * @param plugin the enabled owning plugin
++     * @param type the exact entity type, excluding {@link org.bukkit.entity.EntityType#UNKNOWN}
++     * @param initialDelayTicks the positive delay before the first scheduled tick
++     * @param periodTicks the positive interval between scheduled ticks
++     * @param callback the callback for each ticking entity of this type
++     * @return a handle for unregistering the callback
++     * @throws IllegalArgumentException if either tick value is not positive or the type is unknown
++     * @throws org.bukkit.plugin.IllegalPluginAccessException if the plugin is disabled
++     */
++    @NotNull
++    me.xiaozhangup.octopus.entity.EntityTicker registerEntityTicker(
++        @NotNull org.bukkit.plugin.Plugin plugin, @NotNull org.bukkit.entity.EntityType type, long initialDelayTicks, long periodTicks,
++        @NotNull java.util.function.Consumer<? super org.bukkit.entity.Entity> callback
++    );
++    // Octopus end - entity tick callbacks
++
+     /**
+      * @return the datapack manager
+      */

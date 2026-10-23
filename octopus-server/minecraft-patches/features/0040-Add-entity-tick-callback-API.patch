@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: xiaozhangup <xiaozhangshiw@163.com>
+Date: Sat, 24 Oct 2026 02:41:03 +0800
+Subject: [PATCH] Add entity tick callback API
+
+
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index b7c49b47e572538bb7303cf765b474edd9469a44..31687bc64c2732416421e7706d4c3233de3e6a5d 100644
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -1887,6 +1887,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+     protected void tickChildren(final BooleanSupplier haveTime) {
+         ProfilerFiller profiler = Profiler.get();
+         this.getPlayerList().getPlayers().forEach(playerx -> playerx.connection.suspendFlushing());
++        this.server.entityTickers.beginTick(); // Octopus - entity tick callbacks
+         this.server.getScheduler().mainThreadHeartbeat(); // CraftBukkit
+         // Paper start - optimise Folia entity scheduler
+         ((io.papermc.paper.threadedregions.scheduler.FoliaGlobalRegionScheduler)org.bukkit.Bukkit.getGlobalRegionScheduler()).tick();
+diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
+index 565dfe67bbb5a7dbb2459c7308caab019fd904b1..c367114f4e5d9b59070f315eed61d25d28c49777 100644
+--- a/net/minecraft/server/level/ServerLevel.java
++++ b/net/minecraft/server/level/ServerLevel.java
+@@ -1447,6 +1447,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+         entity.tick();
+         entity.postTick(); // CraftBukkit
+         } else {entity.inactiveTick();} // Paper - EAR 2
++        this.server.server.entityTickers.tick(entity); // Octopus - entity tick callbacks
+         profiler.pop();
+         } finally { if (levelChunk != null) levelChunk.getChunkHot().stopTickingAndCount(); } // KioCG
+ 
+@@ -1483,6 +1484,7 @@ public class ServerLevel extends Level implements WorldGenLevel, ServerEntityGet
+                 vehicle.positionRider(entity);
+             }
+             // Paper end - EAR 2
++            this.server.server.entityTickers.tick(entity); // Octopus - entity tick callbacks
+             profiler.pop();
+             } finally { if (levelChunk != null) levelChunk.getChunkHot().stopTickingAndCount(); } // KioCG
+ 
