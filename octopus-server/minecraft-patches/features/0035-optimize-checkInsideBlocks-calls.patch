@@ -11,10 +11,10 @@ Subject: [PATCH] optimize checkInsideBlocks calls
 License: LGPL-3.0-only (https://www.gnu.org/licenses/lgpl-3.0.html)
 
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 89a2d3d1b11ad33a9159c3d244a57a4e660b0769..58e192a2a25a162ce2861895875b05ce27e90f43 100644
+index 06b9e53b73f847f19f011e70e4a915971b0bcc05..1d0514bc98dffe9bc116a551911baac38128414e 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -1938,7 +1938,11 @@ public abstract class Entity
+@@ -1939,7 +1939,11 @@ public abstract class Entity
          final LongSet visitedBlocks,
          final int maxMovementIterations
      ) {
@@ -27,7 +27,7 @@ index 89a2d3d1b11ad33a9159c3d244a57a4e660b0769..58e192a2a25a162ce2861895875b05ce
          boolean movedFar = from.distanceToSqr(to) > Mth.square(0.9999900000002526);
          boolean debugEntityBlockIntersections = this.level instanceof ServerLevel serverLevel
              && serverLevel.getServer().debugSubscribers().hasAnySubscriberFor(DebugSubscriptions.ENTITY_BLOCK_INTERSECTIONS);
-@@ -1957,24 +1961,42 @@ public abstract class Entity
+@@ -1958,24 +1962,42 @@ public abstract class Entity
                  }
  
                  iterations.set(iteration);
@@ -75,7 +75,7 @@ index 89a2d3d1b11ad33a9159c3d244a57a4e660b0769..58e192a2a25a162ce2861895875b05ce
                                  this.onInsideBlock(state);
                              } catch (Throwable t) {
                                  CrashReport report = CrashReport.forThrowable(t, "Colliding entity with block");
-@@ -1988,11 +2010,11 @@ public abstract class Entity
+@@ -1989,11 +2011,11 @@ public abstract class Entity
  
                          if (insideFluid) {
                              effectCollector.advanceStep(iteration, blockIntersection); // Paper - track position inside effect was triggered on
@@ -89,7 +89,7 @@ index 89a2d3d1b11ad33a9159c3d244a57a4e660b0769..58e192a2a25a162ce2861895875b05ce
                          }
  
                          return true;
-@@ -2004,6 +2026,7 @@ public abstract class Entity
+@@ -2005,6 +2027,7 @@ public abstract class Entity
          );
          return iterations.get() + 1;
      }

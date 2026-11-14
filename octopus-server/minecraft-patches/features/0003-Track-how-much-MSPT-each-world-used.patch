@@ -5,10 +5,10 @@ Subject: [PATCH] Track how much MSPT each world used
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index dad85c1aa5a17c1c565e6889cfdd2c9d1a070091..1eb073ee3f41b467527bd1c8b5cc5b619ab3baf7 100644
+index d5500ccc39dc4e3a6a54208df4c37c44a47db57e..6695586ab78595581afcf4312724c12866753c32 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1823,6 +1823,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1825,6 +1825,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              // Octopus start
              java.util.concurrent.Callable<Pair<ServerLevel, Throwable>> tickingFunction = () -> {
                  level.worldTaskQueueInstance.acquirePoller();
@@ -16,7 +16,7 @@ index dad85c1aa5a17c1c565e6889cfdd2c9d1a070091..1eb073ee3f41b467527bd1c8b5cc5b61
                  try {
                      level.tick(haveTime);
                  } catch (Throwable throwable) {
-@@ -1832,6 +1833,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1834,6 +1835,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                      level.worldTaskQueueInstance.finalizeCyclicalTasks();
                      level.explosionDensityCache.clear(); // Paper - Optimize explosions // Octopus - Move up
                      level.worldTaskQueueInstance.releasePoller();
@@ -24,7 +24,7 @@ index dad85c1aa5a17c1c565e6889cfdd2c9d1a070091..1eb073ee3f41b467527bd1c8b5cc5b61
                  }
                  return Pair.of(level, null);
              };
-@@ -1854,7 +1856,19 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1856,7 +1858,19 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                      result = tickTask.get();
                  }
  

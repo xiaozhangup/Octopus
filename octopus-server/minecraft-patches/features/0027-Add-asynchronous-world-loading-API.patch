@@ -5,10 +5,10 @@ Subject: [PATCH] Add asynchronous world loading API
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index be98b92e6b8b7d6006c99d49db7c9cb50113e17f..8c2aca8db82692185d1b4e40dfd363c1ebf006e7 100644
+index 099647af13568c7f415a4affdda3f93c6ebaf4a0..b1c26dfa8f89de97284e5115481adfe48056c2a1 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -739,6 +739,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -740,6 +740,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                  loading.data()
              );
          }
@@ -16,7 +16,7 @@ index be98b92e6b8b7d6006c99d49db7c9cb50113e17f..8c2aca8db82692185d1b4e40dfd363c1
          this.addLevel(serverLevel);
          this.initWorld(serverLevel, null);
      }
-@@ -908,6 +909,42 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -909,6 +910,42 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          new org.bukkit.event.world.WorldLoadEvent(level.getWorld()).callEvent(); // Paper - call WorldLoadEvent
      }
  
@@ -59,7 +59,7 @@ index be98b92e6b8b7d6006c99d49db7c9cb50113e17f..8c2aca8db82692185d1b4e40dfd363c1
      protected GlobalPos selectLevelLoadFocusPos() {
          return this.worldData.overworldData().getRespawnData().globalPos();
      }
-@@ -996,6 +1033,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -997,6 +1034,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              if (this.hasStopped) return;
              this.hasStopped = true;
          }
@@ -71,7 +71,7 @@ index be98b92e6b8b7d6006c99d49db7c9cb50113e17f..8c2aca8db82692185d1b4e40dfd363c1
          this.worldTickExecutor.shutdownNow(); // Octopus
          if (!this.hasLoggedStop && this.isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread("Server stopped"); // Paper - Debugging
          this.shutdownThread = Thread.currentThread(); // Paper - Improved watchdog support
-@@ -1784,6 +1826,61 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1786,6 +1828,61 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          wrapped.setContextClassLoader(MinecraftServer.class.getClassLoader());
          return wrapped;
      });
@@ -134,7 +134,7 @@ index be98b92e6b8b7d6006c99d49db7c9cb50113e17f..8c2aca8db82692185d1b4e40dfd363c1
  
      protected void tickChildren(final BooleanSupplier haveTime) {
 diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
-index ee1d65d460a69f61bf81db6be48bcb8fbb74dcfe..fc0625068bab6ca677223e5c007f08f078b2eed6 100644
+index 4e3a4277105d2288dd207e4733901d267265ab30..0ec427a15d0f19584b4694efb84bcce2b3e3310c 100644
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
 @@ -479,6 +479,13 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
@@ -165,7 +165,7 @@ index ca13c2d640ba8ed3105478c21fd6e3546370469b..fe2a052be3ace2139ce4a62c3ca34250
  
      // Paper start
 diff --git a/net/minecraft/world/level/storage/SavedDataStorage.java b/net/minecraft/world/level/storage/SavedDataStorage.java
-index 2a9574d5d1254cb24b76bac8132838e09655ffb6..52de751385fe89b23a7ea15320dbd7d8be78d0e2 100644
+index 0d91c7124b85f630f92948c418c2c807e5749eb9..361dc0194ef3094a8d9ba9aa3c3e6990b8c830e7 100644
 --- a/net/minecraft/world/level/storage/SavedDataStorage.java
 +++ b/net/minecraft/world/level/storage/SavedDataStorage.java
 @@ -333,4 +333,15 @@ public class SavedDataStorage implements AutoCloseable {

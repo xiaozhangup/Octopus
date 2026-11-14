@@ -89,10 +89,10 @@ index 4b77109e8bc5eb1ad7da9ec5684e7d61b5358565..4e401400f34fc76e8b97671738870d47
 +    // Leaves end - cache item max stack size
  }
 diff --git a/net/minecraft/world/item/ItemStack.java b/net/minecraft/world/item/ItemStack.java
-index 163fb5adb4484e70b53ed34e77e944e02522c3b6..5f8a2639d31846ba93f2b414ed5bd9aede509b83 100644
+index 003d5835f8dc71a3bc57994e5f6659829c7b65ca..92a665a868d40a94736a110cbeb68888ac660082 100644
 --- a/net/minecraft/world/item/ItemStack.java
 +++ b/net/minecraft/world/item/ItemStack.java
-@@ -1306,6 +1306,13 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
+@@ -1307,6 +1307,13 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
          return this.getCount();
      }
  

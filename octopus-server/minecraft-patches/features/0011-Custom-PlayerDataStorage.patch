@@ -5,7 +5,7 @@ Subject: [PATCH] Custom PlayerDataStorage
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index ab4d371497e7a8597f034aec1a9e67447e3e157a..c0d6f5afc4dae3e1e9d71a17686dd66c4a968b2c 100644
+index a53cda44559ba392d2c557d4eb2f56a880debf3a..e95d1e98442d0c25f85edd8d8489767d28bda279 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -226,6 +226,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -20,7 +20,7 @@ index ab4d371497e7a8597f034aec1a9e67447e3e157a..c0d6f5afc4dae3e1e9d71a17686dd66c
      private MinecraftServer.@Nullable TimeProfiler debugCommandProfiler;
      private boolean debugCommandProfilerDelayStart;
      private ServerConnectionListener connection;
-@@ -1599,6 +1604,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1601,6 +1606,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                  // Paper end - avoid issues with certain tasks not processing during sleep
                  this.server.spark.executeMainThreadTasks(); // Paper - spark
                  this.tickConnection();
@@ -30,7 +30,7 @@ index ab4d371497e7a8597f034aec1a9e67447e3e157a..c0d6f5afc4dae3e1e9d71a17686dd66c
                  this.server.spark.tickEnd(((double)(System.nanoTime() - this.currentTickStart) / 1000000D)); // Paper - spark
                  return;
              }
-@@ -1647,6 +1655,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1649,6 +1657,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          long endTime = System.nanoTime();
          long remaining = this.nextTickTimeNanos - endTime;
          new com.destroystokyo.paper.event.server.ServerTickEndEvent(this.tickCount, ((double)(endTime - this.currentTickStart) / 1000000D), remaining).callEvent();
@@ -231,7 +231,7 @@ index 142a34eb046c87f16b73023c83218d8752922fbe..b8a0f16d508dd38ec6e3177cb6063501
          if (optTag.isEmpty()) {
              this.backup(nameAndId, ".dat");
 diff --git a/net/minecraft/world/level/storage/SavedDataStorage.java b/net/minecraft/world/level/storage/SavedDataStorage.java
-index f359e53024019f35aaa5cd8477da708bda2fc57a..2a9574d5d1254cb24b76bac8132838e09655ffb6 100644
+index d2a379b55467af19d9c7915e6964f97ca7ea264f..0d91c7124b85f630f92948c418c2c807e5749eb9 100644
 --- a/net/minecraft/world/level/storage/SavedDataStorage.java
 +++ b/net/minecraft/world/level/storage/SavedDataStorage.java
 @@ -46,6 +46,9 @@ public class SavedDataStorage implements AutoCloseable {

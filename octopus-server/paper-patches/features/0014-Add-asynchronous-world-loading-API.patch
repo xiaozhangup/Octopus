@@ -5,10 +5,10 @@ Subject: [PATCH] Add asynchronous world loading API
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index a70eb16e64e42b6d6687fdb3fad2b1a7a8290302..165f3b79413d19370b80ee7bf8c9a2bbfdde43f0 100644
+index 3b34710e8aaf903bb442415cef15b14fe5a97f03..174b75a31e871e011db58caacbe40786b52a0dac 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -258,6 +258,12 @@ public final class CraftServer implements Server {
+@@ -260,6 +260,12 @@ public final class CraftServer implements Server {
      final DedicatedServer console;
      private final DedicatedPlayerList playerList;
      private final Map<String, World> worlds = new LinkedHashMap<>();
@@ -21,7 +21,7 @@ index a70eb16e64e42b6d6687fdb3fad2b1a7a8290302..165f3b79413d19370b80ee7bf8c9a2bb
      private YamlConfiguration configuration;
      private YamlConfiguration commandsConfiguration;
      private final Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
-@@ -1145,6 +1151,10 @@ public final class CraftServer implements Server {
+@@ -1147,6 +1153,10 @@ public final class CraftServer implements Server {
  
      @Override
      public World createWorld(WorldCreator creator) {
@@ -32,7 +32,7 @@ index a70eb16e64e42b6d6687fdb3fad2b1a7a8290302..165f3b79413d19370b80ee7bf8c9a2bb
          Preconditions.checkState(this.console.getAllLevels().iterator().hasNext(), "Cannot create additional worlds on STARTUP");
          //Preconditions.checkState(!this.console.isIteratingOverLevels, "Cannot create a world while worlds are being ticked"); // Paper - Cat - Temp disable. We'll see how this goes.
          Preconditions.checkArgument(creator != null, "WorldCreator cannot be null");
-@@ -1162,6 +1172,17 @@ public final class CraftServer implements Server {
+@@ -1164,6 +1174,17 @@ public final class CraftServer implements Server {
              throw new IllegalArgumentException("Cannot create a world with key " + creator.key() + " and name " + name + " one (or both) already match a world that exists");
          }
  
@@ -50,7 +50,7 @@ index a70eb16e64e42b6d6687fdb3fad2b1a7a8290302..165f3b79413d19370b80ee7bf8c9a2bb
          if (chunkGenerator == null) {
              chunkGenerator = this.getGenerator(name);
          }
-@@ -1170,6 +1191,259 @@ public final class CraftServer implements Server {
+@@ -1172,6 +1193,259 @@ public final class CraftServer implements Server {
              biomeProvider = this.getBiomeProvider(name);
          }
  
@@ -310,7 +310,7 @@ index a70eb16e64e42b6d6687fdb3fad2b1a7a8290302..165f3b79413d19370b80ee7bf8c9a2bb
          ResourceKey<LevelStem> actualDimension = switch (creator.environment()) {
              case NORMAL -> LevelStem.OVERWORLD;
              case NETHER -> LevelStem.NETHER;
-@@ -1195,6 +1469,11 @@ public final class CraftServer implements Server {
+@@ -1197,6 +1471,11 @@ public final class CraftServer implements Server {
          } catch (final IOException ex) {
              throw new RuntimeException("Failed to migrate legacy world " + name, ex);
          }
@@ -322,7 +322,7 @@ index a70eb16e64e42b6d6687fdb3fad2b1a7a8290302..165f3b79413d19370b80ee7bf8c9a2bb
          PaperWorldLoader.LoadedWorldData loadedWorldData = PaperWorldLoader.loadWorldData(
              this.console,
              dimensionKey,
-@@ -1208,12 +1487,23 @@ public final class CraftServer implements Server {
+@@ -1210,12 +1489,23 @@ public final class CraftServer implements Server {
                  loadedWorldData.levelOverrides()
              );
          }
@@ -346,7 +346,7 @@ index a70eb16e64e42b6d6687fdb3fad2b1a7a8290302..165f3b79413d19370b80ee7bf8c9a2bb
              WorldOptions worldOptions = new WorldOptions(creator.seed(), creator.generateStructures(), creator.bonusChest());
  
              String flatGenSettings = creator.generatorSettings();
-@@ -1246,7 +1536,7 @@ public final class CraftServer implements Server {
+@@ -1248,7 +1538,7 @@ public final class CraftServer implements Server {
  
          levelStemRegistry = contextRegistryAccess.lookupOrThrow(Registries.LEVEL_STEM);
  
@@ -355,7 +355,7 @@ index a70eb16e64e42b6d6687fdb3fad2b1a7a8290302..165f3b79413d19370b80ee7bf8c9a2bb
              net.minecraft.server.Main.forceUpgrade(this.console.storageSource, DataFixers.getDataFixer(), this.console.options.has("eraseCache"), () -> true, contextRegistryAccess, this.console.options.has("recreateRegionFiles"));
          }
  
-@@ -1259,49 +1549,101 @@ public final class CraftServer implements Server {
+@@ -1261,49 +1551,101 @@ public final class CraftServer implements Server {
              throw new IllegalStateException("Missing level stem for world " + name + " using key " + actualDimension);
          }
  

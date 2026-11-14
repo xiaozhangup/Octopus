@@ -5,10 +5,10 @@ Subject: [PATCH] Add Hamster local diagnostics
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 8c2aca8db82692185d1b4e40dfd363c1ebf006e7..b7c49b47e572538bb7303cf765b474edd9469a44 100644
+index b1c26dfa8f89de97284e5115481adfe48056c2a1..181292c83d18c1b789cce90569e9e444816f4f9b 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1414,6 +1414,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1416,6 +1416,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                  LOGGER.error("Exception stopping the server", t);
              } finally {
                  //this.onServerExit(); // Paper - Improved watchdog support; moved into stop
@@ -16,7 +16,7 @@ index 8c2aca8db82692185d1b4e40dfd363c1ebf006e7..b7c49b47e572538bb7303cf765b474ed
              }
          }
      }
-@@ -1945,7 +1946,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1947,7 +1948,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              java.util.concurrent.Callable<Pair<ServerLevel, Throwable>> tickingFunction = () -> {
                  level.worldTaskQueueInstance.acquirePoller();
                  long tickStart = Util.getNanos(); // SparklyPaper - track world's MSPT
@@ -26,7 +26,7 @@ index 8c2aca8db82692185d1b4e40dfd363c1ebf006e7..b7c49b47e572538bb7303cf765b474ed
                      level.tick(haveTime);
                  } catch (Throwable throwable) {
                      return Pair.of(level, throwable);
-@@ -1996,7 +1998,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1998,7 +2000,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                  if (throwable != null) {
                      CrashReport report = CrashReport.forThrowable(throwable, "Exception ticking world");
                      result.getLeft().fillReportDetails(report);

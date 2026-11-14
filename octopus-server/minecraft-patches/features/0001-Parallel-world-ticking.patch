@@ -5,7 +5,7 @@ Subject: [PATCH] Parallel world ticking
 
 
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java b/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java
-index 775d93d35855e394e5eccf0ad80eca43b1ed9562..7bf7f9e8ba300f3de697bbc9fabab197e317af04 100644
+index e9dc38d934ede23f17e18893ee207d9fbbd26449..3820bac9fd574946f77bba204c5e0b2abbc806bc 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/io/MoonriseRegionFileIO.java
 @@ -181,6 +181,12 @@ public final class MoonriseRegionFileIO {
@@ -48,7 +48,7 @@ index 775d93d35855e394e5eccf0ad80eca43b1ed9562..7bf7f9e8ba300f3de697bbc9fabab197
       * Returns the priority associated with blocking I/O based on the current thread. The goal is to avoid
       * dumb plugins from taking away priority from threads we consider crucial.
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
-index bbba1766ed9da671022c467a45f7de479fb6abb4..8cd82f679cced67fa38db21317a1fb83c95f1da1 100644
+index 130fc0ea8326ab406910b5429acd99ea91708db2..80de3e4b80841f59b8d892661ca7a65ce426392c 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkTaskScheduler.java
 @@ -544,7 +544,7 @@ public final class ChunkTaskScheduler {
@@ -61,7 +61,7 @@ index bbba1766ed9da671022c467a45f7de479fb6abb4..8cd82f679cced67fa38db21317a1fb83
          });
  
 diff --git a/net/minecraft/core/dispenser/DispenseItemBehavior.java b/net/minecraft/core/dispenser/DispenseItemBehavior.java
-index c650f26d3ecdeb94a4d0f40637c07c59a6cbdfa6..52ea860312d5065402f33f10f9d8f1ddfeeac905 100644
+index 04593896b7c54d63fa4f97f58010aabce58dee1d..58eca5775a418448d32e54265b24b2076f2a2324 100644
 --- a/net/minecraft/core/dispenser/DispenseItemBehavior.java
 +++ b/net/minecraft/core/dispenser/DispenseItemBehavior.java
 @@ -308,8 +308,8 @@ public interface DispenseItemBehavior {
@@ -76,7 +76,7 @@ index c650f26d3ecdeb94a4d0f40637c07c59a6cbdfa6..52ea860312d5065402f33f10f9d8f1dd
                  // Paper end
                  // CraftBukkit start
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index c3bf41af0273e902f881cc070fcef6dd64abb063..dad85c1aa5a17c1c565e6889cfdd2c9d1a070091 100644
+index a8c330e21a715711ed21dd9084deea5254121b44..d5500ccc39dc4e3a6a54208df4c37c44a47db57e 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -1,5 +1,9 @@
@@ -89,7 +89,7 @@ index c3bf41af0273e902f881cc070fcef6dd64abb063..dad85c1aa5a17c1c565e6889cfdd2c9d
  import com.google.common.base.Splitter;
  import com.google.common.collect.ImmutableList;
  import com.google.common.collect.Lists;
-@@ -444,10 +448,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -445,10 +449,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              if (currTime - ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel)world).moonrise$getLastMidTickFailure() <= TASK_EXECUTION_FAILURE_BACKOFF) {
                  continue;
              }
@@ -105,7 +105,7 @@ index c3bf41af0273e902f881cc070fcef6dd64abb063..dad85c1aa5a17c1c565e6889cfdd2c9d
                  executed = true;
              }
          }
-@@ -993,6 +1001,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -994,6 +1002,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              if (this.hasStopped) return;
              this.hasStopped = true;
          }
@@ -113,7 +113,7 @@ index c3bf41af0273e902f881cc070fcef6dd64abb063..dad85c1aa5a17c1c565e6889cfdd2c9d
          if (!this.hasLoggedStop && this.isDebugging()) io.papermc.paper.util.TraceUtil.dumpTraceForThread("Server stopped"); // Paper - Debugging
          this.shutdownThread = Thread.currentThread(); // Paper - Improved watchdog support
          org.spigotmc.WatchdogThread.doStop(); // Paper - Improved watchdog support
-@@ -1501,7 +1510,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1503,7 +1512,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          boolean ret = false; // Paper - force execution of all worlds, do not just bias the first
          if (this.tickRateManager.isSprinting() || this.shouldRunAllTasks() || this.haveTime()) {
              for (ServerLevel level : this.getAllLevels()) {
@@ -122,7 +122,7 @@ index c3bf41af0273e902f881cc070fcef6dd64abb063..dad85c1aa5a17c1c565e6889cfdd2c9d
                      ret = true; // Paper - force execution of all worlds, do not just bias the first
                  }
              }
-@@ -1743,6 +1752,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1745,6 +1754,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
  
      public final io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList entitySchedulerTickList = new io.papermc.paper.threadedregions.EntityScheduler.EntitySchedulerTickList(); // Paper - optimise Folia entity scheduler
  
@@ -139,7 +139,7 @@ index c3bf41af0273e902f881cc070fcef6dd64abb063..dad85c1aa5a17c1c565e6889cfdd2c9d
      protected void tickChildren(final BooleanSupplier haveTime) {
          ProfilerFiller profiler = Profiler.get();
          this.getPlayerList().getPlayers().forEach(playerx -> playerx.connection.suspendFlushing());
-@@ -1793,26 +1812,62 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1795,26 +1814,62 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          this.updateEffectiveRespawnData();
  
          this.isIteratingOverLevels = true; // Paper - Throw exception on world create while being ticked
@@ -213,7 +213,7 @@ index c3bf41af0273e902f881cc070fcef6dd64abb063..dad85c1aa5a17c1c565e6889cfdd2c9d
  
          profiler.popPush("connection");
 diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
-index c4cfb53e145d69666ffc27ef4ee0c50b54eb9143..ee1d65d460a69f61bf81db6be48bcb8fbb74dcfe 100644
+index ef53d4d17222a882dd3d33575096c864a0a00a06..4e3a4277105d2288dd207e4733901d267265ab30 100644
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
 @@ -120,7 +120,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
@@ -291,10 +291,10 @@ index ea4cc487002a0edc54cc49bfbecf72be156b6af7..a2b056424b7d9dfa781a3676ec8750c1
      private final ResourceKey<LevelStem> typeKey;
      public final String bukkitName;
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 9757a49eca1d52194881841e5f8661b523b375a5..94fa4b9dd0eea741e624fdb72081aa0bc82ee5c8 100644
+index bea975af0b8be42883bac92d0366cf93ebadc0fc..8887f3ced3f0e7844617b10c778116f2c3cec708 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -4311,17 +4311,20 @@ public abstract class Entity
+@@ -4317,17 +4317,20 @@ public abstract class Entity
          // Paper end - Fix item duplication and teleport issues
          newEntity.restoreFrom(this);
          this.removeAfterChangingDimensions();
@@ -386,7 +386,7 @@ index 09cc0f75c0dea7d9ef9caf9b1f14f46e4da84375..1845baef1c7da6f3b211f4dbdbe0c670
                              });
                          return true;
 diff --git a/net/minecraft/world/item/ItemStack.java b/net/minecraft/world/item/ItemStack.java
-index 00861318771cd184c9f75a9a036deee9ec2ba310..81a4a55bf44914a314b1bbf6753f493b7e07787a 100644
+index 284b3f1dacf975cfb263ed44478993326637f4d2..69912129928774c2bc04d42ceb0fd917653b6b46 100644
 --- a/net/minecraft/world/item/ItemStack.java
 +++ b/net/minecraft/world/item/ItemStack.java
 @@ -404,8 +404,8 @@ public final class ItemStack implements DataComponentHolder, ItemInstance {
@@ -454,90 +454,15 @@ index 5564a54f23aab158b9506325953ec70cab55c961..4ee1a9b11d71382e0c93501b17c2af0e
                  if (!capturedBlockStates.isEmpty()) {
                      org.bukkit.Location location = org.bukkit.craftbukkit.util.CraftLocation.toBukkit(pos, level);
 diff --git a/net/minecraft/world/level/block/grower/TreeGrower.java b/net/minecraft/world/level/block/grower/TreeGrower.java
-index 95ac67eeee1c5c12fd709fe44288d6de9a28b3a1..c2986002efc48987fce96511bea553961378719d 100644
+index c6ebd031389108a7506232386322ecd706fde84d..111c278eb3edee659640ab2418d90d7754ff8620 100644
 --- a/net/minecraft/world/level/block/grower/TreeGrower.java
 +++ b/net/minecraft/world/level/block/grower/TreeGrower.java
-@@ -234,57 +234,59 @@ public final class TreeGrower {
+@@ -234,7 +234,7 @@ public final class TreeGrower {
  
      // CraftBukkit start
      private void setTreeType(Holder<Feature> feature) {
-+        org.bukkit.TreeType treeType; // Octopus
-         if (feature.is(TreeFeatures.OAK) || feature.is(TreeFeatures.OAK_BEES_005)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.TREE;
-+            treeType = org.bukkit.TreeType.TREE; // Octopus
-         } else if (feature.is(TreeFeatures.HUGE_RED_MUSHROOM)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.RED_MUSHROOM;
-+            treeType = org.bukkit.TreeType.RED_MUSHROOM; // Octopus
-         } else if (feature.is(TreeFeatures.HUGE_BROWN_MUSHROOM)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.BROWN_MUSHROOM;
-+            treeType = org.bukkit.TreeType.BROWN_MUSHROOM; // Octopus
-         } else if (feature.is(TreeFeatures.JUNGLE_TREE)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.COCOA_TREE;
-+            treeType = org.bukkit.TreeType.COCOA_TREE; // Octopus
-         } else if (feature.is(TreeFeatures.JUNGLE_TREE_NO_VINE)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.SMALL_JUNGLE;
-+            treeType = org.bukkit.TreeType.SMALL_JUNGLE; // Octopus
-         } else if (feature.is(TreeFeatures.PINE)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.TALL_REDWOOD;
-+            treeType = org.bukkit.TreeType.TALL_REDWOOD; // Octopus
-         } else if (feature.is(TreeFeatures.SPRUCE)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.REDWOOD;
-+            treeType = org.bukkit.TreeType.REDWOOD; // Octopus
-         } else if (feature.is(TreeFeatures.ACACIA)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.ACACIA;
-+            treeType = org.bukkit.TreeType.ACACIA; // Octopus
-         } else if (feature.is(TreeFeatures.BIRCH) || feature.is(TreeFeatures.BIRCH_BEES_005)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.BIRCH;
-+            treeType = org.bukkit.TreeType.BIRCH; // Octopus
-         } else if (feature.is(TreeFeatures.SUPER_BIRCH_BEES_0002)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.TALL_BIRCH;
-+            treeType = org.bukkit.TreeType.TALL_BIRCH; // Octopus
-         } else if (feature.is(TreeFeatures.SWAMP_OAK)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.SWAMP;
-+            treeType = org.bukkit.TreeType.SWAMP; // Octopus
-         } else if (feature.is(TreeFeatures.FANCY_OAK) || feature.is(TreeFeatures.FANCY_OAK_BEES_005)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.BIG_TREE;
-+            treeType = org.bukkit.TreeType.BIG_TREE; // Octopus
-         } else if (feature.is(TreeFeatures.JUNGLE_BUSH)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.JUNGLE_BUSH;
-+            treeType = org.bukkit.TreeType.JUNGLE_BUSH; // Octopus
-         } else if (feature.is(TreeFeatures.DARK_OAK)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.DARK_OAK;
-+            treeType = org.bukkit.TreeType.DARK_OAK; // Octopus
-         } else if (feature.is(TreeFeatures.MEGA_SPRUCE)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.MEGA_REDWOOD;
-+            treeType = org.bukkit.TreeType.MEGA_REDWOOD; // Octopus
-         } else if (feature.is(TreeFeatures.MEGA_PINE)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.MEGA_PINE;
-+            treeType = org.bukkit.TreeType.MEGA_PINE; // Octopus
-         } else if (feature.is(TreeFeatures.MEGA_JUNGLE_TREE)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.JUNGLE;
-+            treeType = org.bukkit.TreeType.JUNGLE; // Octopus
-         } else if (feature.is(TreeFeatures.AZALEA_TREE)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.AZALEA;
-+            treeType = org.bukkit.TreeType.AZALEA; // Octopus
-         } else if (feature.is(TreeFeatures.MANGROVE)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.MANGROVE;
-+            treeType = org.bukkit.TreeType.MANGROVE; // Octopus
-         } else if (feature.is(TreeFeatures.TALL_MANGROVE)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.TALL_MANGROVE;
-+            treeType = org.bukkit.TreeType.TALL_MANGROVE; // Octopus
-         } else if (feature.is(TreeFeatures.CHERRY) || feature.is(TreeFeatures.CHERRY_BEES_005)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.CHERRY;
-+            treeType = org.bukkit.TreeType.CHERRY; // Octopus
-         } else if (feature.is(TreeFeatures.PALE_OAK) || feature.is(TreeFeatures.PALE_OAK_BONEMEAL)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.PALE_OAK;
-+            treeType = org.bukkit.TreeType.PALE_OAK; // Octopus
-         } else if (feature.is(TreeFeatures.PALE_OAK_CREAKING)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.PALE_OAK_CREAKING;
-+            treeType = org.bukkit.TreeType.PALE_OAK_CREAKING; // Octopus
-         } else if (feature.is(TreeFeatures.RED_POPLAR) || feature.is(TreeFeatures.ORANGE_POPLAR) || feature.is(TreeFeatures.YELLOW_POPLAR)) {
--            net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.TreeType.POPLAR;
-+            treeType = org.bukkit.TreeType.POPLAR; // Octopus
-         }  else {
-             throw new IllegalArgumentException("Unknown tree generator " + feature);
-         }
-+        net.minecraft.world.level.block.SaplingBlock.treeTypeRT.set(treeType); // Octopus
+-        net.minecraft.world.level.block.SaplingBlock.treeType = org.bukkit.craftbukkit.CraftTreeType.fromFeature(feature.unwrapKey().orElseThrow());
++        net.minecraft.world.level.block.SaplingBlock.treeTypeRT.set(org.bukkit.craftbukkit.CraftTreeType.fromFeature(feature.unwrapKey().orElseThrow())); // Octopus
      }
      // CraftBukkit end
  }

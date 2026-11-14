@@ -17,7 +17,7 @@ index 4baf46256e90a87d684e57ff623076a8e9395f31..c9c3a42ac456288d966d280f6091bd77
      }
  
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index c0d6f5afc4dae3e1e9d71a17686dd66c4a968b2c..be98b92e6b8b7d6006c99d49db7c9cb50113e17f 100644
+index e95d1e98442d0c25f85edd8d8489767d28bda279..099647af13568c7f415a4affdda3f93c6ebaf4a0 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -25,17 +25,7 @@ import java.nio.file.FileStore;
@@ -39,7 +39,7 @@ index c0d6f5afc4dae3e1e9d71a17686dd66c4a968b2c..be98b92e6b8b7d6006c99d49db7c9cb5
  import java.util.Map.Entry;
  import java.util.concurrent.CompletableFuture;
  import java.util.concurrent.Executor;
-@@ -1616,7 +1606,30 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1618,7 +1608,30 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          new com.destroystokyo.paper.event.server.ServerTickStartEvent(this.tickCount+1).callEvent(); // Paper - Server Tick Events
          this.tickCount++;
          this.tickRateManager.tick();
@@ -162,10 +162,10 @@ index c5a212e73c2efeb1f440778cb3f1fa6ee8165e63..52f0b0ad01d852f5bd17202eeaccd9a5
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 30cc297ee7cd4da61bee6485a92ee2ed86d8e3c5..cf1b29efa7220bc1457f8b507213f43c8f6d24b6 100644
+index 9d5e7fabf77642468e2b152ee2378645e9034ecd..423621c78d394ca849ed6131995d92985d6b2da4 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
-@@ -5634,4 +5634,6 @@ public abstract class Entity
+@@ -5640,4 +5640,6 @@ public abstract class Entity
          return ((ServerLevel) this.level()).isPositionEntityTicking(this.blockPosition());
      }
      // Paper end
@@ -189,10 +189,10 @@ index c756d28b396520264336832f17527981248556f3..90630d3528cb6c07b5242fe868a6b610
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/entity/Mob.java b/net/minecraft/world/entity/Mob.java
-index 51dec65d0f437deb370eabbfa0369c4232caac14..7ee9c58e336518113244f3f30a4ccc4e97fc85ee 100644
+index 92ce15b22517bda5033e6377c76abaa6a9d68d03..4c9523d5824636c2befe27b15fe21ed8b62b9dea 100644
 --- a/net/minecraft/world/entity/Mob.java
 +++ b/net/minecraft/world/entity/Mob.java
-@@ -1718,4 +1718,11 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
+@@ -1721,4 +1721,11 @@ public abstract class Mob extends LivingEntity implements Targeting, EquipmentUs
      public void swing(final InteractionHand hand, final SwingAnimation animation) {
          this.swing(hand, animation, false);
      }
@@ -221,7 +221,7 @@ index 7c92c9335997cee76ff360c51f704ee41a180796..fb4cab83fd23c5561326a58683558e9a
 +    // KioCG end
  }
 diff --git a/net/minecraft/world/entity/player/Player.java b/net/minecraft/world/entity/player/Player.java
-index 4068dc1cea4edca196dc0c58b4804e94dd07881e..2db02b1202297691e27052360698863e0106642b 100644
+index 4ba3fb85b0473b4e7aa237701034d25f84e955cd..63258be0f2222d5d1591ac7f525b9341772fb168 100644
 --- a/net/minecraft/world/entity/player/Player.java
 +++ b/net/minecraft/world/entity/player/Player.java
 @@ -1435,6 +1435,13 @@ public abstract class Player extends Avatar implements ContainerUser {

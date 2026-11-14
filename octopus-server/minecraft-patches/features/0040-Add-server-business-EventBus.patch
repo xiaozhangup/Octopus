@@ -5,9 +5,10 @@ Subject: [PATCH] Add server business EventBus
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+index 218847bbaf171480fc9df95f787f0054d2443142..f19a05215d3b3720c67217b6842c88eb24acb18c 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1033,6 +1033,7 @@
+@@ -1034,6 +1034,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              if (this.hasStopped) return;
              this.hasStopped = true;
          }
@@ -15,7 +16,7 @@ diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/Mi
          // Octopus start - asynchronous world loading
          this.worldLoadExecutor.shutdownNow();
          final boolean worldLoaderStopped = this.awaitWorldLoaderShutdown();
-@@ -1888,6 +1889,7 @@
+@@ -1890,6 +1891,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          ProfilerFiller profiler = Profiler.get();
          this.getPlayerList().getPlayers().forEach(playerx -> playerx.connection.suspendFlushing());
          this.server.entityTickers.beginTick(); // Octopus - entity tick callbacks

@@ -20,10 +20,10 @@ index 30483ee49deaa6294fc5eb76d9ab6cc9f399894a..a803312e0fd3607007fc9666f376138e
              this.server.getScheduler().cancelTasks(plugin);
          } catch (Throwable ex) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index 165f3b79413d19370b80ee7bf8c9a2bbfdde43f0..4b8bcdd36ba6554f94317bd3d48278c994236fd4 100644
+index 174b75a31e871e011db58caacbe40786b52a0dac..de79e8927f17ae5ba3ca514bca3235b7199e2ac4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -3390,6 +3390,18 @@ public final class CraftServer implements Server {
+@@ -3411,6 +3411,18 @@ public final class CraftServer implements Server {
          return mobGoals;
      }
  

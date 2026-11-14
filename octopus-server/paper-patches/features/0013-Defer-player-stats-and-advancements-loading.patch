@@ -5,10 +5,10 @@ Subject: [PATCH] Defer player stats and advancements loading
 
 
 diff --git a/src/main/java/io/papermc/paper/connection/HorriblePlayerLoginEventHack.java b/src/main/java/io/papermc/paper/connection/HorriblePlayerLoginEventHack.java
-index e6511bddcdf1dc455d17d91d733aad055d2301dc..ffabe811377f3e9d0cbdc015709c33c332bb43ed 100644
+index e1215b7403fb90a51b810036ccc38faaa81d29b1..856030c3589b1a58265f79d7124c872fcf439440 100644
 --- a/src/main/java/io/papermc/paper/connection/HorriblePlayerLoginEventHack.java
 +++ b/src/main/java/io/papermc/paper/connection/HorriblePlayerLoginEventHack.java
-@@ -79,7 +79,9 @@ public class HorriblePlayerLoginEventHack {
+@@ -80,7 +80,9 @@ public class HorriblePlayerLoginEventHack {
          if (connection.savedPlayerForLegacyEvents != null) {
              player = connection.savedPlayerForLegacyEvents;
          } else {

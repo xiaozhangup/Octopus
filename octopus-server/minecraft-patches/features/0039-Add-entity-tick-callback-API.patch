@@ -5,10 +5,10 @@ Subject: [PATCH] Add entity tick callback API
 
 
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index b7c49b47e572538bb7303cf765b474edd9469a44..31687bc64c2732416421e7706d4c3233de3e6a5d 100644
+index 181292c83d18c1b789cce90569e9e444816f4f9b..218847bbaf171480fc9df95f787f0054d2443142 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1887,6 +1887,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1889,6 +1889,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      protected void tickChildren(final BooleanSupplier haveTime) {
          ProfilerFiller profiler = Profiler.get();
          this.getPlayerList().getPlayers().forEach(playerx -> playerx.connection.suspendFlushing());
