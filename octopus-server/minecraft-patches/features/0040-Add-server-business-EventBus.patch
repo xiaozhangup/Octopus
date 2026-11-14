@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Sat, 14 Nov 2026 00:00:00 +0800
+Subject: [PATCH] Add server business EventBus
+
+
+diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
+--- a/net/minecraft/server/MinecraftServer.java
++++ b/net/minecraft/server/MinecraftServer.java
+@@ -1033,6 +1033,7 @@
+             if (this.hasStopped) return;
+             this.hasStopped = true;
+         }
++        if (this.server != null) this.server.eventBus.shutdown(); // Octopus - EventBus
+         // Octopus start - asynchronous world loading
+         this.worldLoadExecutor.shutdownNow();
+         final boolean worldLoaderStopped = this.awaitWorldLoaderShutdown();
+@@ -1888,6 +1889,7 @@
+         ProfilerFiller profiler = Profiler.get();
+         this.getPlayerList().getPlayers().forEach(playerx -> playerx.connection.suspendFlushing());
+         this.server.entityTickers.beginTick(); // Octopus - entity tick callbacks
++        this.server.eventBus.drain(); // Octopus - EventBus; before parallel world ticks
+         this.server.getScheduler().mainThreadHeartbeat(); // CraftBukkit
+         // Paper start - optimise Folia entity scheduler
+         ((io.papermc.paper.threadedregions.scheduler.FoliaGlobalRegionScheduler)org.bukkit.Bukkit.getGlobalRegionScheduler()).tick();

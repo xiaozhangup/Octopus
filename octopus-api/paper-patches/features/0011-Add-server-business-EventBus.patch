@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Sat, 14 Nov 2026 00:00:00 +0800
+Subject: [PATCH] Add server business EventBus
+
+
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index 492e78541..53da1dfa2 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -2880,6 +2880,14 @@ public final class Bukkit {
+         return server.getMobGoals();
+     }
+ 
++    // Octopus start - EventBus
++    /** Returns the server's shared business event bus. */
++    @NotNull
++    public static me.xiaozhangup.octopus.eventbus.EventBus getEventBus() {
++        return server.getEventBus();
++    }
++    // Octopus end - EventBus
++
+     // Octopus start - entity tick callbacks
+     /**
+      * @see Server#registerEntityTicker(org.bukkit.plugin.Plugin, org.bukkit.entity.EntityType, long, java.util.function.Consumer)
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index 4e7f2e4d5..029b8e6f0 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -2666,6 +2666,12 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+     @NotNull
+     com.destroystokyo.paper.entity.ai.MobGoals getMobGoals();
+ 
++    // Octopus start - EventBus
++    /** Returns the shared, plugin-lifecycle-aware business event bus. */
++    @NotNull
++    me.xiaozhangup.octopus.eventbus.EventBus getEventBus();
++    // Octopus end - EventBus
++
+     // Octopus start - entity tick callbacks
+     /**
+      * Registers a callback for an exact entity type, first running after one period.

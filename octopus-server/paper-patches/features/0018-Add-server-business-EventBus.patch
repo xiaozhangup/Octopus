@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Sat, 14 Nov 2026 00:00:00 +0800
+Subject: [PATCH] Add server business EventBus
+
+
+diff --git a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
+index a803312e0..e89598cda 100644
+--- a/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
++++ b/src/main/java/io/papermc/paper/plugin/manager/PaperPluginInstanceManager.java
+@@ -267,6 +267,10 @@ class PaperPluginInstanceManager {
+                 + pluginName + " (Is it up to date?)", ex, plugin); // Paper
+         }
+ 
++        // Octopus start - EventBus
++        ((org.bukkit.craftbukkit.CraftServer) this.server).eventBus.disablePlugin(plugin);
++        // Octopus end - EventBus
++
+         // Octopus start - entity tick callbacks
+         ((org.bukkit.craftbukkit.CraftServer) this.server).entityTickers.unregisterAll(plugin);
+         // Octopus end - entity tick callbacks
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index 4b8bcdd36..9f906450f 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -384,6 +384,7 @@ public final class CraftServer implements Server {
+ 
+     public CraftServer(DedicatedServer console, PlayerList playerList) {
+         this.console = console;
++        this.eventBus = new me.xiaozhangup.octopus.eventbus.ServerEventBus(console); // Octopus - EventBus
+         this.playerList = (DedicatedPlayerList) playerList;
+         this.playerView = MCUtil.transformUnmodifiable(playerList.getPlayers(), ServerPlayer::getBukkitEntity);
+         this.serverVersion = io.papermc.paper.ServerBuildInfo.buildInfo().asString(io.papermc.paper.ServerBuildInfo.StringRepresentation.VERSION_SIMPLE); // Paper - improve version
+@@ -3390,6 +3391,15 @@ public final class CraftServer implements Server {
+         return mobGoals;
+     }
+ 
++    // Octopus start - EventBus
++    public final me.xiaozhangup.octopus.eventbus.ServerEventBus eventBus;
++
++    @Override
++    public me.xiaozhangup.octopus.eventbus.EventBus getEventBus() {
++        return this.eventBus;
++    }
++    // Octopus end - EventBus
++
+     // Octopus start - entity tick callbacks
+     public final me.xiaozhangup.octopus.entity.EntityTickerManager entityTickers = new me.xiaozhangup.octopus.entity.EntityTickerManager();
+ 
